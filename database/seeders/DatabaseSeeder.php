@@ -15,6 +15,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(IcsDatabaseSeeder::class);
+        // Database seeder placeholder for database team member
     }
 }
