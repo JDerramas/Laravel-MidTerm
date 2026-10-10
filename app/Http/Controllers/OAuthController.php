@@ -22,7 +22,7 @@ class OAuthController extends Controller
         }
 
         $clientId = config('services.onepass.client_id');
-        $redirectUri = config('services.onepass.redirect_uri');
+        $redirectUri = env('ONEPASS_REDIRECT_URI') ?: url('/oauth/callback');
         $issuerUrl = rtrim(config('services.onepass.issuer_url'), '/');
 
         $state = Str::random(40);
@@ -65,7 +65,7 @@ class OAuthController extends Controller
 
         $clientId = config('services.onepass.client_id');
         $clientSecret = config('services.onepass.client_secret');
-        $redirectUri = config('services.onepass.redirect_uri');
+        $redirectUri = env('ONEPASS_REDIRECT_URI') ?: url('/oauth/callback');
         $issuerUrl = rtrim(config('services.onepass.issuer_url'), '/');
         $codeVerifier = session('oauth_code_verifier') ?? $request->cookie('oauth_code_verifier');
 
