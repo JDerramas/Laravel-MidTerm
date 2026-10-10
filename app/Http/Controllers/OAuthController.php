@@ -39,7 +39,7 @@ class OAuthController extends Controller
             'client_id'             => $clientId,
             'redirect_uri'          => $redirectUri,
             'response_type'         => 'code',
-            'scope'                 => 'openid profile email student_id qr contact avatar',
+            'scope'                 => 'openid profile email student_id qr avatar',
             'state'                 => $state,
             'code_challenge'        => $codeChallenge,
             'code_challenge_method' => 'S256',
