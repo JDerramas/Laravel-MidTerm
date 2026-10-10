@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.3-apache
 
 # Install system dependencies and required PHP extensions for Laravel
 RUN apt-get update && apt-get install -y \
@@ -40,4 +40,4 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Dynamic port binding for Render ($PORT or default 80)
 EXPOSE 80 10000
 
-CMD sh -c "sed -i \"s/80/\${PORT:-80}/g\" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground"
+CMD sh -c "sed -i \"s/80/\${PORT:-80}/g\" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && php artisan optimize:clear && apache2-foreground"
