@@ -1,0 +1,336 @@
+================================================================================
+          ICS APPAREL & MERCHANDISE RESERVATION SYSTEM (LARAVEL 13)
+        FRONTEND CODE EXPLANATION (TAGLISH) - PARA SA REPORT & DEFENSE
+================================================================================
+Target Files: 
+  1. resources/views/merch.blade.php (Student Store & Checkout Portal)
+  2. resources/views/admin.blade.php (Dedicated Admin Management Console)
+  3. resources/css/style.css (Styling & Aesthetic System)
+Role sa MVC: VIEW ("User Interface, Styling & Client-Side Interactivity")
+================================================================================
+
+I. SIMPLENG PALIWANAG: BAKIT HINIWALAY ANG ADMIN AT STUDENT SA 2 BLADE FILES?
+--------------------------------------------------------------------------------
+Sa modernong software engineering at MVC architecture, "Separation of Concerns"
+ang tawag dito:
+
+1. merch.blade.php (Student View):
+   - Naka-focus sa karanasan ng mag-aaral: mabilis na pagtingin sa mga uniporme,
+     pagpili ng sukat, shopping cart, at GCash checkout.
+   - Walang admin controls kaya mas magaan at ligtas gamitin ng mga estudyante.
+   - May direct button sa header: "Admin Management" na pumupunta sa /admin.
+
+2. admin.blade.php (Dedicated Admin View):
+   - Naka-focus sa pamamahala at logistics: Dashboard charts, inventory CRUD,
+     reservation queue, user accounts, audit logs, at helpdesk live chat.
+   - May sariling standalone layout at may button pabalik sa student store:
+     "🛒 Go to Student Store" na bumabalik sa /.
+
+3. JAVASCRIPT & REACTIVE LOGIC:
+   - Parehong gumagamit ng asynchronous fetch() API para sa real-time na
+     transaksyon nang walang full page reloads.
+
+4. CSS & DESIGN (Collegiate Modern Aesthetic):
+   - Naka-theme sa official ICS colors: Royal Navy Blue, Crimson Red, at Gold.
+   - Gumagamit ng glassmorphic cards, modern badges, at responsive grid.
+
+
+================================================================================
+II. BALANGKAS NG MGA BAHAGI SA resources/views/merch.blade.php (STUDENT PORTAL)
+================================================================================
+
+1. HEADER & UNIFIED ONEPASS IDENTITY:
+   - ICS Emblem at System Title.
+   - Streamlined Header Bar: Tinanggal ang dating hiwalay na desktop portal switcher sa header upang maging malinis, maluwag, at propesyonal ang navigation bar.
+   - Unified Header Profile Dropdown (100% Dynamic):
+     * Guest State: Single 1-Click "🟢 Student Login (OnePass)" button na direktang
+       nagre-redirect sa official OnePass authorization server (Zero typing ng username/password).
+     * Logged-in State: Dynamic verified student avatar, buong pangalan, Student Number,
+       at course section badge ("AIS 2A • Student").
+     * Dropdown Menu:
+       1. "View OnePass Profile" (External link sa opisyal na OnePass profile).
+       2. "Switch Student Account (OnePass)".
+       3. "Sign Out".
+       4. "Admin Management Console →" (Elegenteng itim at pulang link na permanente sa dropdown para sa awtorisadong staff).
+   - Clean Flash Warning Banners: Ang error alerts (`session('error')`) ay pinanatiling malinis—tanging ang error message at dismiss `✕` button ang nakadisplay nang walang nakakagulong action links.
+   - Shopping Cart icon na may live counter badge.
+   - Helpdesk Support trigger button.
+   - Mobile Drawer Mirror: Realtime synchronized card sa loob ng mobile drawer.
+
+2. HERO BANNER:
+   - Malugod na pagtanggap sa estudyante at mabilisang patakaran sa pickup ng damit.
+
+3. MERCHANDISE CATALOG GRID:
+   - Filter Pills para sa Departamento (All, CICS, CBAA) at Kategorya (Uniforms,
+     PE, Department Polos, Accessories).
+   - 2-Column Responsive Card Grid na nagpapakita ng larawan ng damit, presyo,
+     tela, at natitirang stock.
+   - Size Picker buttons (XS hanggang 3XL) at Quantity selector.
+
+4. SHOPPING CART DRAWER (Slide-out Panel):
+   - Lumalabas mula sa kanang bahagi kapag pinindot ang cart icon.
+   - Ipinapakita ang bawat damit, sukat, piraso, at live computed subtotal.
+   - May Proceed to Checkout button.
+
+5. SHOPEE-STYLE ORDER STATUS & TRACKING PROGRESS (User-to-User Privacy Guard):
+   - Strict Isolation Policy: Ang dropdown selector ay nagpapakita LAMANG ng mga reserbasyon ng mismong naka-login na estudyante.
+   - Tinanggal ang pagpapakita ng pangalan ng ibang mag-aaral (`ref_code (status) — ₱total`) upang maiwasan ang privacy leaks.
+   - Kung guest o unauthenticated, naka-lock ang dropdown at may abiso na "Sign in with OnePass to track your orders".
+
+6. CHECKOUT MODAL & GCASH PAYMENT:
+   - Awtomatikong naka-populate ang verified OnePass name at student ID.
+   - Pagpili sa pagitan ng Cash on Pickup at GCash Online.
+   - GCash QR Card na may instant screenshot upload at preview bago i-submit.
+
+7. PRINTABLE CLAIM SLIP:
+   - Resibo na may unique Reference Code (hal. ICS-2026-X941K) na pwedeng
+     i-print o i-screenshot para ipakita sa tanggapan.
+
+
+================================================================================
+III. BALANGKAS NG MGA BAHAGI SA resources/views/admin.blade.php (ADMIN CONSOLE)
+================================================================================
+
+1. ADMIN HEADER & RBAC ACCESS GUARD:
+   - "ICS Admin Console - Staff & Logistics".
+   - Button na "🛒 Go to Student Store" para mabilisang paglipat sa panig ng student.
+   - RBAC Email Gatekeeper: Tanging mga OnePass user na ang email ay nakatala sa User Management (`system_users`) na may status na `Active` ang binibigyan ng pahintulot na ma-access ang portal.
+   - Dynamic Profile Pill: Ipinapakita ang OnePass avatar/picture, buong pangalan, at role ng kasalukuyang naka-sign in na administrator.
+   - OnePass Profile Redirect Button: May direct button na "OnePass Profile" na nagbubukas ng opisyal na OnePass profile URL (`https://onepass-gdbe.onrender.com/profile`) sa bagong browser tab.
+
+2. EXECUTIVE DASHBOARD MODULE:
+   - Apat (4) na KPI Cards: Total Products, Units in Stock, Units Sold, at Total Revenue.
+   - Donut Chart para sa benta at Bar Chart para sa imbentaryo via Chart.js.
+   - Stock vs Sales visual progress bars bawat damit.
+
+3. INFORMATION MANAGEMENT (PRODUCTS CRUD):
+   - Imbentaryo table na may breakdown ng stock mula XS hanggang 3XL.
+   - "Add New Merchandise" button na nagbubukas ng modal para sa picture upload,
+     presyo, at sukat.
+   - "Edit" at "Delete/Deactivate" buttons bawat produkto.
+
+4. RESERVATION LOGISTICS QUEUE:
+   - Talaan ng lahat ng orders mula sa mga mag-aaral na may mabilisang search bar.
+   - Action buttons: "Mark as Ready", "Mark as Claimed", at "Cancel Order".
+   - Conditional Delete Button: May dedikadong pulang delete button ("Delete Order") na lumalabas LAMANG kapag tapos na ang reservation (status ay Claimed o Cancelled). Kapag pinindot, binubura nito ang record sa database at sa UI nang hindi nagre-redirect sa ibang dashboard tab.
+   - GCash Receipt Viewer Modal para i-verify ang in-upload na screenshot ng bayad.
+
+5. REPORTS & CSV EXPORT:
+   - Buod ng kinita at pindutan ng "Download CSV Report" para sa Excel documentation.
+
+6. USER MANAGEMENT:
+   - Roster ng mga opisyal at advisers na may User Code, Name, Email, Role, at Status.
+   - Modal form para magdagdag ng bagong kawani o magpalit ng tungkulin.
+
+7. ACTIVITY LOGS (AUDIT TRAIL):
+   - Sumusunod sa exact classroom whiteboard format:
+     USER CODE | ACTION | ACTIVITY | TIMESTAMP
+
+8. CUSTOMER SUPPORT HELPDESK & CHAT:
+   - Split-pane layout: kaliwa ay listahan ng tickets; kanan ay live chat box.
+   - 1-Click "Cancel Reservation" button mula sa loob mismo ng chat upang
+     awtomatikong maibalik ang stock sa imbentaryo kapag nagmakaawa ang estudyante.
+
+
+================================================================================
+IV. MGA JAVASCRIPT FUNCTIONS SA FRONTEND (CODE BREAKDOWN + 1 PARAGRAPH SUMMARY)
+================================================================================
+
+--------------------------------------------------------------------------------
+FUNCTION 1: switchTab(tabName)
+--------------------------------------------------------------------------------
+document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+→ Itinatago dito lahat ng mga kasalukuyang nakabukas na tab sa screen sa pamamagitan ng paglalagay ng 'hidden' class sa kanila.
+
+document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+→ Inaalis naman dito yung 'hidden' class doon sa specific tab na pinindot ng user para siya yung lumabas.
+
+document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+→ Inaalis dito yung active highlight styling sa lahat ng buttons sa navigation menu.
+
+document.getElementById(`btn-${tabName}`).classList.add('active');
+→ Nilalagyan naman ng active highlight yung pinindot na button para makita ng user kung aling tab ang aktibo ngayon.
+
+1-Paragraph Summary:
+
+Basically, ito yung JavaScript function na namamahala sa paglipat-lipat ng tab sa webpage nang hindi nagre-reload ang browser. Itinatago nito yung mga hindi napiling sections at agad na inilalabas yung pinindot na tab, para maging mabilis at smooth yung karanasan sa paglipat mula sa catalog, logistics queue, inventory, hanggang helpdesk.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 2: addToCart(productId, size, quantity)
+--------------------------------------------------------------------------------
+if (!size) { alert('Please select a size first!'); return; }
+→ Sine-check muna dito kung may napiling size ang student bago magdagdag sa cart; kapag wala pa, magpapakita ng warning alert.
+
+const product = catalogData.find(p => p.id === productId);
+→ Hinahanap dito sa catalog array yung details ng damit tulad ng pangalan at presyo gamit yung product ID.
+
+const existingIndex = cart.findIndex(item => item.id === productId && item.size === size);
+→ Chine-check kung nasa loob na ba ng cart yung parehong item na may parehong sukat para maiwasan ang duplicate rows.
+
+if (existingIndex > -1) { cart[existingIndex].quantity += quantity; }
+→ Kapag nandoon na pala dati, dinadagdagan na lang yung quantity nito sa halip na gumawa ng bagong linya.
+
+else { cart.push({ id: product.id, name: product.name, price: product.price, ... }); }
+→ Kapag bagong damit o bagong sukat, idinadagdag ito bilang bagong entry sa cart array.
+
+renderCart();
+→ Tinatawag dito yung renderCart function para mag-update agad yung itsura ng cart drawer at yung pulang counter badge sa taas.
+
+1-Paragraph Summary:
+
+Basically, itong function na ito yung tumatakbo kapag pinindot ng student ang Add to Cart button sa isang merchandise. Sinisiguro muna nito na may napiling sukat, tinitingnan kung nasa cart na dati ang damit para quantity na lang ang dagdagan, at agad na ina-update ang cart drawer at counter badge sa header para makita agad ng estudyante ang pagbabago.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 3: renderCart()
+--------------------------------------------------------------------------------
+const cartContainer = document.getElementById('cart-items-container');
+→ Kinukuha dito yung HTML element ng shopping cart drawer kung saan ilalagay yung mga napiling damit.
+
+cartContainer.innerHTML = '';
+→ Nililinis muna yung lumang laman ng listahan para hindi magpatong-patong o mag-duplicate kapag nag-refresh ang listahan.
+
+cart.forEach((item, index) => { total += (item.price * item.quantity); ... });
+→ Nag-i-iterate sa bawat item sa loob ng cart para gumawa ng HTML cards at i-compute yung kabuuang presyo.
+
+document.getElementById('cart-subtotal').innerText = 'PHP ' + total.toLocaleString();
+→ Isinusulat at ipinapakita dito yung na-compute na total amount sa subtotal display ng drawer.
+
+document.getElementById('cart-badge-count').innerText = cart.reduce((sum, i) => sum + i.quantity, 0);
+→ Ina-update dito yung pulang badge sa navigation bar para ipakita kung ilang piraso na lahat ang laman ng shopping bag.
+
+1-Paragraph Summary:
+
+Basically, ito yung nagre-render at nag-a-update ng shopping cart drawer sa gilid ng screen. Gumagawa ito ng bagong HTML card para sa bawat damit sa cart, kinakalkula nang real-time ang total amount kapag nagbago ang dami, at ina-update ang badge count sa navigation bar para laging accurate ang nakikita ng estudyante.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 4: submitReservation(event)
+--------------------------------------------------------------------------------
+event.preventDefault();
+→ Pinipigilan dito yung default reload behavior ng browser form para hindi mag-refresh ang buong webpage.
+
+const formData = new FormData(document.getElementById('checkout-form'));
+→ Kinukuha dito lahat ng inputs na tinype ng estudyante sa checkout form tulad ng pangalan, ID number, at in-upload na GCash receipt.
+
+formData.append('items', JSON.stringify(cart));
+→ Isinasama dito sa ipapadalang data yung listahan ng mga damit at sukat na nasa loob ng cart.
+
+const response = await fetch('/api/reservations', { method: 'POST', body: formData, ... });
+→ Ipinapadala dito sa backend API yung order gamit ang asynchronous Fetch POST request kasama ang CSRF token.
+
+const data = await response.json();
+→ Binabasa dito yung sagot ng server na naglalaman ng bagong Reference Code ng order.
+
+cart = []; renderCart(); closeCheckoutModal();
+→ Nililinis na dito yung cart, inaayos ang UI, at isinasara ang checkout form dahil successful na ang order.
+
+1-Paragraph Summary:
+
+Basically, ito yung function na nagpapadala ng order ng estudyante mula sa checkout modal patungo sa backend sa pamamagitan ng asynchronous fetch request nang walang page reload. Tinitipon nito ang personal details, items sa cart, at GCash screenshot, ipinapasa sa server, at agad na nagpapakita ng printable claim reference code pagkatapos ma-save sa database.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 5: updateReservationStatus(id, newStatus) & Reservation Queue Support Hold
+--------------------------------------------------------------------------------
+const response = await fetch(`/api/reservations/${id}/status`, { method: 'PATCH', ... });
+→ Nagpapadala dito ng background PATCH request sa server para palitan ang status ng reservation sa database.
+
+if (activeTicket) { /* Render ⚠️ ON HOLD Badge & ⚠️ Resolve Ticket Button */ }
+→ Conflict Prevention Lock UI: Kapag may nakitang aktibong Support Ticket ang order, awtomatikong inilalabas ang '⚠️ ON HOLD: May Support Ticket' badge at tinatanggal ang 'Mark Ready' at 'Mark Claimed' buttons. Sa halip, pinapalitan ito ng '⚠️ Resolve Ticket' button na direktang magbubukas ng tiket sa Helpdesk tab para maiwasan ang conflict bago i-claim ang item.
+
+if (response.ok) { updateBadgeUI(id, newStatus); showToast(`Marked as ${newStatus}!`); }
+→ Kapag naging successful yung request, agad na pinapalitan yung kulay at text ng badge sa table at nagpapakita ng notification popup.
+
+1-Paragraph Summary:
+
+Basically, ginagamit ito ng admin sa Reservation Queue para baguhin ang estado ng order ng estudyante sa isang pindot lang. Nilagyan ito ng awtomatikong Conflict Lock kung saan kapag may nakabinbing helpdesk ticket ang order (tulad ng paghingi ng cancellation o pagpalit ng size), awtomatikong itinatago ang Mark Ready at Mark Claimed buttons at pinapalitan ng ON HOLD warning badge at Resolve Ticket shortcut upang masigurong naayos muna ang concern bago ipamigay ang damit.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 6: sendStudentChatMessage(e) & Turn-Taking Anti-Spam Banner
+--------------------------------------------------------------------------------
+const input = document.getElementById('student-chat-input'); const msg = input.value.trim();
+→ Kinukuha dito yung mensaheng tinype ng estudyante at tinitingnan kung may laman bago ipadala.
+
+inputWrapper.classList.add('hidden'); waitingBanner.classList.remove('hidden');
+→ Immediate Optimistic Anti-Spam Lock: Sa sandaling mapindot ang Send, agad na itinatago ang chat input form at inilalabas ang 'Naghihintay ng Sagot mula sa Admin (Anti-Spam)' banner para hindi na makapag-spam o makapagpadala pa ng sunod-sunod na mensahe ang student.
+
+const res = await fetch(`/My_laravel/public/api/support-tickets/${ticketId}/messages`, { method: 'POST', ... });
+→ Ipinapadala sa backend API ang chat message gamit ang asynchronous POST request kasama ang CSRF token.
+
+if (lastMsg && lastMsg.sender_type === 'student') { inputWrapper.classList.add('hidden'); waitingBanner.classList.remove('hidden'); }
+→ Turn-Taking Verification: Sa tuwing nagre-render o nagpo-poll ang chat, kapag ang huling mensahe ay mula sa student, nananatiling naka-lock ang input bar hangga't hindi pa sumasagot ang ICS Admin.
+
+1-Paragraph Summary:
+
+Basically, ito ang chat messaging engine ng Student Support na may mahigpit na Turn-Taking Anti-Spam protection. Sa oras na mag-send ng mensahe ang estudyante, agad nitong ikinukubli ang chat box at ipinapakita ang amber waiting banner, kaya hindi makakapagpadala ng panibagong mensahe ang estudyante hangga't wala pang opisyal na sagot o tugon ang ICS Admin Officer sa tiket.
+================================================================================
+
+
+--------------------------------------------------------------------------------
+FUNCTION 7: startRealtimeSync() sa merch.blade.php (Student Store Live Sync)
+--------------------------------------------------------------------------------
+this._syncInterval = setInterval(async () => { ... }, 3000);
+→ Nagpapatakbo ng timer bawat 3 segundo para awtomatikong tumawag sa backend server sa background nang hindi nagre-refresh ang buong webpage.
+
+const res = await fetch('/My_laravel/public/api/realtime/sync' + qs, { headers: { 'Accept': 'application/json' } });
+→ Tahimik na kumukuha ng pinakabagong data tulad ng stock, order tracking milestone, at bagong chat messages gamit ang Fetch API.
+
+if (data.products) { this.catalog = data.products; this.updateCatalogStockBadges(); }
+→ Agad na ina-update ang stock pills ("In Stock", "Low Stock", o "Out of Stock") at pinapatay o binubuhay ang "Reserve" button kapag naubos ang damit.
+
+if (this.activeTrackedRef) { const matchedRes = ...; this.updateTrackerView(matchedRes); }
+→ Awtomatikong pinapaabante ang Shopee-style Order Tracker sa screen ng estudyante kapag pinalitan ng admin ang status (hal. naging "Ready for Pickup" o "Claimed").
+
+if (this.activeStudentTicketId && data.active_ticket) { this.renderStudentChatMessages(currentTicket); }
+→ Awtomatikong inilalabas ang bagong tugon ng admin sa loob ng Student Support Chat box nang hindi na kailangang pindutin ang reload.
+
+1-Paragraph Summary:
+
+Basically, ito ang live background polling engine ng Student Store na awtomatikong tumatakbo bawat tatlong segundo nang hindi naglo-reload ang page. Tahimik nitong ina-update ang mga stock pills at buttons sa tindahan kapag may naubos o nadagdag na damit, kusa nitong pinapaabante ang Shopee-style order progress tracker kapag inihanda ng admin ang order, at agad nitong inilalabas ang bagong reply ng admin sa helpdesk chat para maging tunay na realtime ang karanasan ng estudyante.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 8: startAdminRealtimeSync() sa admin.blade.php (Admin Dedicated Portal)
+--------------------------------------------------------------------------------
+this._adminSyncInterval = setInterval(async () => { ... }, 3000);
+→ Nagpapatakbo ng awtomatikong polling timer bawat 3 segundo para patuloy na kumustahin ang server at kunin ang pinakasariwang datos.
+
+const res = await fetch('/My_laravel/public/api/realtime/sync' + ticketParam);
+→ Kumukuha ng magaan na JSON mula sa server na naglalaman ng mga bagong reservation, product inventory, tickets, at live KPI calculations.
+
+const m = data.metrics; document.getElementById('kpi-total-stock').textContent = ...;
+→ Agad na ina-update ang numero sa mga KPI cards ng Admin Dashboard (Total Products, On-Hand Stock, Units Sold, at Total Revenue) nang kusa sa screen.
+
+if (this.adminTab === 'reservations') { this.renderReservationsQueue(); }
+→ Kapag nakatingin ang admin sa Reservation Queue, awtomatikong lumalabas sa table ang mga bagong pasok na orders mula sa mga estudyante nang hindi nagre-refresh.
+
+if (this.adminTab === 'helpdesk') { this.renderAdminChatMessages(currentTicket); }
+→ Awtomatikong nag-a-update ang chat messages at listahan ng tickets sa helpdesk sa tuwing magre-reply o magpapadala ng bagong tanong ang estudyante.
+
+1-Paragraph Summary:
+
+Basically, ito ang real-time synchronization engine ng Admin Console na nag-a-update ng buong pamamahala bawat tatlong segundo nang walang page reload. Kusa nitong binabago ang mga numero sa dashboard KPI counters at donut charts, awtomatikong ipinapasok ang mga bagong dating na reservations sa queue table, at real-time na nagpapakita ng mga bagong messages sa customer support helpdesk para agad makatugon ang mga opisyal ng ICS.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 9: deleteStudentTicket() & adminDeleteTicket() (Resolved Ticket Deletion Engine)
+--------------------------------------------------------------------------------
+${t.status === 'Resolved' ? `<button onclick="icsApp.deleteStudentTicket(...)">Delete</button>` : ''}
+→ Conditional Delete Button Rendering: Sa parehong Student Support modal at Admin Helpdesk, sinusuri muna ang estado ng tiket. Kung ito ay 'Resolved' na, doon lamang ilalabas ang pulang 'Delete' button. Kung 'Open' o 'In Progress' pa ang usapan, ganap na walang delete button sa interface upang maiwasan ang aksidenteng pagbura habang inaasikaso pa ang concern.
+
+if (!confirm(`Sigurado ka bang nais mong burahin ang resolved ticket [${ticketCode}]?...`)) return;
+→ User Decision Confirmation Modal: Bago ipadala ang bura request, humihingi muna ng kumpirmasyon sa screen. Tanging ang user o admin lamang ang may karapatang magpasya kung nais na ba nilang linisin at alisin ang kanilang natapos na tiket.
+
+const res = await fetch(`/My_laravel/public/api/support-tickets/${ticketId}`, { method: 'DELETE', ... });
+→ Asynchronous DELETE API Call: Ipinapadala sa server ang utos na burahin ang ticket at chat messages nang walang page reload gamit ang Fetch API.
+
+this.supportTickets = this.supportTickets.filter(t => t.id !== ticketId); this.renderStudentTicketsHistory();
+→ Immediate UI List Update: Kapag tagumpay ang pagbura, agad na inaalis ang card sa screen, ina-update ang badge counters, at nagpapakita ng success toast notification.
+
+1-Paragraph Summary:
+
+Basically, ito ang visual management function para sa ligtas na pagbura ng mga tapos nang Helpdesk Support Tickets. Tinitiyak nito na walang sinuman ang makakapagbura ng ticket habang bukas pa ang reklamo o usapan dahil lalabas lamang ang pulang Delete button kapag Resolved na ito, at binibigyan ng buong desisyon ang estudyante o admin sa pamamagitan ng confirmation prompt bago ito permanenteng linisin sa screen at sa database.
+================================================================================

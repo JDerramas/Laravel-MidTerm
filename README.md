@@ -1,11 +1,14 @@
 # 🎽 ICS Apparel & Merchandise Reservation System
 
 > **Official Midterm Project for Computer Programming 3 (CP3)**  
-> **Integrated Computer Society (ICS)** • **Academic Year 2026**
+> **Integrated Computer Society (ICS)** • **Academic Year 2026**  
+> 🌐 **Live Cloud Deployment**: [https://laravel-midterm-8n2y.onrender.com](https://laravel-midterm-8n2y.onrender.com)
 
+[![Render](https://img.shields.io/badge/Render-Production_Live-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://laravel-midterm-8n2y.onrender.com)
+[![TiDB Cloud](https://img.shields.io/badge/TiDB_Cloud-Serverless_MySQL-00D3EB?style=for-the-badge&logo=mysql&logoColor=white)](https://tidbcloud.com)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 [![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
-[![MySQL](https://img.shields.io/badge/MySQL-InnoDB-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 
 ---
@@ -20,6 +23,7 @@ The **ICS Apparel & Merchandise Reservation System** is a unified, full-stack we
 2. **Double-Booking & Stock Discrepancies**: Prevents overbooking with dynamic, atomic stock allocation per size (`XS`, `S`, `M`, `L`, `XL`, `2XL`).
 3. **Logistics Deadlocks**: Provides an automated **Conflict Lock Engine** (`⚠️ ON HOLD`) preventing premature item claims while a student has an unresolved helpdesk ticket.
 4. **Order Support Transparency**: Built-in real-time Helpdesk Chat with turn-taking anti-spam and strict resolved-only ticket deletion governance.
+5. **Real-Time Audit & Toast Notification Engine**: Live background polling, Web Audio API chime sounds, and floating toast notifications for administrative auditing across all logins, logouts, order creations, updates, and cancellations.
 
 ---
 
@@ -27,11 +31,14 @@ The **ICS Apparel & Merchandise Reservation System** is a unified, full-stack we
 
 | Layer                  | Technologies & Tools                                                                                        |
 | :--------------------- | :---------------------------------------------------------------------------------------------------------- |
+| **Live Hosting**       | Render Web Service (Custom multi-stage Docker container: Nginx + PHP 8.2 FPM + Supervisor)                 |
+| **Cloud Database**     | TiDB Serverless Cloud (AWS Singapore `ap-southeast-1`, Port 4000, TLS/SSL Encrypted via System CA Bundle)   |
+| **Uptime Monitoring**  | UptimeRobot automated 5-minute HTTP ping daemon (prevents Render container cold-start sleep)               |
 | **Frontend UI/UX**     | Laravel Blade Engine, Tailwind CSS, Space Grotesk / Plus Jakarta Sans fonts, FontAwesome 6, Canvas Confetti |
-| **Client-Side Logic**  | Vanilla JavaScript (ES6+), Fetch API, 3-Second Background Polling Engine, LocalStorage caching              |
+| **Client-Side Logic**  | Vanilla JavaScript (ES6+), Web Audio API Synth Chimes, Dynamic Toast Notifications, LocalStorage caching   |
 | **Backend Framework**  | Laravel 11.x MVC Architecture, PHP 8.2 / 8.3                                                                |
 | **Identity & SSO**     | OnePass OIDC SSO (RFC 6749, RFC 7636 PKCE S256), Supabase Auth (`oyzvcqaytavbfwdrgili.supabase.co`)       |
-| **Database & ORM**     | MySQL 8.0 (InnoDB Engine), Laravel Eloquent ORM, JSON Column Casting                                        |
+| **Database & ORM**     | MySQL 8.0 / TiDB Cloud (InnoDB Engine), Laravel Eloquent ORM, JSON Column Casting                           |
 | **Development Server** | XAMPP (Apache 2.4 + MySQL MariaDB/InnoDB), Composer 2.x, Node.js 20+                                        |
 
 ---

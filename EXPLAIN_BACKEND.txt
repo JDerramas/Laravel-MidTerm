@@ -1,0 +1,949 @@
+================================================================================
+          ICS APPAREL & MERCHANDISE RESERVATION SYSTEM (LARAVEL 11)
+         BACKEND CODE EXPLANATION (TAGLISH) - PARA SA REPORT & DEFENSE
+================================================================================
+Target Files: app/Http/Controllers/MerchController.php, OAuthController.php, app/Models/* & routes/web.php
+Role sa MVC: CONTROLLER & MODEL ("The Brain, Logic, and Data Layer of the Application")
+================================================================================
+
+I. SIMPLENG PALIWANAG: ANO BA ANG ROLE NG BACKEND SA MVC?
+--------------------------------------------------------------------------------
+Isipin mo ang MVC na parang isang sikat na kainan o restaurant:
+
+1. VIEW (Frontend - merch.blade.php & admin.blade.php):
+   - Ito yung "Waiter" at "Menu".
+   - May dalawa tayong hiwalay na views:
+     * merch.blade.php -> para sa Student Store (Catalog, Cart, Checkout).
+     * admin.blade.php -> para sa Admin Portal (Dashboard, Queue, CRUD, Logs).
+
+2. ROUTE (routes/web.php):
+   - Ito yung "Order Slip".
+   - Sinasabi kung saang kusina o function dapat pumunta yung request ng user.
+
+3. CONTROLLER (MerchController.php):
+   - Ito yung "Chef / Kusinero".
+   - Siya yung tumatanggap ng request mula sa routes, nagche-check kung valid,
+     nag-uutos sa Model para mag-save o magbasa sa Database, at naghahanda
+     ng tamang view o JSON data pabalik sa user.
+
+4. MODEL (app/Models/*):
+   - Ito yung "Pantry / Storage".
+   - Siya yung direct na kumakausap sa MySQL tables gamit ang Eloquent ORM.
+
+
+================================================================================
+II. MGA ROUTES AT KUNG SAANG CONTROLLER FUNCTION NAKA-CONNECT
+================================================================================
+1.  GET  /                                  -> index() (Student Store: merch.blade.php)
+2.  GET  /admin                             -> admin() (Admin Portal: admin.blade.php)
+3.  GET  /admin/dashboard                   -> admin() (Admin Portal: admin.blade.php)
+4.  GET  /api/catalog                       -> getCatalog()
+5.  POST /api/reservations                  -> storeReservation()
+6.  PATCH /api/reservations/{id}/status     -> updateReservationStatus()
+7.  DELETE /api/reservations/{id}           -> destroyReservation()
+8.  POST /api/products                      -> storeProduct()
+9.  POST /api/products/{id}                 -> updateProduct()
+10. DELETE /api/products/{id}               -> deleteProduct()
+11. POST /api/users                         -> storeUser()
+12. PUT  /api/users/{id}                    -> updateUser()
+13. DELETE /api/users/{id}                  -> deleteUser()
+14. GET  /reports/export-csv                -> exportReportCsv()
+15. GET  /api/support/tickets               -> getSupportTickets()
+16. POST /api/support/tickets               -> storeSupportTicket()
+17. GET  /api/support/tickets/{id}/messages -> getTicketMessages()
+18. POST /api/support/tickets/{id}/messages -> storeTicketMessage()
+19. PATCH /api/support/tickets/{id}/status  -> updateTicketStatus()
+20. POST /api/support/tickets/{id}/cancel-reservation -> cancelReservationFromTicket()
+21. GET  /api/realtime/sync                     -> getRealtimeSync()
+22. DELETE /api/support/tickets/{id}            -> deleteTicket()
+23. GET  /oauth/login                           -> OAuthController@redirect (OnePass OIDC SSO Redirect with PKCE S256)
+24. GET  /oauth/callback                        -> OAuthController@callback (Token Exchange & Claims Sync)
+25. GET  /oauth/logout                          -> StudentAuthController@logout (Session Revocation)
+
+
+================================================================================
+III. PALIWANAG SA LAHAT NG 20 PUBLIC FUNCTIONS SA MerchController.php
+================================================================================
+
+--------------------------------------------------------------------------------
+FUNCTION 1: public function index(Request $request)
+--------------------------------------------------------------------------------
+• Route: GET / (Main Student Portal & Store)
+
+$products = Product::where('is_active', true)->orderBy('id', 'asc')->get();
+→ Kinukuha dito yung mga products sa MySQL database na active pa. Tapos ina-arrange siya based sa ID, from pinaka-mababa hanggang pinaka-mataas.
+
+$reservations = Reservation::orderBy('created_at', 'desc')->get();
+→ Kinukuha naman dito lahat ng student reservations, tapos sini-sort siya based sa date kung kailan ginawa. So yung pinaka-latest na reservation yung unang lalabas.
+
+ActivityLog::record('READ', 'Opened ICS Merch Student Store', ...);
+→ Dito naman, nagre-record siya sa activity log na may nag-open ng ICS Merch Student Store. Parang ginagawa siyang record para makita kung anong activity yung nangyari sa system.
+
+return view('merch', compact('products', 'reservations', ...));
+→ Pagkatapos makuha lahat ng data, pinapasa niya yung mga data na yun papunta sa merch.blade.php, para magamit at ma-display sa student side ng website.
+
+1-Paragraph Summary:
+
+Basically, itong function na ito yung naglo-load ng student merch store. Kinukuha niya yung mga active products from the database, pati yung reservations, tapos inaayos yung data para ready na gamitin sa catalog at ibang parts ng page. Nagre-record din siya ng activity sa audit log bago niya i-display yung merch.blade.php na siyang student shopping interface.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 2: public function admin(Request $request)
+--------------------------------------------------------------------------------
+• Route: GET /admin & GET /admin/dashboard (Dedicated Admin Portal)
+
+$studentUser = session('student_user');
+if (!$studentUser) { return redirect()->route('home')->with('error', 'Access Restricted...'); }
+→ STRICT ACCESS GUARD 1: Sinusuri kung may naka-login na OnePass account sa session; kung wala, bina-block at ibinabalik sa home page.
+
+$adminUser = SystemUser::whereRaw('LOWER(TRIM(email)) = ?', [$userEmail])->where('status', 'Active')->first();
+if (!$adminUser) { return redirect()->route('home')->with('error', 'Access Denied...'); }
+→ STRICT RBAC GUARD 2: Hinahanap kung ang exactong OnePass institutional email (tulad ng jderramas251505@navotaspolytechniccollege.edu.ph) ay rehistrado sa User Management (system_users) at may Active status. Kapag ibang email ang nag-login (tulad ng omsim123456@navotaspolytechniccollege.edu.ph na wala sa system_users), bina-block agad ito at nagpapakita ng Access Denied alert.
+
+$products = Product::where('is_active', true)->orderBy('id', 'asc')->get();
+→ Kinukuha dito yung lahat ng active products sa database para mai-display sa inventory list at tables sa admin side.
+
+$reservations = Reservation::orderBy('created_at', 'desc')->get();
+→ Kinukuha naman dito lahat ng reservations ng mga estudyante para sa Reservation Logistics Queue, naka-sort mula sa pinakabago.
+
+$activityLogs = ActivityLog::orderBy('created_at', 'desc')->take(50)->get();
+→ Kinukuha dito yung pinakahuling 50 activity logs para makita ng admin yung audit trail at history ng mga nangyari sa system.
+
+$users = SystemUser::orderBy('id', 'asc')->get();
+→ Kinukuha naman dito lahat ng accounts ng admins, officers, at staff para sa User Management module.
+
+$verifiedStudents = Student::orderBy('name', 'asc')->get();
+→ Kinukuha ang verified roster ng mga estudyante mula sa database para magamit sa real-time email verification kapag nagdadagdag ng bagong admin account.
+
+foreach ($products as $p) { $totalRevenue += ($p->units_sold * $p->price); }
+→ Kinakalkula dito yung kabuuang benta o total revenue ng organization base sa dami ng naibentang items multiplied sa presyo.
+
+return view('admin', compact('products', 'reservations', ...));
+→ Pagkatapos ma-compute lahat ng metrics at maipasa ang security guard, pinapasa niya lahat sa admin.blade.php.
+
+1-Paragraph Summary:
+
+Basically, ito yung dedikadong function para sa Admin Portal na protektado ng mahigpit na Role-Based Access Control (RBAC). Sinusuri muna nito kung ang nag-login na OnePass email ay rehistrado at Active sa User Management table bago buksan ang portal. Kapag awtorisado, kinukuha at kinakalkula nito lahat ng inventory KPIs, reservations queue, audit logs, at verified student records, bago i-render ang kumpletong control panel sa admin.blade.php.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 3: public function getCatalog()
+--------------------------------------------------------------------------------
+• Route: GET /api/catalog
+
+$products = Product::where('is_active', true)->get();
+→ Kinukuha dito lahat ng mga paninda sa database na active pa at available para bilhin ng students.
+
+return response()->json($products);
+→ Ibinabalik niya yung mga products bilang JSON format para madaling mabasa at magamit ng JavaScript sa frontend.
+
+1-Paragraph Summary:
+
+Basically, itong function na ito ay isang mabilis na API endpoint. Tinatawag ito ng JavaScript sa frontend para kumuha ng pinakabagong listahan ng mga damit at merchandise nang hindi kailangang mag-reload yung buong webpage, tapos ibinabalik niya ito as malinis na JSON data para diretso nang mai-display sa catalog cards.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 4: public function storeReservation(Request $request)
+--------------------------------------------------------------------------------
+• Route: POST /api/reservations
+
+$validated = $request->validate([...]);
+→ Dito chine-check at bina-validate kung kumpleto yung input ng student tulad ng pangalan, student ID, department, at yung mga items sa cart.
+
+if ($request->hasFile('receipt_file')) { ... $file->move(...); }
+→ Kapag nag-upload ng GCash receipt screenshot yung student, sine-save dito yung image file sa uploads folder ng server.
+
+$refCode = 'ICS-' . date('Y') . '-' . strtoupper(Str::random(5));
+→ Dito gumagawa ng unique na Reference Code (halimbawa ICS-2026-X941K) na may kasamang random letters para magsilbing claim code ng student.
+
+$reservation = Reservation::create([...]);
+→ Dito na opisyal na sine-save sa reservations table sa MySQL yung buong details ng order kasama yung items at payment method.
+
+$prod->current_stock = max(0, $prod->current_stock - $qty);
+→ Awtomatikong binabawasan dito yung available stock ng damit sa database para hindi ma-overbook ang benta.
+
+$prod->units_reserved = ($prod->units_reserved ?? 0) + $qty;
+→ Dinadagdagan naman dito yung units_reserved count para alam sa inventory na nakatabi na yung mga items para sa student na ito.
+
+$sizes[$item['size']] = max(0, $sizes[$item['size']] - $qty);
+→ Binabawasan din dito yung stock ng specific na sukat (XS, S, M, L, XL) sa loob ng sizes JSON column ng produkto.
+
+ActivityLog::record('CREATE', "New reservation [{$refCode}]...", ...);
+→ Nagre-record sa activity log na may bagong student na nag-checkout kasama yung reference code at total amount.
+
+return response()->json(['success' => true, 'reservation' => $reservation]);
+→ Nagpapadala ng JSON response pabalik sa frontend para maipakita agad sa student yung successful confirmation at printable claim slip.
+
+1-Paragraph Summary:
+
+Basically, ito yung function na nagpa-process ng checkout ng estudyante. Chine-check muna nito kung valid lahat ng input, sine-save yung GCash receipt kung may in-upload, gumagawa ng unique reference code, nagse-save ng bagong order sa database, awtomatikong nagbabawas ng stock sa bawat size, at nagtatala sa audit trail bago magbigay ng success confirmation sa student.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 5: public function updateReservationStatus(Request $request, $id)
+--------------------------------------------------------------------------------
+• Route: PATCH /api/reservations/{id}/status
+
+$validated = $request->validate(['status' => 'required|in:Pending,Ready for Pickup,Claimed,Cancelled']);
+→ Chine-check dito kung valid yung status na gustong ipalit ng admin, dapat isa lang sa apat na allowed status values.
+
+$reservation = Reservation::findOrFail($id);
+→ Hinahanap dito sa database yung specific reservation gamit yung ID nito, at mag-e-error kapag hindi nahanap.
+
+if (in_array($newStatus, ['Ready for Pickup', 'Claimed'])) { ... SupportTicket::where('reservation_ref', ...)->first(); }
+→ Conflict Lock Check: Sinusuri muna dito kung may aktibong Support Ticket (Open o In Progress) na nakabinbin para sa reservation na ito. Kapag may ticket pa ang estudyante (halimbawa: nagpapakansela o nagtatanong ng size), bina-block at hindi papayagang i-mark as Ready o Claimed para maiwasan ang conflict bago ma-resolve ang ticket.
+
+$reservation->status = $newStatus; $reservation->save();
+→ Ina-update at sine-save na dito sa database yung bagong status ng reservation ng estudyante kung walang conflict lock.
+
+if ($oldStatus !== 'Claimed' && $newStatus === 'Claimed') { ... }
+→ Kapag minarkahan ng admin na 'Claimed' na, opisyal nang ililipat yung items bilang units_sold at mamarkahan na bayad na ito.
+
+if ($oldStatus !== 'Cancelled' && $newStatus === 'Cancelled') { ... }
+→ Kapag kinansela naman yung order, awtomatikong ibinabalik dito sa current_stock yung mga damit at sizes para pwedeng mabili ulit ng iba.
+
+ActivityLog::record('UPDATE', "Updated reservation status...", ...);
+→ Nagre-record sa audit trail kung sinong admin ang nagbago ng status at kung ano yung naging pagbabago sa order.
+
+1-Paragraph Summary:
+
+Basically, ginagamit ito ng admin para i-update ang estado ng reservation ng estudyante. Mayroon itong matalinong Conflict Prevention Lock kung saan awtomatikong hinaharangan ang pag-marka ng Ready o Claimed kapag may nakabinbing Support Ticket ang estudyante upang hindi magkaaberya. Kapag naging Claimed naman, kinukumpirma nito ang bayad at opisyal na inililipat ang items bilang benta, samantalang kapag kinansela ay awtomatiko nitong ibinabalik ang mga damit sa inventory stock habang nagtatala sa audit trail.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 6: public function storeProduct(Request $request)
+--------------------------------------------------------------------------------
+• Route: POST /api/products
+
+$validated = $request->validate(['item_code' => 'required|unique:products', ...]);
+→ Chine-check dito kung unique yung item code, may pangalan, may presyo, at valid yung picture bago i-save.
+
+if ($request->hasFile('image')) { ... $file->move(...); }
+→ Kapag nag-upload ng image ng bagong damit yung admin mula sa computer, sine-save ito sa uploads/products folder sa server.
+
+$sizes = is_array($validated['sizes']) ? ... : json_decode(...);
+→ Inaayos dito yung array ng stock counts sa bawat sukat (XS hanggang 3XL) mula sa submitted form.
+
+$totalStock = array_sum($sizes);
+→ Pinag-a-add dito yung stock mula sa sizes array para makuha yung kabuuang initial stock ng produkto.
+
+$product = Product::create([...]);
+→ Dito na ginagawa at sine-save yung bagong product record sa products table sa MySQL database.
+
+ActivityLog::record('CREATE', "Added new merchandise item...", ...);
+→ Nagtatala sa audit log na may bagong merchandise item na naidagdag sa inventory para documented ang action.
+
+1-Paragraph Summary:
+
+Basically, ito yung function na nagdadagdag ng bagong merchandise o uniform sa Information Management module. Tumatanggap ito ng details ng bagong damit, nagse-save ng picture sa server, nagko-compute ng kabuuang stock base sa sizes, at nagse-save ng bagong row sa products table kasabay ng pagtala sa activity logs.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 7: public function updateProduct(Request $request, $id)
+--------------------------------------------------------------------------------
+• Route: POST /api/products/{id}
+
+$product = Product::findOrFail($id);
+→ Hinahanap dito sa database yung produktong gustong i-edit ng admin gamit yung primary ID.
+
+if ($request->hasFile('image')) { ... }
+→ Kapag nag-upload ng bagong picture, pinapalitan dito yung lumang image path ng bago sa storage.
+
+$product->name = $validated['name']; $product->price = ...;
+→ Ina-update dito yung mga binagong impormasyon tulad ng pangalan ng damit, presyo, at tela.
+
+if (!empty($validated['sizes'])) { $product->sizes = $sizes; ... }
+→ Inaayos dito yung bilang ng stock sa bawat sukat at ina-update din yung current_stock ng produkto.
+
+$product->save();
+→ Sine-save na dito sa MySQL database yung lahat ng mga bagong binagong detalye ng produkto.
+
+ActivityLog::record('UPDATE', "Updated merchandise item...", ...);
+→ Nagtatala sa audit log ng mga binagong impormasyon sa produkto para transparent ang updates.
+
+1-Paragraph Summary:
+
+Basically, pinapayagan ng function na ito ang admin na magbago ng detalye ng existing merchandise tulad ng presyo, uri ng tela, sukat, at larawan. Pagkatapos mag-edit, agad nitong sine-save ang mga updates sa database at nagtatala ng activity log para malaman kung sino ang nag-update sa item.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 8: public function deleteProduct($id)
+--------------------------------------------------------------------------------
+• Route: DELETE /api/products/{id}
+
+$product = Product::findOrFail($id);
+→ Hinahanap muna sa database yung produktong gustong burahin gamit yung ID nito.
+
+$product->delete();
+→ Binubura o tinatanggal na dito yung produkto mula sa products table sa MySQL.
+
+ActivityLog::record('DELETE', "Deleted merchandise item...", ...);
+→ Nagre-record sa audit log na may binurang item para laging may record kung sinong admin ang nagtanggal.
+
+1-Paragraph Summary:
+
+Basically, ito yung function na nagtatanggal ng hindi na kailangang merchandise o phased-out na uniform mula sa database. Hinahanap muna nito yung specific product bago tuluyang i-delete, at nagre-record ito ng action sa audit log para sa pananagutan ng admin.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 9: public function storeUser(Request $request)
+--------------------------------------------------------------------------------
+• Route: POST /api/users
+
+$student = Student::whereRaw('LOWER(TRIM(email)) = ?', [$searchEmail])->first();
+if (!$student) { return response()->json(['message' => 'Hindi mahanap ang email sa database...'], 422); }
+→ DATABASE VERIFICATION GUARD: Bago makapag-add ng bagong admin o officer, sinisiyasat muna ng system kung ang email address ay eksaktong umiiral sa `students` table (ang database ng OnePass verified students). Kapag hindi rehistrado sa OnePass ang email, agad itong ibinabasura at nagbabalik ng 422 Validation Error.
+
+$user = SystemUser::create([...]);
+→ Kapag napatunayang totoo at rehistrado ang estudyante sa database, awtomatikong kinokopya ang kanyang buong pangalan at departamento at sine-save sa `system_users` table bilang Active Admin.
+
+ActivityLog::record('CREATE', "Registered system user account...", ...);
+→ Nagre-record sa activity log na may bagong OnePass account na nabigyan ng administrative access.
+
+1-Paragraph Summary:
+
+Basically, ito yung nagre-rehistro ng mga bagong opisyal at administrators sa User Management module na may Database Guard. Hindi ito pumapayag na maglagay ng kahit anong gawa-gawang email—dapat eksaktong tumutugma ang email sa rehistradong OnePass student account sa `students` database. Kapag valid, agad nitong ipinapasok ang account sa `system_users` table upang awtomatiko itong makapag-login sa Admin Console.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 10: public function updateUser(Request $request, $id)
+--------------------------------------------------------------------------------
+• Route: PUT /api/users/{id}
+
+$user = SystemUser::findOrFail($id);
+→ Hinahanap dito yung user record sa database gamit yung ID bago ito i-edit.
+
+$user->update($validated);
+→ Ina-update dito yung mga binagong details tulad ng pangalan, role (Adviser, Officer, Cashier), department, o status.
+
+ActivityLog::record('UPDATE', "Updated account info...", ...);
+→ Nagre-record sa audit log na may binagong profile o role ng user sa system.
+
+1-Paragraph Summary:
+
+Basically, ginagamit ito para mag-edit ng information ng kasalukuyang user tulad ng kanyang role o active status nang hindi nabubura ang kanyang account history, at agad nitong sine-save ang mga pagbabago sa database habang nagtatala ng log sa audit trail.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 11: public function deleteUser($id)
+--------------------------------------------------------------------------------
+• Route: DELETE /api/users/{id}
+
+$user = SystemUser::findOrFail($id);
+→ Hinahanap sa database yung user gamit yung ID bago burahin.
+
+$user->delete();
+→ Tinatanggal na dito yung record ng user mula sa system_users table.
+
+ActivityLog::record('DELETE', "Deleted user account...", ...);
+→ Nagtatala sa audit trail na may tinanggal na user account para sa security tracking.
+
+1-Paragraph Summary:
+
+Basically, tinatanggal ng function na ito ang account ng isang dating officer o staff mula sa system upang hindi na ito makapag-access sa admin panel, habang nag-iiwan ito ng permanenteng record sa activity logs para sa proteksyon ng system.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 12: public function exportReportCsv()
+--------------------------------------------------------------------------------
+• Route: GET /reports/export-csv
+
+$products = Product::all();
+→ Kinukuha dito lahat ng mga produkto sa database para masama sa official report.
+
+$headers = ['Content-Type' => 'text/csv', ...];
+→ Nagse-set dito ng download headers para gawing CSV spreadsheet file yung response na ida-download ng browser.
+
+$handle = fopen('php://output', 'w');
+→ Binubuksan dito yung direct output stream ng PHP para mabilis makapagsulat ng CSV nang hindi bumibigat ang server.
+
+fputcsv($handle, ['Item Code', 'Product Name', 'Price', ...]);
+→ Isinusulat dito yung column headers sa unang row ng CSV file.
+
+foreach ($products as $p) { fputcsv($handle, [...]); }
+→ Isa-isang isinusulat dito bawat produkto kasama yung units sold, remaining stock, at kabuuang benta.
+
+ActivityLog::record('READ', 'Downloaded CSV Report', ...);
+→ Nagre-record sa audit log na may nag-download ng official sales and inventory report.
+
+1-Paragraph Summary:
+
+Basically, ito yung function na nagge-generate at nagpapa-download ng official Excel o CSV report ng benta at imbentaryo. Binabasa nito lahat ng produkto sa database, inaayos sa spreadsheet format, at ipinapadala sa browser para ma-download ng admin habang nagtatala sa audit logs.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 13: public function getSupportTickets(Request $request)
+--------------------------------------------------------------------------------
+• Route: GET /api/support/tickets
+
+$query = SupportTicket::with(['messages', 'reservation'])->orderBy('created_at', 'desc');
+→ Kinukuha dito yung support tickets kasama yung mga chat messages at details ng reservation nila gamit ang Eloquent relationship.
+
+if ($request->has('student_id')) { $query->where('student_id', ...); }
+→ Privacy filter ito para kung estudyante ang tumitingin, yung mga sarili lang niyang ticket ang lalabas sa screen.
+
+$tickets = $query->get();
+→ Kinukuha na dito sa MySQL database yung final list ng tickets base sa query conditions.
+
+1-Paragraph Summary:
+
+Basically, kinukuha ng function na ito ang lahat ng concern tickets ng mga estudyante mula sa database kasama ang kanilang chat conversations. May privacy check din ito para sariling tickets lang ang makita ng bawat estudyante, habang nakikita naman ng admin ang buong listahan sa helpdesk queue.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 14: public function storeSupportTicket(Request $request)
+--------------------------------------------------------------------------------
+• Route: POST /api/support/tickets
+
+$request->validate(['student_id' => 'required', 'reason' => 'required', ...]);
+→ Chine-check dito kung kumpleto yung details tulad ng student ID, reason, at subject bago tanggapin yung ticket.
+
+if ($request->filled('reservation_ref')) { ... }
+→ Anti-duplicate check ito para hindi makagawa ng dobleng ticket yung student habang bukas pa yung nauna niyang ticket para sa parehong order.
+
+$ticketCode = 'TCK-' . date('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+→ Gumagawa dito ng automated tracking code tulad ng TCK-2026-0001 para madaling ma-track ng student at admin.
+
+$ticket = SupportTicket::create([...]);
+→ Sine-save na dito yung bagong ticket record sa support_tickets table sa MySQL.
+
+SupportMessage::create(['ticket_id' => $ticket->id, 'sender_type' => 'student', ...]);
+→ Awtomatiko ding sine-save dito yung unang chat message ng student sa support_messages table.
+
+1-Paragraph Summary:
+
+Basically, ito yung function kapag nag-submit ang estudyante ng bagong concern sa helpdesk. Sinusuri nito ang impormasyon para maiwasan ang spam, gumagawa ng unique ticket tracking number, sine-save ang ticket at ang unang mensahe sa database, at nagse-set ng Open status para maaksyunan agad ng admin.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 15: public function getTicketMessages(Request $request, $id)
+--------------------------------------------------------------------------------
+• Route: GET /api/support/tickets/{id}/messages
+
+$ticket = SupportTicket::with('reservation')->findOrFail($id);
+→ Hinahanap dito sa database yung ticket gamit yung ID kasama yung reservation info nito.
+
+if ($ticket->student_id !== $request->student_id) { return response()->json(..., 403); }
+→ Security check ito para masigurong hindi mababasa ng ibang estudyante ang ticket na hindi naman sa kanila.
+
+$messages = $ticket->messages()->orderBy('created_at', 'asc')->get();
+→ Kinukuha dito lahat ng messages sa chat thread mula pinaka-una hanggang pinakabago para tuloy-tuloy ang convo.
+
+1-Paragraph Summary:
+
+Basically, kinukuha ng function na ito ang buong convo o chat history ng isang ticket. Sinisiguro muna nito ang security para may-ari lang ang makabasa, bago kunin lahat ng mensahe mula sa database nang naka-arrange ayon sa oras para maayos na lumabas sa chat window.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 16: public function storeTicketMessage(Request $request, $id)
+--------------------------------------------------------------------------------
+• Route: POST /api/support/tickets/{id}/messages
+
+$ticket = SupportTicket::findOrFail($id);
+→ Hinahanap muna sa database yung ticket na pinapadalhan ng chat gamit yung ID nito.
+
+if ($ticket->status === 'Resolved') { return response()->json(..., 422); }
+→ Chine-check kung sarado na yung ticket; kapag Resolved na, bawal na mag-chat para tapos na ang issue.
+
+if ($request->sender_type === 'student') { $lastNonSystemMsg = SupportMessage::where('ticket_id', $ticket->id)...; if ($lastNonSystemMsg && $lastNonSystemMsg->sender_type === 'student') { return response()->json(..., 422); } }
+→ Strict Turn-Taking Anti-Spam Engine: Sinusuri dito kung student ang nagpadala ng chat. Kapag ang pinakahuling mensahe sa thread ay nanggaling na sa student at hindi pa sumasagot ang ICS Admin Officer, awtomatikong bina-block ang mensahe at nagbabalik ng 422 error code. Ipinapatupad nito na bawal mag-spam o magsunod-sunod ng chat hangga't walang tugon mula sa admin.
+
+$msg = SupportMessage::create(['ticket_id' => $ticket->id, ...]);
+→ Sine-save dito yung bagong chat message sa support_messages table kapag pasado sa anti-spam check.
+
+if ($request->sender_type === 'admin' && $ticket->status === 'Open') { ... }
+→ Kapag sumagot na ang admin, awtomatikong ginagawang 'In Progress' ang status ng ticket para alam ng student na may nag-aasikaso na.
+
+1-Paragraph Summary:
+
+Basically, ito yung nagpapadala ng bagong chat message sa loob ng helpdesk conversation thread na may mahigpit na Turn-Taking Anti-Spam protection. Tinitingnan nito kung bukas pa ang ticket at sinisigurong hindi maaaring magsunod-sunod ng mensahe ang estudyante kung hindi pa sumasagot ang admin. Kapag sumagot naman ang admin, awtomatiko nitong ginagawang In Progress ang ticket at muling binubuksan ang karapatan ng estudyante na magpadala ng susunod na tugon.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 17: public function updateTicketStatus(Request $request, $id)
+--------------------------------------------------------------------------------
+• Route: PATCH /api/support/tickets/{id}/status
+
+$ticket = SupportTicket::findOrFail($id);
+→ Hinahanap muna sa database yung ticket na gustong i-update gamit yung ID nito.
+
+if ($newStatus === 'Resolved') { $ticket->update(['status' => 'Resolved', ...]); }
+→ Kapag minarkahan ng admin na Resolved na, itinatala dito yung time kung kailan na-solve at kung sinong admin ang nag-ayos.
+
+SupportMessage::create(['ticket_id' => $ticket->id, 'sender_type' => 'system', ...]);
+→ Naglalagay dito ng automated system chat bubble sa loob ng convo para makita ng student na sarado na ang ticket.
+
+1-Paragraph Summary:
+
+Basically, ginagamit ito ng admin para baguhin ang estado ng support ticket tulad ng pagmarka rito bilang Resolved. Nirerecord po nito kung kailan at sino ang nag-ayos ng problema, at nagpapadala ito ng system message sa chat para opisyal na ma notify ang student.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 18: public function cancelReservationFromTicket(Request $request, $id)
+--------------------------------------------------------------------------------
+• Route: POST /api/support/tickets/{id}/cancel-reservation
+
+$ticket = SupportTicket::findOrFail($id);
+→ Hinahanap dito yung ticket at tinitingnan kung anong reference code ng reservation ang naka-link dito.
+
+$reservation = Reservation::where('ref_code', $ticket->reservation_ref)->first();
+→ Hinahanap sa reservations table yung order na gustong ipakansela ng estudyante.
+
+foreach ($items as $item) { ... $product->current_stock += $qty; ... }
+→ Awtomatikong ibinabalik dito sa current_stock at sizes ng produkto yung mga damit para hindi mabawasan ang imbentaryo.
+
+$reservation->status = 'Cancelled'; $reservation->save();
+→ Ginagawang 'Cancelled' na yung status ng reservation sa database para opisyal nang kanselado ang order.
+
+$ticket->update(['status' => 'Resolved', 'resolved_at' => now()]);
+→ Awtomatiko ding ginagawang 'Resolved' yung support ticket dahil naaksyunan na yung request ng student.
+
+SupportMessage::create(['ticket_id' => $ticket->id, 'sender_type' => 'system', ...]);
+→ Nagpapadala ng system message sa chat thread para kumpirmadong kanselado na ang order at naibalik na ang stock.
+
+1-Paragraph Summary:
+
+Basically, ito yung 1-click button ng admin sa loob ng live chat para agad na aprubahan ang pagkansela ng order ng estudyante. Awtomatiko nitong ibinabalik ang mga damit sa inventory stock para maiwasan or masayang yung item, ginagawang Cancelled ang order, minamarkahang Resolved ang ticket, at nagpapadala ng confirmation message sa chat kasabay ng pag-record sa audit logs.
+================================================================================
+
+
+--------------------------------------------------------------------------------
+FUNCTION 19: public function getRealtimeSync(Request $request)
+--------------------------------------------------------------------------------
+• Route: GET /api/realtime/sync (Realtime Polling Engine)
+
+$products = Product::where('is_active', true)->select(...)->orderBy('id', 'asc')->get();
+→ Kinukuha dito yung latest inventory ng mga paninda kasama ang sizes at current_stock para updated agad ang stock badges at buttons sa tindahan nang hindi naglo-reload.
+
+$reservations = Reservation::orderBy('created_at', 'desc')->take(50)->get();
+→ Kinukuha dito ang pinakahuling 50 orders sa pila para makita agad sa reservation queue kung may bagong order na pumasok.
+
+if (!empty($trackingCode)) { $trackedReservation = Reservation::where('tracking_code', ...)->first(); }
+→ Kapag may tinitingnang order ang estudyante sa Shopee-style order tracker, kinukuha dito yung status update para kusa itong umabante sa susunod na milestone.
+
+if (!empty($activeTicketId)) { $activeTicket = SupportTicket::with('messages')->find(...); }
+→ Kapag may nakabukas na chat conversation sa helpdesk, kinukuha ang pinakabagong mensahe para lumabas agad ang sagot ng admin o student nang kusa.
+
+$metrics = [ 'total_products' => ..., 'total_stock' => ..., 'total_sold' => ..., 'total_revenue' => ..., ... ];
+→ Kinakalkula dito nang mabilis ang kabuuang benta, kita, on-hand stock, at pending orders para sa dashboard counters ng admin.
+
+return response()->json([ 'success' => true, 'timestamp' => now()->toIso8601String(), 'products' => $products, ... ]);
+→ Ibinabalik ang lahat ng real-time updates bilang magaan at mabilis na JSON data papunta sa browser tuwing 3 segundo.
+
+1-Paragraph Summary:
+
+Basically, ito ang live heartbeat engine ng buong system na sumasagot sa tuwing tumatawag ang browser bawat 3 segundo sa /api/realtime/sync. Nagpapadala ito ng mabilis at magaan na JSON package na may sariwang stock ng mga damit, pinakabagong pila ng reservations, live progress ng sinusubaybayang order, bagong chat messages sa helpdesk, at dashboard KPI statistics ng admin para laging realtime at sabay sa oras ang display nang hindi na kailangang mag-refresh ng webpage.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 20: public function deleteTicket(Request $request, $id)
+----------------------------------------- ---------------------------------------
+• Route: DELETE /api/support/tickets/{id}
+
+$ticket = SupportTicket::findOrFail($id);
+→ Hinahanap muna sa database yung ticket na gustong burahin gamit ang ID nito.
+
+if ($ticket->status !== 'Resolved') { return response()->json(..., 422); }
+→ Strict Safety Check: Sinisiguro dito na 'Resolved' na talaga ang status ng ticket bago ito payagang burahin. Kapag 'Open' o 'In Progress' pa, bina-block ito at hindi papayagan upang maiwasan ang aksidenteng pagbura ng aktibong usapan at reklamo ng estudyante.
+
+if (!$isAdmin) { if (empty($studentId) || $ticket->student_id !== $studentId) { return response()->json(..., 403); } }
+→ User Decision & Privacy Check: Kapag estudyante ang nagbubura, chine-check dito kung siya ba talaga ang may-ari ng ticket. Tanging ang mismong user lamang ang may karapatang magdesisyon kung buburahin niya o itatabi ang sarili niyang resolved ticket.
+
+$ticket->messages()->delete(); $ticket->delete();
+→ Awtomatikong binubura muna lahat ng kaakibat na chat messages sa database bago tuluyang burahin ang mismong ticket record.
+
+ActivityLog::record('DELETE', "Deleted resolved support ticket [{$code}]...", ...);
+→ Nagtatala sa audit trail kung kailan at sinong user o admin ang nagbura ng ticket para may malinis na talaan ang system.
+
+return response()->json(['success' => true, 'message' => "Matagumpay na nabura ang resolved ticket [{$code}]."]);
+→ Nagpapadala ng JSON confirmation response pabalik sa frontend para maalis agad sa listahan ang naburang ticket nang hindi nagre-reload.
+
+1-Paragraph Summary:
+
+Basically, ito ang function na nagbubura ng mga natapos nang support ticket sa database na may dalawang mahigpit na panuntunan: una, bawal itong burahin kapag hindi pa Resolved upang maiwasan ang aksidenteng pagkawala ng aktibong usapan; pangalawa, tanging ang mismong may-ari ng tiket o ang admin lamang ang binibigyan ng kapangyarihang magdesisyon kung nais na itong tanggalin. Kapag inaprubahan, awtomatiko nitong nililinis ang mga messages, binubura ang ticket, at nag-iiwan ng log sa audit trail.
+================================================================================
+
+
+--------------------------------------------------------------------------------
+FUNCTION 20B: public function destroyReservation($id)
+--------------------------------------------------------------------------------
+• Route: DELETE /api/reservations/{id} (Permanently Delete Finished Order)
+
+$reservation = Reservation::findOrFail($id);
+$refCode = $reservation->ref_code;
+$status = $reservation->status;
+
+if ($status !== 'Claimed' && $status !== 'Cancelled') {
+    // Awtomatikong ibinabalik ang stock counts kung hindi pa Claimed o Cancelled:
+    foreach ($reservation->items as $item) {
+        $prod = Product::where('item_code', ...)->first();
+        if ($prod) {
+            $prod->units_reserved = max(0, $prod->units_reserved - $qty);
+            $prod->current_stock += $qty;
+            $sizes[$item['size']] += $qty;
+            $prod->save();
+        }
+    }
+}
+
+SupportTicket::where('reservation_ref', $refCode)->delete();
+$reservation->delete();
+ActivityLog::record('DELETE', "Permanently deleted reservation [{$refCode}]...", ...);
+
+1-Paragraph Summary:
+Basically, ito ang function sa admin portal para linisin o tanggalin ang mga natapos nang reservations (Claimed o Cancelled). Sinisiguro nito ang data integrity: kung aksidenteng may natitirang reserved units, ibinabalik nito ang stock sa tamang bilang, binubura ang kaugnay na support tickets, at nagtatala ng pormal na audit log.
+================================================================================
+
+
+================================================================================
+IV. PALIWANAG SA OAuthController.php (OnePass OAuth 2.0 / OIDC & Supabase Sync)
+================================================================================
+Target File: app/Http/Controllers/OAuthController.php
+Domain: Campus Single Sign-On (SSO), RFC 6749, RFC 7636 (PKCE), Supabase Cloud Auth
+--------------------------------------------------------------------------------
+
+FUNCTION 21: public function redirect(Request $request)
+• Route: GET /oauth/login (1-Click Student Login Trigger)
+
+$state = Str::random(40); session(['oauth_state' => $state]);
+→ Gumagawa ng unguessable 40-character random string para sa state parameter na magsisilbing proteksyon laban sa CSRF (Cross-Site Request Forgery) attacks habang nagta-travel sa pagitan ng client at OnePass server.
+
+$codeVerifier = Str::random(64); session(['oauth_code_verifier' => $codeVerifier]);
+$codeChallenge = rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
+→ RFC 7636 PKCE (Proof Key for Code Exchange) Engine: Gumagawa ng 64-character high-entropy secret ($codeVerifier) at kinukuha ang SHA-256 base64url hash nito ($codeChallenge). Pinoprotektahan nito ang authorization code laban sa interception attacks.
+
+$query = http_build_query([ 'client_id' => ..., 'redirect_uri' => ..., 'response_type' => 'code', 'scope' => 'openid profile email student_id qr contact avatar', 'state' => $state, 'code_challenge' => $codeChallenge, 'code_challenge_method' => 'S256' ]);
+return redirect("{$issuerUrl}/oauth/authorize?{$query}");
+→ Inihahanda ang kumpletong query parameters ayon sa OnePass OIDC specification at nagbabalik ng HTTP 302 redirect para dalhin ang estudyante sa official campus authorization screen nang walang anumang manual input sa ating app.
+
+1-Paragraph Summary:
+Basically, ito ang entry point ng OnePass SSO kung saan pagpindot ng estudyante sa "Student Login", awtomatiko itong lumilikha ng secure CSRF state token at RFC 7636 PKCE S256 challenge, at nagdidirekta sa user papunta sa OnePass authorization server upang aprubahan ang mga kinakailangang student identity claims.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 22: public function callback(Request $request)
+• Route: GET /oauth/callback (Backchannel Token Issuance & Profile Fetch)
+
+$code = $request->get('code');
+→ Tumatanggap ng authorization code mula sa OnePass pagkatapos aprubahan ng estudyante ang login.
+
+$tokenEndpoint = "{$issuerUrl}/api/oauth/token";
+→ Architectural Resilience & Cold-Start Handling:
+  1. REST API Exemption: Direktang tumatarget sa `/api/oauth/token` dahil ito ay API route na libre sa CSRF token requirement. Hindi na tinatawagan ang lumang `/oauth/token` na nagdudulot ng "419 Page Expired / CSRF token mismatch".
+  2. 25-Second Timeout: Dahil naka-host ang OnePass sa Render Free Tier na natutulog (sleep mode), pinalawig ang cURL timeout sa 25 seconds upang bigyang-daan ang Render instance na magising (wake-up cold start) nang hindi nagta-timeout (Error 28).
+  3. Pre-Warming & XAMPP Bridge: Awtomatikong nagpe-prefetch ng DNS at nagse-send ng silent wake-up ping sa frontend. At kapag na-access ang app mula sa XAMPP Apache (`localhost`), awtomatikong inililipat sa `127.0.0.1:8000` kung saan nakarehistro ang opisyal na OnePass OAuth redirect URI.
+  4. OnePass Registration Link: May nakalaang register hyperlink (`https://onepass-gdbe.onrender.com/onepass/login`) para sa mga estudyanteng wala pang OnePass account.
+
+$tokenResponse = Http::withHeaders(['Accept' => 'application/json'])->asForm()->timeout(25)->post($tokenEndpoint, $tokenPayload);
+→ Backchannel Server-to-Server Token Exchange: Ipinapadala ng ating Laravel backend ang authorization code, Client Secret, at orihinal na PKCE code_verifier sa OnePass gamit ang secure POST request para makuha ang Access Token at ID Token.
+
+$userResponse = Http::withToken($accessToken)->withHeaders(['Accept' => 'application/json'])->get("{$issuerUrl}/api/oauth/userinfo");
+→ Kinukuha ang mga verified claims ng estudyante (sub, name, email, student_id, course, year_level, section, avatar, member_number, qr_payload) o direktang nade-decode mula sa ID Token (JWT) sa loob ng 0 milliseconds.
+
+session(['student_user' => $studentProfile]);
+\App\Models\Student::updateOrCreate(['student_id' => $studentId], [...]);
+ActivityLog::record('LOGIN', "Student [{$name} ({$studentId})] authenticated successfully via OnePass OIDC SSO.", ...);
+$this->syncToSupabase($studentProfile);
+→ Awtomatikong sine-save ang profile sa active Laravel session para ma-render sa unified header, ina-update ang local database cache sa `students` table, nagtatala sa Audit Trail, at sine-sync ang verified user sa Supabase Auth database.
+
+1-Paragraph Summary:
+Basically, ito ang callback processor na tumatanggap ng authorization code mula sa OnePass, nagpapalitan nito ng access token sa pamamagitan ng server-to-server POST sa /api/oauth/token na may 25s timeout laban sa Render cold start, kumukuha ng buong claims ng estudyante (0ms JWT decoding), nag-iimbak nito sa session at database, nagre-record sa audit logs, at nagse-sync sa Supabase bago ibalik ang estudyante sa home page bilang ganap na verified user.
+
+
+--------------------------------------------------------------------------------
+FUNCTION 23: protected function syncToSupabase(array $profile)
+--------------------------------------------------------------------------------
+Http::withHeaders([ 'apikey' => $serviceKey, 'Authorization' => "Bearer {$serviceKey}" ])
+    ->post("{$supabaseUrl}/auth/v1/admin/users", [ 'email' => ..., 'user_metadata' => [...] ]);
+→ Kumokonekta sa Supabase Project (`oyzvcqaytavbfwdrgili.supabase.co`) gamit ang Service Role Key upang awtomatikong i-provision ang verified student account sa cloud auth store kasama ang kumpletong metadata (Pangalan, Student Number, Department, Section).
+
+1-Paragraph Summary:
+Basically, ito ang cloud synchronization bridge na nagse-save ng bawat nag-login na estudyante sa Supabase Auth store upang maging available ang verified student credentials sa cloud at mobile platforms nang ligtas at real-time.
+================================================================================
+
+
+================================================================================
+V. PALIWANAG SA PITONG (7) ELOQUENT MODELS AT KANILANG KONEKSYON SA CONTROLLERS
+================================================================================
+Directory: app/Models/
+Teknolohiya: Laravel Eloquent ORM (Object-Relational Mapping)
+
+Bakit mahalaga ang Models sa Backend?
+Sa Laravel MVC, ang Model ang opisyal na tulay sa pagitan ng PHP code at ng MySQL database.
+Sa halip na magsulat ng mapanganib at mahahabang raw SQL queries tulad ng:
+`SELECT * FROM products WHERE id = 5` o `INSERT INTO reservations (...) VALUES (...)`,
+ginagamit natin ang Eloquent Model syntax:
+`Product::find(5)` o `Reservation::create([...])`.
+
+Apat (4) na Dahilan Kung Bakit Konektado ang Models sa ating Controllers:
+1. 100% SQL Injection Protection: Gumagamit ang Eloquent ng PDO prepared statements at parameter binding sa ilalim ng hood.
+2. Mass Assignment Protection ($fillable): Pinipigilan ang hackers na magpasok ng unauthorized column updates (hal. pagbabago ng user role o ref_code).
+3. Automatic Data Casting ($casts): Awtomatikong kino-convert ang JSON data types ng MySQL sa madaling gamiting PHP arrays (hal. cart items at size inventory counts).
+4. Expressive Relational Queries: Nagbibigay daan sa malinis na table relationships (`hasMany`, `belongsTo`, `hasOne`) para sa aming Conflict Lock at Anti-Spam safety guards.
+
+Narito ang detalyadong breakdown ng Pitong (7) Models at kung paano sila ginagamit ng Controllers:
+
+--------------------------------------------------------------------------------
+MODEL 1: Product.php (app/Models/Product.php)
+--------------------------------------------------------------------------------
+• Kaakibat na Table sa Database: `products`
+• Papel sa System: Kumakatawan sa bawat merchandise o uniform item sa tindahan.
+
+1. Mass Assignment Protection ($fillable):
+   - 'item_code', 'name', 'category', 'dept', 'gender', 'price', 'material',
+     'description', 'image_path', 'sizes', 'initial_stock', 'current_stock',
+     'units_sold', 'units_reserved', 'is_active'
+
+2. Automatic Data Casting ($casts):
+   - `'sizes' => 'array'` -> Napakahalaga! Ang stock bawat sukat (XS, S, M, L, XL, 2XL)
+     ay nakaimbak bilang native JSON sa MySQL pero awtomatikong nagiging PHP associative array sa controller!
+   - `'price' => 'float'`, `'current_stock' => 'integer'`, `'is_active' => 'boolean'`.
+
+3. Paano Kumokonekta sa Controllers:
+   a. Sa `MerchController::index()` at `getCatalog()`:
+      `Product::where('is_active', true)->get();`
+      - Kinukuha ang mga aktibong paninda para i-display sa student catalog.
+   b. Sa `MerchController::storeReservation()` (Atomic Stock Deduction):
+      ```php
+      $product = Product::find($item['product_id']);
+      $sizes = $product->sizes;
+      $sizes[$item['size']] -= $item['quantity']; // Bawas stock sa partikular na sukat
+      $product->sizes = $sizes;
+      $product->current_stock -= $item['quantity'];
+      $product->units_reserved += $item['quantity'];
+      $product->save();
+      ```
+      - Direktang minamanipula ng Controller ang Product model properties para maiwasan ang double-booking bawat size!
+   c. Sa `MerchController::cancelReservationFromTicket()` (Restock Logic):
+      - Kapag na-cancel ang order, binabasa uli ang Product model para ibalik ang bawas na stock sa tama nitong sukat.
+   d. Sa `MerchController::storeProduct()`, `updateProduct()`, at `deleteProduct()`:
+      - Admin CRUD operations para sa pagdaragdag, pag-eedit ng presyo o stock, at pagbura ng paninda.
+
+1-Paragraph Summary:
+Basically, ang Product model ang tagapamahala ng imbentaryo na naglalaman ng JSON array casting para sa stock bawat sukat. Konektado ito sa controller tuwing naglo-load ng catalog, nagbabawas ng stock sa checkout, nagbabalik ng stock sa cancellation, at kapag nagdaragdag o nag-eedit ang admin ng mga paninda.
+
+
+--------------------------------------------------------------------------------
+MODEL 2: Reservation.php (app/Models/Reservation.php)
+--------------------------------------------------------------------------------
+• Kaakibat na Table sa Database: `reservations`
+• Papel sa System: Kumakatawan sa bawat order slip o reserbasyon ng estudyante.
+
+1. Mass Assignment Protection ($fillable):
+   - 'ref_code', 'student_name', 'student_id', 'department', 'year_level',
+     'contact', 'pickup_date', 'pickup_slot', 'items', 'total_amount',
+     'status', 'payment_method', 'payment_status', 'payment_reference',
+     'receipt_image', 'notes'
+
+2. Automatic Data Casting ($casts):
+   - `'items' => 'array'` -> JSON Snapshot Pattern! Ang listahan ng mga damit na binili
+     ng estudyante (produkto, sukat, dami, presyo noong binili) ay naka-array kaya hindi ito
+     maapektuhan kahit magbago ang presyo ng damit sa hinaharap.
+   - `'total_amount' => 'float'`
+
+3. Eloquent Relationships (Pundasyon ng Safety Engine):
+   - `public function supportTickets()`:
+     `return $this->hasMany(SupportTicket::class, 'reservation_ref', 'ref_code');`
+     - 1-to-Many: Ang isang reservation ay maaaring magkaroon ng isa o higit pang support ticket.
+   - `public function activeTicket()`:
+     `return $this->hasOne(SupportTicket::class, 'reservation_ref', 'ref_code')->whereIn('status', ['Open', 'In Progress']);`
+     - **ITO ANG PUNDASYON NG CONFLICT LOCK ENGINE!**
+
+4. Paano Kumokonekta sa Controllers:
+   a. Sa `MerchController::storeReservation()`:
+      `$reservation = Reservation::create([...]);`
+      - Gumagawa ng bagong reservation record gamit ang unique claim code (hal. `ICS-2026-X941K`).
+   b. Sa `MerchController::updateReservationStatus()` (Conflict Lock Guard):
+      ```php
+      $reservation = Reservation::findOrFail($id);
+      if ($reservation->activeTicket) {
+          return response()->json([
+              'success' => false,
+              'message' => "CONFLICT LOCK: Hindi maaaring baguhin ang status habang may aktibong ticket ({$reservation->activeTicket->ticket_code})."
+          ], 422);
+      }
+      ```
+      - Ginagamit ng controller ang relationship method para awtomatikong maharang ang pag-claim ng damit kapag may bukas na reklamo!
+   c. Sa `MerchController::admin()`:
+      `Reservation::with('activeTicket')->latest()->get();`
+      - Eager loading ng activeTicket para sa mabilis at real-time na rendering ng reservation queue table sa admin.
+
+1-Paragraph Summary:
+Basically, ang Reservation model ang may hawak ng order details gamit ang JSON snapshot pattern para sa mga biniling gamit. Konektado ito sa controller sa pamamagitan ng activeTicket relationship na siyang nagpapatakbo sa Conflict Lock Engine upang hindi ma-release ang damit kapag may bukas na ticket.
+
+
+--------------------------------------------------------------------------------
+MODEL 3: SupportTicket.php (app/Models/SupportTicket.php)
+--------------------------------------------------------------------------------
+• Kaakibat na Table sa Database: `support_tickets`
+• Papel sa System: Kumakatawan sa customer service tickets para sa mga reklamo, pagpapalit ng sukat, o pagkansela ng order.
+
+1. Mass Assignment Protection ($fillable):
+   - 'ticket_code', 'student_id', 'student_name', 'department', 'reservation_ref',
+     'reason', 'subject', 'status', 'priority', 'resolved_by', 'resolved_at'
+
+2. Automatic Data Casting ($casts):
+   - `'resolved_at' => 'datetime'` -> Ginagawang Carbon instance para sa madaling date calculations at timestamp formatting.
+
+3. Eloquent Relationships:
+   - `public function messages(): HasMany`
+     `return $this->hasMany(SupportMessage::class, 'ticket_id')->orderBy('created_at', 'asc');`
+     - Kumukuha ng lahat ng chat messages na kaakibat ng ticket na nakaayos ayon sa chronological order.
+   - `public function reservation(): BelongsTo`
+     `return $this->belongsTo(Reservation::class, 'reservation_ref', 'ref_code');`
+     - Ikinakabit ang ticket sa pinagmulang order record gamit ang reference code.
+
+4. Paano Kumokonekta sa Controllers:
+   a. Sa `MerchController::storeSupportTicket()`:
+      - Lumilikha ng bagong ticket (`SupportTicket::create([...])`) at nagpapadala ng initial message.
+   b. Sa `MerchController::getTicketMessages()`:
+      - Binubuksan ang buong chat history gamit ang `$ticket->messages`.
+   c. Sa `MerchController::deleteTicket()` (Deletion Governance):
+      - Sinusuri ng controller kung `$ticket->status === 'Resolved'`. Kapag inaprubahan, tinatawag ang `$ticket->messages()->delete()` at `$ticket->delete()`.
+
+1-Paragraph Summary:
+Basically, ang SupportTicket model ang sentro ng helpdesk na nag-uugnay sa reservation at sa mga chat messages nito. Ginagamit ito ng controller para mag-file ng reklamo, magpakita ng buong conversation history, at magpatupad ng strict deletion policy kapag Resolved na ang isyu.
+
+
+--------------------------------------------------------------------------------
+MODEL 4: SupportMessage.php (app/Models/SupportMessage.php)
+--------------------------------------------------------------------------------
+• Kaakibat na Table sa Database: `support_messages`
+• Papel sa System: Kumakatawan sa indibidwal na chat bubble o mensahe sa pagitan ng estudyante at admin.
+
+1. Mass Assignment Protection ($fillable):
+   - 'ticket_id', 'sender_type', 'sender_name', 'sender_id', 'message', 'is_system'
+
+2. Automatic Data Casting ($casts):
+   - `'is_system' => 'boolean'` -> Nagtatakda kung automated system notice ang mensahe o galing sa tao.
+
+3. Eloquent Relationships:
+   - `public function ticket(): BelongsTo`
+     `return $this->belongsTo(SupportTicket::class, 'ticket_id');`
+
+4. Paano Kumokonekta sa Controllers:
+   a. Sa `MerchController::storeTicketMessage()` (Turn-Taking Anti-Spam Logic):
+      ```php
+      $lastMsg = $ticket->messages()->latest()->first();
+      if ($lastMsg && $lastMsg->sender_type === 'student' && $senderType === 'student') {
+          return response()->json([
+              'success' => false,
+              'message' => 'Mangyaring maghintay muna sa sagot ng Admin bago magpadala muli ng mensahe.'
+          ], 429);
+      }
+      ```
+      - Binabasa ng controller ang SupportMessage model upang alamin kung sino ang huling nagsalita, at pinipigilan ang estudyante na mag-spam ng sunod-sunod na chat bubbles hangga't hindi sumasagot ang opisyal!
+
+1-Paragraph Summary:
+Basically, ang SupportMessage model ang nag-iimbak ng bawat linya ng usapan sa chat. Konektado ito sa controller sa pagpapatupad ng Turn-Taking Anti-Spam Rule kung saan sinusuri ang sender_type ng huling mensahe upang magkaroon ng maayos at disiplinadong palitan ng mensahe.
+
+
+--------------------------------------------------------------------------------
+MODEL 5: ActivityLog.php (app/Models/ActivityLog.php)
+--------------------------------------------------------------------------------
+• Kaakibat na Table sa Database: `activity_logs`
+• Papel sa System: Enterprise Audit Trail na nagtatala ng bawat galaw ng admin at estudyante para sa transparency at seguridad.
+
+1. Mass Assignment Protection ($fillable):
+   - 'user_code', 'user_name', 'action', 'activity', 'module', 'ip_address'
+
+2. Static Helper Method:
+   ```php
+   public static function record($action, $activity, $userCode = 'USR-001', $userName = 'Admin', $module = 'General')
+   {
+       return self::create([
+           'user_code'  => $userCode,
+           'user_name'  => $userName,
+           'action'     => strtoupper($action),
+           'activity'   => $activity,
+           'module'     => $module,
+           'ip_address' => request()->ip() ?? '127.0.0.1',
+       ]);
+   }
+   ```
+
+3. Paano Kumokonekta sa Controllers:
+   - Ginagamit ito sa halos lahat ng mutating functions sa buong backend:
+     * `ActivityLog::record('CREATE', "Submitted reservation...", ...)` sa checkout.
+     * `ActivityLog::record('UPDATE', "Status updated to Ready for Pickup...", ...)` sa admin queue.
+     * `ActivityLog::record('DELETE', "Deleted product...", ...)` sa product CRUD.
+     * `ActivityLog::record('LOGIN', "Student authenticated via OnePass...", ...)` sa OAuthController.
+     * `ActivityLog::record('LOGOUT', "Student signed out...", ...)` sa logout.
+
+1-Paragraph Summary:
+Basically, ang ActivityLog model ang black box flight recorder ng system. Mayroon itong static helper method na `record()` na tinatawag ng controllers sa bawat operasyon upang mag-iwan ng permanenteng marka sa database kasama ang IP address, pangalan, at timestamp ng gumawa.
+
+
+--------------------------------------------------------------------------------
+MODEL 6: Student.php (app/Models/Student.php)
+--------------------------------------------------------------------------------
+• Kaakibat na Table sa Database: `students`
+• Papel sa System: Local high-speed identity cache para sa verified campus students na naka-sync sa OnePass OIDC at Supabase Cloud Auth.
+
+1. Mass Assignment Protection ($fillable):
+   - 'student_id', 'name', 'email', 'department', 'section', 'year_level',
+     'contact', 'avatar', 'status', 'password'
+
+2. Helper Methods sa Model:
+   - `getInitialsAttribute()`:
+     - Kinukuha ang unang titik ng First Name at Last Name (halimbawa: "Juan Dela Cruz" -> "JD") para sa avatar kapag walang uploaded picture.
+   - `toProfileArray()`:
+     - Nagbabalik ng malinis at kumpletong associative array ng estudyante na handang ilagay sa Laravel session (`session('student_user')`).
+
+3. Paano Kumokonekta sa Controllers:
+   a. Sa `OAuthController::callback()`:
+      ```php
+      \App\Models\Student::updateOrCreate(
+          ['student_id' => $studentId],
+          [
+              'name'       => $name,
+              'email'      => $email,
+              'department' => $course,
+              'section'    => $section,
+              'year_level' => $yearLevel,
+              'avatar'     => $avatar,
+              'status'     => 'Enrolled',
+          ]
+      );
+      ```
+      - Pagkabalik ng estudyante mula sa OnePass SSO, awtomatikong ina-update o nililikha ng controller ang kanyang student record sa MySQL nang walang manual registration.
+   b. Sa `OAuthController::logout()`:
+      - Binubura ang session habang pinapanatili ang student profile sa database para sa mabilis na 1-click access sa hinaharap.
+
+1-Paragraph Summary:
+Basically, ang Student model ang humahawak ng verified credentials ng mga estudyante sa ating local database. Ginagamit ito ng OAuthController gamit ang updateOrCreate upang magsilbing mabilis na local cache na laging updated tuwing magsa-sign-in ang estudyante gamit ang OnePass.
+
+
+--------------------------------------------------------------------------------
+MODEL 7: SystemUser.php (app/Models/SystemUser.php)
+--------------------------------------------------------------------------------
+• Kaakibat na Table sa Database: `system_users`
+• Papel sa System: Kumakatawan sa mga faculty advisers, admin officers, at logistics staff na may access sa administrative dashboard.
+
+1. Mass Assignment Protection ($fillable):
+   - 'user_code', 'name', 'email', 'role', 'department', 'status', 'avatar'
+
+2. Paano Kumokonekta sa Controllers:
+   a. Sa `MerchController::admin()`:
+      - `SystemUser::where('status', 'Active')->get();`
+      - Kinukuha ang listahan ng mga awtorisadong staff para i-display sa System User Management table sa admin panel.
+   b. Sa `MerchController::storeUser()`, `updateUser()`, at `deleteUser()`:
+      - Pinangangasiwaan ang pagdaragdag, pag-eedit ng tungkulin (hal. Faculty Adviser vs Officer), at pag-deactivate ng staff accounts.
+
+1-Paragraph Summary:
+Basically, ang SystemUser model ang namamahala sa administrative credentials at roles ng mga guro at student council officers. Konektado ito sa MerchController para sa role-based rendering at user management operations sa admin portal.
+
+
+================================================================================
+VI. KABUUANG BUOD SA INTERACTION NG CONTROLLERS AT MODELS (THE MVC HARMONY)
+================================================================================
+Kapag tinanong ka sa defense: "Paano nagtutulungan ang inyong Controller at Model?"
+Ito ang iyong isasagot:
+
+"Basically po sa aming system, mahigpit naming sinusunod ang Single Responsibility Principle ng MVC:
+1. Ang Controller ang 'Orchestrator' o 'Traffic Cop'—siya ang sumasala ng request, nagpapatakbo ng security checks tulad ng CSRF, Conflict Lock, at Anti-Spam turn-taking, at nagpapasya kung anong response ang ibabalik.
+2. Ang Model naman ang 'Data Custodian'—siya ang nakikipag-ugnayan sa MySQL database gamit ang Eloquent ORM. Siya ang namamahala sa table casting (tulad ng JSON arrays para sa cart snapshots at size inventory), mass assignment security ($fillable), at table relationships (tulad ng activeTicket at messages).
+
+Dahil dito, napapanatiling malinis, modular, ligtas sa SQL Injection, at madaling i-maintain ang aming buong backend architecture."
+================================================================================
+

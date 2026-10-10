@@ -1,0 +1,309 @@
+================================================================================
+          ICS APPAREL & MERCHANDISE RESERVATION SYSTEM (LARAVEL 11)
+      SLIDE-BY-SLIDE PRESENTATION CONTENT GUIDE (PARA SA POWERPOINT / CANVA)
+================================================================================
+Target Audience: Professor / Panelist Evaluators
+Course: Computer Programming 3 (CP3) - Midterm Defense Presentation
+Format: 8-Slide Professional Deck (Ideal for 7 to 10 Minutes Presentation)
+Theme / Color Palette: ICS Official Colors (Navy Slate `#0f172a`, Crimson Red `#dc2626`, Gold `#f59e0b`, White `#ffffff`)
+================================================================================
+
+I. OVERVIEW NG SLIDE DECK
+--------------------------------------------------------------------------------
+Heto ang eksaktong balangkas na kokopyahin ng inyong Documentation Member 
+para sa PowerPoint o Canva slides. Bawat slide ay may:
+  1. Slide Title & Layout Suggestion (Paano aayusin ang itsura)
+  2. Exact On-Slide Text (Ang mismong ita-type sa slide)
+  3. Presenter Script (Ang sasabihin habang nakabukas ang slide)
+  4. Suggested Screenshot / Visual (Anong picture ang ididikit)
+
+
+================================================================================
+SLIDE 1: TITLE & PROJECT COVER
+================================================================================
+• LAYOUT: Center-aligned, modern minimalist, dark background (Navy Slate) na may ICS Gold accent.
+
+• EXACT ON-SLIDE TEXT:
+  [Title]: ICS APPAREL & MERCHANDISE RESERVATION SYSTEM
+  [Subtitle]: Enterprise Single Sign-On, Real-Time Inventory & Conflict-Locked Logistics Portal
+  
+  [Event/Subject]: Computer Programming 3 (CP3) - Midterm Project Defense
+  [Organization]: Integrated Computer Society (ICS) • Academic Year 2026
+  
+  [Team Members & Roles]:
+  • [Pangalan ni Member 1] - Frontend Lead & Documentation
+  • [Pangalan ni Member 2] - Backend Lead & Security Engineer
+  • [Pangalan ni Member 3] - Database Architect & System Support
+
+• SUGGESTED VISUAL:
+  - Official ICS Emblem / Logo sa gitna o kaliwa.
+  - Maliit na tech badges sa ibaba: [Laravel 11] [MySQL InnoDB] [Tailwind CSS] [OnePass OIDC].
+
+• PRESENTER SCRIPT (Member 1):
+  "Magandang araw po sa ating guro at mga panelist. Kami po ang grupo nina [Pangalan 1], 
+  [Pangalan 2], at [Pangalan 3]. Ipinagmamalaki po naming i-present ang aming Midterm 
+  Project: ang ICS Apparel & Merchandise Reservation System."
+
+
+================================================================================
+SLIDE 2: PROBLEM STATEMENT (THE LOGISTICS CHALLENGES)
+================================================================================
+• LAYOUT: 3 o 4 Cards / Columns na may Red/Warning icons para ma-highlight ang mga problema.
+
+• EXACT ON-SLIDE TEXT:
+  [Slide Title]: The Problem: Manual Logistics Chaos
+  [Subtitle]: Mga hamong kinakaharap ng student council taun-taon sa pamamahagi ng merch
+
+  [Card 1 - Manual Chaos & Data Loss]:
+  • Physical Sign-up Sheets & Spreadsheets
+  • Nawawalang listahan at unverified student numbers.
+  
+  [Card 2 - Double-Booking & Size Discrepancies]:
+  • No Real-time Stock Allocation
+  • Sabay-sabay na nag-oorder sa iisang sukat (hal. Medium), nagreresulta sa shortage.
+
+  [Card 3 - Premature Claims & Logistics Deadlocks]:
+  • Unresolved Disputes During Releasing
+  • Nakukuha ng student ang damit kahit may dispute o mali ang naibayad na halaga.
+
+  [Card 4 - Disconnected Systems]:
+  • Standalone logins na madaling mapeke o makalimutan ang passwords.
+
+• SUGGESTED VISUAL:
+  - Icons: 📋 (Clipboard with cross), ⚠️ (Warning triangle), ⏳ (Hourglass).
+  - Red accent headers para maramdamang "pain point" ito.
+
+• PRESENTER SCRIPT (Member 1):
+  "Bawat taon po, ang Integrated Computer Society ay namamahagi ng daan-daang department 
+  uniforms, P.E. shirts, at lanyards. Sa lumang paraan po ng manual sign-up sa papel o 
+  Google Sheets, madalas pong magkaroon ng double-booking: may naipangakong sukat na 
+  wala na palang stock. Bukod dito, nagkakagulo sa releasing kapag may reklamo ang student 
+  dahil walang centralized lock at tracking system."
+
+
+================================================================================
+SLIDE 3: THE SOLUTION (CORE FEATURES & CAPABILITIES)
+================================================================================
+• LAYOUT: 2 Columns: Kaliwa ay Features List; Kanan ay Screenshot ng Merch Catalog & Cart.
+
+• EXACT ON-SLIDE TEXT:
+  [Slide Title]: The Solution: ICS Apparel & Merch Portal
+  [Subtitle]: A unified, automated, and secure reservation ecosystem
+
+  [Key Features]:
+  1. 1-Click OnePass Campus SSO (RFC 7636 PKCE S256)
+     • Zero manual credential typing; verified student profile agad.
+  2. Dynamic Catalog with Atomic Stock per Size
+     • Real-time stock counting (XS to 2XL) na awtomatikong nababawasan.
+  3. Responsive Cart Drawer & GCash Online Verification
+     • Seamless checkout na may resibo at reference tracking.
+  4. Background Real-time Polling Engine (3s Sync)
+     • Walang page refresh; instant sync sa pagitan ng student at admin.
+  5. Automated Conflict Lock Engine (⚠️ ON HOLD)
+     • Hinaharang ang pag-claim ng damit habang may nakabinbing reklamo.
+  6. Turn-Taking Customer Support Live Chat
+     • Controlled anti-spam messaging sa pagitan ng student at officer.
+
+• SUGGESTED VISUAL:
+  - High-resolution screenshot ng `merch.blade.php` na nakabukas ang Cart Drawer.
+
+• PRESENTER SCRIPT (Member 1):
+  "Upang lutasin ito, binuo po namin ang ICS Merch Portal. Hindi lamang po ito simpleng 
+  catalog; mayroon po itong 1-Click OnePass campus authentication gamit ang PKCE, 
+  atomic stock reservation bawat sukat, real-time sync bawat 3 segundo, at automated 
+  Conflict Lock Engine na nagpoprotekta sa council laban sa maling releasing."
+
+
+================================================================================
+SLIDE 4: SYSTEM ARCHITECTURE & TECH STACK
+================================================================================
+• LAYOUT: 4 Layer Horizontal Cards o Flow Diagram mula Frontend hanggang Database.
+
+• EXACT ON-SLIDE TEXT:
+  [Slide Title]: System Architecture & Technology Stack
+  [Subtitle]: Modern Full-Stack MVC Architecture built on Laravel 11
+
+  [Layer 1: Frontend & UI/UX]
+  • Blade Templating Engine, Tailwind CSS, Space Grotesk Font
+  • Responsive Cart Drawer, Mobile Navigation Drawer, Modal Modifiers
+
+  [Layer 2: Client Logic & Real-Time Sync]
+  • Vanilla JavaScript (ES6+), Fetch API, 3-Second Background Polling Loop
+  • Dynamic DOM Hydration nang walang full page reloads
+
+  [Layer 3: Backend & Business Logic]
+  • Laravel 11.x MVC Architecture, PHP 8.2+
+  • 25 Modular REST API Routes, CSRF Validation, RBAC Middleware Guards
+
+  [Layer 4: Identity & Data Persistence]
+  • OnePass OAuth 2.0 & OIDC Auth Server (RFC 6749, RFC 7636 PKCE S256)
+  • MySQL 8.0 InnoDB Storage Engine (ACID Compliant, 7 Normalized Tables)
+  • Cloud-Ready: Deployable via Render.com, Railway.app, o Cloudflare Tunnel
+
+• SUGGESTED VISUAL:
+  - Architecture flowchart box diagram: 
+    [Student Browser] <--> [Laravel 11 Backend] <--> [MySQL InnoDB & OnePass Server]
+
+• PRESENTER SCRIPT (Member 2):
+  "Sa aming technical architecture, sumunod po kami sa pinakabagong Laravel 11 MVC 
+  standards. Ang aming frontend ay pinatatakbo ng Blade at Tailwind CSS na may 3-second 
+  asynchronous polling engine para sa instant updates. Sa backend, mayroon kaming 25 
+  REST endpoints na may mahigpit na validation, habang ang identity naman ay nakakabit 
+  sa OnePass OAuth 2.0 gamit ang PKCE S256 encryption."
+
+
+================================================================================
+SLIDE 5: DATABASE ARCHITECTURE & SCHEMA HIGHLIGHTS
+================================================================================
+• LAYOUT: Kaliwa ay Schema Table List; Kanan ay ERD Diagram snapshot.
+
+• EXACT ON-SLIDE TEXT:
+  [Slide Title]: Database Architecture & Schema Integrity
+  [Subtitle]: MySQL 8.0 InnoDB Engine with Full ACID Compliance
+
+  [Core Tables (7 Normalized Tables)]:
+  1. products: Catalog inventory with JSON size counts & atomic stock units
+  2. reservations: Order records with JSON shopping cart snapshots
+  3. support_tickets: Customer service cases (Open, In Progress, Resolved)
+  4. support_messages: Chat conversation history with ON DELETE CASCADE
+  5. system_users: Role-Based Directory (Advisers & Officers kabilang ang ics@npc.edu.ph)
+  6. students: Local verified student roster cached from OnePass
+  7. activity_logs: Immutable Whiteboard Audit Trail (User Code, Action, Activity, Time)
+
+  [Key Database Design Highlights]:
+  • JSON Snapshot Pattern: Tinitiyak ang historical price at size accuracy ng orders.
+  • B-Tree Indexing: Mabilis na O(log N) lookups sa student_id at reference codes.
+  • Orphan Prevention: ON DELETE CASCADE sa support_messages para malinis ang database.
+
+• SUGGESTED VISUAL:
+  - ASCII o visual ERD diagram mula sa `README.md` o `EXPLAIN_DATABASE.txt`.
+
+• PRESENTER SCRIPT (Member 3):
+  "Ang aming data layer po ay binubuo ng pitong (7) normalized tables sa ilalim ng 
+  MySQL InnoDB storage engine. Gumamit po kami ng JSON Snapshot Pattern para sa shopping 
+  cart items upang manatiling accurate ang presyo kahit magbago ito sa future. Mayroon 
+  din po kaming B-Tree indexes sa student IDs para sa sub-millisecond search latency, 
+  at foreign key cascading upang maiwasan ang orphan records sa chat."
+
+
+================================================================================
+SLIDE 6: LIVE DEMONSTRATION WORKFLOW
+================================================================================
+• LAYOUT: Step-by-Step Numbered Timeline (Hakbang 1 hanggang 6).
+
+• EXACT ON-SLIDE TEXT:
+  [Slide Title]: Live Demonstration Roadmap
+  [Subtitle]: Ang sunod-sunod na daloy ng aming live end-to-end presentation
+
+  1. 🟢 OnePass Campus SSO Login
+     • 1-Click login redirect; instant student profile population sa header dropdown.
+  2. 🛒 Catalog Browsing & Size Selection
+     • Atomic stock deduction; Cart Drawer checkout na may GCash receipt upload.
+  3. ⚡ Real-Time Admin Sync (3 Seconds)
+     • Kusa at agarang paglitaw ng bagong reservation sa Admin Logistics Queue.
+  4. ⚠️ Conflict Lock Trigger (ON HOLD)
+     • Pag-file ng student ticket ➔ Awtomatikong pag-lock ng Claim/Ready buttons.
+  5. 💬 Turn-Taking Live Chat & Restocking
+     • Anti-spam message locking; resolution & automated stock return.
+  6. 🗑️ Logistics Deletion Governance
+     • Pagbura ng tapos nang reservation (Claimed/Cancelled) at resolved ticket.
+
+• SUGGESTED VISUAL:
+  - Side-by-side screenshots: Kaliwa ay Student View; Kanan ay Admin View.
+
+• PRESENTER SCRIPT (Member 1 o Member 2):
+  "Heto po ang magiging daloy ng aming live demonstration. Ipapakita po namin kung 
+  paano mag-log in ang estudyante gamit ang OnePass nang walang tina-type na password, 
+  paano mag-checkout sa cart, paano ito agad lilitaw sa Admin Portal sa loob ng 3 segundo, 
+  at kung paano gagana ang automated Conflict Lock at Turn-Taking chat."
+
+
+================================================================================
+SLIDE 7: SECURITY, QUALITY ASSURANCE & CLOUD DEPLOYMENT
+================================================================================
+• LAYOUT: 3 Cards o Split-Column layout na nagpapakita ng Security, QA, at Deployment.
+
+• EXACT ON-SLIDE TEXT:
+  [Slide Title]: Security Compliance, QA Testing & Deployment
+  [Subtitle]: Enterprise protection controls and production-ready hosting
+
+  [Security Compliance]:
+  • RFC 7636 PKCE S256: SHA-256 Code Challenge laban sa code interception.
+  • CSRF Meta Token Header: Proteksyon sa lahat ng mutating POST/PATCH/DELETE requests.
+  • SQL Injection Prevention: 100% Parameter-Bound PDO Queries via Eloquent ORM.
+  • RBAC Access Guard: Tanging authorized emails (ics@npc.edu.ph) ang makakapasok sa /admin.
+
+  [Quality Assurance (QA) Testing]:
+  • 7 Boundary & Integration Test Cases (TC-01 hanggang TC-07) - 100% PASSED:
+    - Zero Stock Blocking • Form Validation • GCash Proof Verification
+    - Chat Anti-Spam • Conflict Lock • Deletion Safety Controls
+
+  [Cloud Deployment Options]:
+  • Render.com (Same platform ng OnePass) o Railway.app na may MySQL database.
+  • Cloudflare Tunnel (`cloudflared tunnel`) para sa instant zero-cost live public demo.
+
+• SUGGESTED VISUAL:
+  - Table ng QA Test Matrix na may berdeng "PASSED" badges.
+  - Security padlock icon 🔒 at Cloud deployment icon ☁️.
+
+• PRESENTER SCRIPT (Member 2 o Member 3):
+  "Sa aspeto naman po ng Security at QA, 100% po kaming protektado laban sa CSRF at 
+  SQL Injection dahil sa Eloquent ORM. Ang OnePass login ay gumagamit ng SHA-256 
+  cryptographic challenge. Sumailalim din po ang system sa 7 boundary test scenarios 
+  kung saan 100% po itong pumasa. Bukod sa lokal na XAMPP setup, cloud-ready na rin 
+  po ito sa Render at Railway o via Cloudflare Tunnel para sa live online access."
+
+
+================================================================================
+SLIDE 8: CONCLUSION & PROJECT SUMMARY
+================================================================================
+• LAYOUT: Center-aligned, malinis na typography na may callout message at Q&A text.
+
+• EXACT ON-SLIDE TEXT:
+  [Slide Title]: Conclusion & Impact
+  [Subtitle]: Modernizing Student Services for the Integrated Computer Society
+
+  [Summary of Achievements]:
+  ✅ Solved Logistics Chaos: Nawala ang manual spreadsheets at nawawalang orders.
+  ✅ Zero Double-Booking: Garantisadong atomic inventory counts bawat sukat ng damit.
+  ✅ Enterprise Security: Real-time conflict lock, OIDC SSO, at whiteboard audit logging.
+  ✅ Complete Documentation: Industry-standard README.md, PHPDoc, at technical portfolios.
+
+  [Closing Tagline]:
+  "Empowering ICS students and leaders through automated, secure, and modern software engineering."
+
+  [Call to Action]:
+  THANK YOU!
+  Open for Questions and Panel Evaluation (Q&A)
+
+• SUGGESTED VISUAL:
+  - Final screenshot collage ng Student Store at Admin Dashboard.
+  - ICS Emblem at GitHub Repository Link.
+
+• PRESENTER SCRIPT (Lahat / Member 1):
+  "Bilang pagtatapos po, matagumpay po naming nalutas ang taun-taong logistics issues 
+  ng ICS sa pamamagitan ng isang maaasahan, mabilis, at ligtas na reservation system. 
+  Maraming salamat po sa inyong pakikinig, at handa na po kaming sagutin ang inyong mga 
+  katanungan sa aming Q&A session."
+
+
+================================================================================
+III. QUICK TIPS PARA SA INYONG SLIDE DESIGN SA CANVA O POWERPOINT
+--------------------------------------------------------------------------------
+1. Kulay ng Slides:
+   - Background: Dark Navy Slate (`#0f172a` o `#1e293b`). Mas mukhang high-tech at professional.
+   - Text Titles: White (`#ffffff`) at ICS Gold (`#f59e0b`).
+   - Cards/Boxes: Dark slate na may subtle borders (`#334155`).
+
+2. Font Pairings:
+   - Headings: Space Grotesk, Plus Jakarta Sans, o Montserrat (Bold/Black).
+   - Body Text: Inter o Arial (Clean and readable).
+
+3. Iwasan ang Text Clutter:
+   - Huwag ilagay ang buong talata sa slide. Gamitin ang bullet points na nakasulat 
+     sa itaas, at sabihin na lamang sa bibig ang nasa Presenter Script!
+
+================================================================================
+End of Slide-by-Slide Content Guide.
+I-share ito sa inyong Documentation Member para simulan na niya ang paggawa ng slides!
+================================================================================

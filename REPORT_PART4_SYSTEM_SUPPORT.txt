@@ -1,0 +1,265 @@
+================================================================================
+           ICS APPAREL & MERCHANDISE RESERVATION SYSTEM (LARAVEL 11)
+  SPEAKER SCRIPT & REPORTING GUIDE: PART 4 - SYSTEM SUPPORT, DEVOPS & SECURITY
+================================================================================
+Role sa Grouping: TASK 4: SYSTEM SUPPORT (DEVOPS, QA, SECURITY, & CLOUD INFRASTRUCTURE)
+Target Files na Ipapakita:
+  1. Dockerfile & Render Cloud Console (Docker Containerization & Live Web Hosting)
+  2. .gitignore & Git Log / GitHub Repository (Git Workflow & Version Control)
+  3. composer.json & package.json (Dependency & Runtime Environment Management)
+  4. .env & public/index.php (Deployment Configuration & Web Server Isolation)
+  5. QA Testing Matrix & Security Architecture (CSRF, XSS, PDO, PKCE)
+Scope sa Rubric:
+  • Dev Setup (XAMPP Apache, PHP 8.2+, MySQL, Composer 2, Node.js runtime)
+  • Git Workflow (Branch discipline, clean commit messages, .gitignore rules)
+  • Deployment Config (Docker container, public/ routing, storage:link, Render Cloud, TiDB Cloud)
+  • Testing (QA Test Matrix, boundary testing, zero-stock checks, chat concurrency tests)
+  • Security Compliance (CSRF meta tokens, PDO SQL parameter binding, XSS sanitization, OAuth PKCE)
+================================================================================
+
+I. INTRODUCTORY SPIEL (ANG SASABIHIN MO SA PAGSISIMULA NG IYONG REPORT)
+--------------------------------------------------------------------------------
+(Tindig nang maayos, buksan ang terminal o README.md sa screen, at sabihin nang may kumpiyansa:)
+
+"Maraming salamat kay [Pangalan ng Database Reporter].
+Magandang araw po sa ating propesor at sa kagalang-galang na panel ng evaluators.
+Ako po si [Pangalan Mo], at ako naman po ang mag-uulat para sa TASK 4 and 5: 
+SYSTEM SUPPORT, DEVOPS, SECURITY COMPLIANCE, at PROJECT DOCUMENTATION.
+
+Sa isang propesyonal na engineering team, ang aking tungkulin po ay ang 
+pagsasanib ng DevOps Engineer, QA Tester, Security Auditor, at Technical Writer. 
+Kahit gaano po kaganda ang code at database, kung hindi ito maayos na mai-setup, 
+marupok sa security exploits, puno ng bugs, o walang dokumentasyon, hindi ito maituturing 
+na production-ready software.
+
+Sakop po ng aking presentasyon ang anim (6) na mahahalagang haligi:
+1. Ang aming Local Development Setup at Runtime Requirements;
+2. Ang maingat at disiplinadong Git Workflow at Version Control;
+3. Ang aming Deployment Configuration at Cloud-readiness Architecture;
+4. Ang komprehensibong QA Testing Matrix at System Stress Testing;
+5. Ang enterprise-grade Security Compliance (CSRF, SQL Injection, XSS, at PKCE);
+6. At ang kumpletong Project Documentation sa aming README.md at PHPDoc comments.
+
+Suriin po natin ang mga teknikal na aspetong ito."
+
+
+================================================================================
+II. DETAILED TOPIC BREAKDOWN & REPORTING SCRIPT (SALITA-POR-SALITA)
+================================================================================
+
+--------------------------------------------------------------------------------
+TOPIC 1: DEV SETUP & RUNTIME ENVIRONMENT
+--------------------------------------------------------------------------------
+ANO ANG SASABIHIN MO:
+"Magsimula po tayo sa aming Local Development Setup.
+Upang mapatakbo nang maayos ang pinakabagong Laravel 11 framework, inihanda po namin 
+ang aming local machine gamit ang sumusunod na standardized software stack:
+
+1. PHP Runtime:
+   - Tumatakbo po kami sa PHP 8.2 pataas (kasalukuyang PHP 8.3 sa XAMPP).
+   - In-enable po namin sa `php.ini` ang mga kritikal na extensions:
+     * `pdo_mysql` para sa mabilis na database connectivity;
+     * `fileinfo` para sa server-side validation ng mga ini-upload na GCash resibo;
+     * `mbstring` at `openssl` para sa cryptographic token generation.
+2. Web & Database Server:
+   - Apache HTTP Server at MySQL Database sa XAMPP Control Panel.
+3. Package Managers:
+   - Composer 2.x para sa PHP backend packages (`composer.json`).
+   - Node.js at NPM para sa client-side build tools at dependencies (`package.json`)."
+
+ANO ANG IPAKIKITA MO SA SCREEN:
+- Buksan ang terminal at patakbuhin ang: `php -v` at `composer --version`.
+
+
+--------------------------------------------------------------------------------
+TOPIC 2: GIT WORKFLOW & VERSION CONTROL
+--------------------------------------------------------------------------------
+ANO ANG SASABIHIN MO:
+"Sa aspeto naman po ng Git Workflow, nagpatupad po kami ng mahigpit na commit discipline 
+at malinis na version control sa aming opisyal na GitHub repository:
+
+1. Centralized GitHub Repository:
+   - Naka-host po ang aming source code sa GitHub (`https://github.com/JDerramas/Laravel-MidTerm.git`).
+2. `.gitignore` Integrity & Security:
+   - Mahigpit po naming sinala ang aming `.gitignore` file.
+   - Naka-exclude po ang `/vendor`, `/node_modules`, `storage/*.key`, at ang pinaka-importante: 
+     ang `.env` file upang hindi ma-leak sa internet ang aming database credentials at API keys.
+   - Naka-exclude din po ang mga transient local notes (`*.txt`) habang pinapanatiling 
+     naka-version control ang aming opisyal na `README.md`.
+3. Commit Discipline:
+   - Gumamit po kami ng semantic commit conventions (tulad ng `feat:`, `fix:`, `refactor:`) 
+     upang madaling ma-audit ang bawat pagbabago sa buong timeline ng proyekto."
+
+ANO ANG IPAKIKITA MO SA SCREEN:
+- Ipakita ang `.gitignore` file sa VS Code at ang GitHub commit history gamit ang:
+  `git log -n 5 --oneline`
+
+
+--------------------------------------------------------------------------------
+TOPIC 3: LIVE CLOUD DEPLOYMENT & PRODUCTION DOCKER ARCHITECTURE
+--------------------------------------------------------------------------------
+ANO ANG SASABIHIN MO:
+"Tingnan naman po natin ang aming Live Deployment Configuration and Cloud Readiness.
+Hindi lang po ito sa localhost tumatakbo — live and fully deployed po ang aming system sa cloud:
+
+1. Live URL & Render Cloud Hosting:
+   - Naka-deploy po ang aming buong application sa Render Cloud gamit ang custom Docker container:
+     Live URL: https://laravel-midterm-8n2y.onrender.com
+   - Naka-containerize po ito gamit ang multi-stage Dockerfile na may PHP 8.2 FPM, Nginx web server, 
+     at Composer dependencies para 100% consistent ang takbo saan mang server ilagay.
+
+2. Web Root Isolation (`public/index.php`):
+   - Sa aming Nginx at Apache configuration, ang Document Root ay laging nakaturo sa loob ng `public/`.
+   - Ito ay para hindi kailanman ma-access o ma-leak mula sa browser ang ating application code, 
+     vendor packages, at ang napakahalagang `.env` credentials.
+
+3. Distributed Cloud Database (TiDB Serverless Cloud):
+   - Nakakonekta po ang aming live Render container sa TiDB Serverless Cloud sa AWS Singapore 
+     gamit ang TLS/SSL CA cert (`/etc/ssl/certs/ca-certificates.crt`) sa Port 4000. 
+     Naka-centralize po ang data kaya kahit mag-redeploy ang server, intact ang lahat ng records.
+
+4. 24/7 Availability via UptimeRobot Keep-Alive:
+   - Dahil ang free tier ng cloud servers ay natutulog (sleep mode) pag walang traffic ng 15 minutes, 
+     nag-setup po kami ng automated HTTP ping monitor gamit ang UptimeRobot every 5 minutes. 
+     Dahil dito, laging gising ang server at walang cold-start delay para sa mga nagche-check."
+
+ANO ANG IPAKIKITA MO SA SCREEN:
+- Ipakita ang `public/index.php` at ipaliwanag na ito lamang ang nag-iisang public entrypoint 
+  ng buong web application.
+
+
+--------------------------------------------------------------------------------
+TOPIC 4: COMPREHENSIVE QA TESTING MATRIX & STRESS TESTING
+--------------------------------------------------------------------------------
+ANO ANG SASABIHIN MO:
+"Bilang QA Specialist ng team, isinailalim ko po ang system sa sampung (10) masusing 
+Quality Assurance at Boundary Test Scenarios bago ang araw na ito:
+
+1. TEST SCENARIO 1 (Zero-Stock Inventory Blocking):
+   - Sinubukan pong i-order ang item na may 0 stock. 
+   - Resulta: PASS. Hinarang ng backend validation at nagpakita ng babala sa student.
+2. TEST SCENARIO 2 (GCash Proof Requirement):
+   - Sinubukang mag-checkout ng GCash payment nang walang inilalagay na reference number.
+   - Resulta: PASS. Hinarang ng validation at nag-require ng wastong payment proof.
+3. TEST SCENARIO 3 (High-Frequency Chat Polling Stress Test):
+   - Sinubukan naming mag-chat nang sabay sa dalawang magkaibang browser tabs.
+   - Resulta: PASS. Dahil sa aming `after_id` incremental query engine at concurrency locks 
+     (`_isPolling`), nagawa nitong mag-respond sa loob ng 2ms hanggang 3ms nang walang 
+     socket jamming o queue lag sa single-threaded local server.
+4. TEST SCENARIO 4 (Privacy & Unauthorized Access Control):
+   - Sinubukan naming i-access ang ticket messages ng ibang student ID.
+   - Resulta: PASS. Nagbalik ang server ng HTTP 403 Forbidden.
+5. TEST SCENARIO 5 (Cross-Device & Mobile Responsiveness):
+   - Sinubukan sa smartphone, tablet, at desktop displays.
+   - Resulta: PASS. Buo ang layout, functional ang fixed bottom navigation bar at drawer.
+6. TEST SCENARIO 6 (Cancellation Stock Restoration):
+   - Kinansela ang isang reservation.
+   - Resulta: PASS. Kusa at awtomatikong ibinalik ng system ang reserved units sa available stock.
+7. TEST SCENARIO 7 (OnePass Token Validation):
+   - Sinubukan ang OIDC PKCE redirect at token exchange.
+   - Resulta: PASS. Matagumpay na na-sync ang verified student session.
+8. TEST SCENARIO 8 (OAuth Redirect URI Whitelist Matching):
+   - Sinubukan ang OnePass login sa Render production URL. Nung una, nag-error ng 400 Bad Request 
+     dahil `https://app.npc.edu.ph` ang naka-whitelist sa developer portal imbes na 
+     `https://laravel-midterm-8n2y.onrender.com/oauth/callback`.
+   - Resulta: PASS. Na-reconfigure ang Whitelisted Redirect URIs sa OnePass Console at naging 100% smooth.
+9. TEST SCENARIO 9 (Database Unique Constraint Collision Defense):
+   - Sinubukan ang pag-login ng student na may existing email pero ibang primary key sequence. 
+     Hinarang ng SQL duplicate key error 1062.
+   - Resulta: PASS. Na-patch sa controller ang smart lookup (`where('email')->orWhere('student_id')`) 
+     at defensive update para seamless ang account reconciliation.
+10. TEST SCENARIO 10 (Realtime Activity Audit & Audio Notifications):
+    - Sinubukan ang sabay na pag-login/logout ng users at pag-place ng order habang nakabukas ang Admin panel.
+    - Resulta: PASS. Kusa at live na lumabas ang toast notifications, nag-chime ang Web Audio synth sound, 
+      at nag-update ang recent activity dashboard nang walang manual page refresh."
+
+
+--------------------------------------------------------------------------------
+TOPIC 5: SECURITY COMPLIANCE & BEST PRACTICES
+--------------------------------------------------------------------------------
+ANO ANG SASABIHIN MO:
+"Pagdating po sa Cyber Security at Application Hardening, ipinatupad po namin 
+ang sumusunod na mga pananggalang:
+
+1. Cross-Site Request Forgery (CSRF) Protection:
+   - Ang bawat POST, PUT, PATCH, at DELETE request ay may kasamang `@csrf` token o 
+     `X-CSRF-TOKEN` HTTP header na bine-verify ng `VerifyCsrfToken` middleware.
+2. SQL Injection Prevention:
+   - 100% ng database access ay dumadaan sa Eloquent ORM na may PDO Parameter Binding. 
+     Walang ginamit na raw string interpolation.
+3. Cross-Site Scripting (XSS) Sanitization:
+   - Ang lahat ng text na inilalabas sa Blade views ay gumagamit ng double curly braces `{{ ... }}` 
+     na awtomatikong nagko-convert ng mapanganib na HTML tags (tulad ng `<script>`) 
+     patungo sa ligtas na HTML entities gamit ang `htmlspecialchars()`.
+4. OAuth 2.0 PKCE Security:
+   - Gumamit po kami ng cryptographic `code_challenge` at `code_verifier` (SHA-256) 
+     upang maprotektahan ang student authentication laban sa Man-in-the-Middle at 
+     Code Interception attacks.
+5. Password Hashing:
+   - Lahat ng passwords sa database ay naka-hash sa pamamagitan ng Bcrypt algorithm."
+
+
+--------------------------------------------------------------------------------
+TOPIC 6: PROJECT DOCUMENTATION & PRESENTATION (README.md & PHPDoc)
+--------------------------------------------------------------------------------
+ANO ANG SASABIHIN MO:
+"Panghuli po para sa TASK 5: PROJECT DOCUMENTATION:
+Siniguro po namin na ang aming repository ay may antas-propesyonal na dokumentasyon:
+
+1. Master README.md File:
+   - Naglalaman po ito ng complete System Overview, Architectural Diagram, 
+     Step-by-step Installation Guide, Database Setup commands, at API Endpoints documentation.
+2. PHPDoc Code Comments:
+   - Bawat controller function at model relationship sa aming codebase ay may standard 
+     PHPDoc docstrings na nagpapaliwanag ng layunin ng method, accepted parameters, 
+     at return types.
+3. Interactive UI Feedback:
+   - Ang system po ay nagbibigay ng malinaw na feedback sa user gamit ang 
+     animated Toast notifications, real-time status badges, at system event logs."
+
+ANO ANG IPAKIKITA MO SA SCREEN:
+- Buksan ang `README.md` sa VS Code o sa GitHub repository upang makita ng panel 
+  ang kumpleto at magandang pagkakaayos nito.
+
+
+================================================================================
+III. CONCLUDING SPIEL (PAGTATAPOS NG BUONG REPORT NG GRUPO)
+================================================================================
+"Bilang pagtatapos po ng aming presentasyon:
+Ang ICS Apparel and Merchandise Reservation System po ay hindi lamang isang proyekto 
+para makapasa sa klase. Ito po ay isang buo, ligtas, mabilis, at tunay na magagamit na 
+solusyon para sa ating Integrated Computer Society.
+
+Mula po sa aming Server-side Logic, patungo sa Responsive Frontend, matatag na Database, 
+at masusing System Support at Dokumentasyon—nagkaisa po ang aming grupo upang buuin 
+ang sistemang ito nang may mataas na pamantayan sa software engineering.
+
+Bukas na po ngayon ang aming grupo sa anumang katanungan o paglilinaw mula sa ating 
+kagalang-galang na panel. Maraming salamat po sa inyong pakikinig!"
+
+
+================================================================================
+IV. Q&A DEFENSE CHEAT SHEET (MGA POSIBLENG ITANONG NG PROF & SAGOT MO)
+================================================================================
+TANONG 1: "Bakit hindi ninyo isinama ang `.env` sa inyong GitHub repository?"
+SAGOT MO:
+"Dahil ang `.env` file po ay naglalaman ng 'sensitive environment secrets' tulad ng database 
+passwords, OnePass client secrets, at APP_KEY. Kapag nai-push po ito sa Git, magiging bulnerable 
+ang buong server sa security compromise. Ang tamang software engineering practice po ay ang 
+pag-commit lamang ng `.env.example` at paglikha ng `.env` nang lokal sa bawat deployment machine."
+
+TANONG 2: "Paano ninyo pinoprotektahan ang mga users laban sa Cross-Site Scripting (XSS)?"
+SAGOT MO:
+"Sa aming Laravel Blade views, ginagamit po namin ang `{{ $variable }}` syntax. Kusa po itong 
+pinatatakbo ng Blade compiler sa `htmlspecialchars()` function ng PHP, kaya kung maglagay man 
+ang isang malisyosong user ng `<script>alert('hack')</script>` sa chat o form, ire-render lamang 
+ito ng browser bilang plain harmless text sa halip na i-execute bilang JavaScript code."
+
+TANONG 3: "Bakit kailangan pa ng `php artisan storage:link`?"
+SAGOT MO:
+"Sa Laravel, ang mga in-upload na files tulad ng GCash receipts ay naka-imbak sa pribadong 
+`storage/app/public/` folder para sa seguridad. Hindi po direktang ma-a-access ng web browser 
+ang storage folder dahil ang Document Root ay nasa `public/`. Ang `storage:link` po ay gumagawa 
+ng isang filesystem symbolic link (shortcut) mula sa `public/storage` patungo sa `storage/app/public`, 
+upang mai-display ang mga larawan sa browser nang ligtas at maayos."
+================================================================================

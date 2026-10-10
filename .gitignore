@@ -26,3 +26,9 @@ scratch/
 database/_archi_backup/
 *.txt
 !public/robots.txt
+!REPORT_PART*.txt
+!KAGRUPO_DEFENSE_MASTER_EXPLANATION.txt
+!EXPLAIN_*.txt
+!SLIDE_DECK_*.txt
+!PARA_SA_KAGRUPO_GUIDE.txt
+!REPORTING_PRESENTATION_GUIDE.txt
