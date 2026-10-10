@@ -60,9 +60,9 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA', env('DB_SSL_CA', true)),
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA', (!in_array(env('DB_HOST', '127.0.0.1'), ['127.0.0.1', 'localhost']) ? env('DB_SSL_CA', true) : null)),
                 PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT', false),
-            ], fn($val) => !is_null($val) && $val !== '') : [],
+            ], fn($val) => !is_null($val) && $val !== '' && $val !== false) : [],
         ],
 
         'mariadb' => [
