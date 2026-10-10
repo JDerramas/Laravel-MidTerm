@@ -249,7 +249,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   <span class="font-bold text-xs text-white">View OnePass Profile</span>
-                  <svg class="w-3 h-3 text-ics-gold ml-auto group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  <svg class="w-3 h-3 text-ics-gold ml-auto group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
                 </a>
                 <a href="{{ route('oauth.login') }}" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-200 flex items-center gap-2.5 transition">
                   <svg class="w-4 h-4 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -366,7 +368,9 @@
           <div>
             <p class="text-xs font-bold text-white leading-tight flex items-center gap-1" id="mob-user-name">
               <span>{{ $mStu['name'] }}</span>
-              <svg class="w-3 h-3 text-ics-gold opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              <svg class="w-3 h-3 text-ics-gold opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
             </p>
             <p class="text-[10px] text-ics-gold font-mono" id="mob-user-id">{{ $mStu['student_id'] }} &bull; {{ $mStu['section'] ?? 'Student' }}</p>
           </div>
@@ -1188,7 +1192,7 @@
           <span>Continue with OnePass SSO</span>
         </a>
 
-        <!-- Register on OnePass Hyperlink -->
+        <!-- Register on OnePass Hyperlink 
         <div class="pt-2 pb-1 border-t border-slate-800/80 flex flex-col items-center justify-center gap-1.5 text-center">
           <p class="text-[11px] text-slate-400">Don't have an official student account yet?</p>
           <a
@@ -1202,7 +1206,7 @@
             </svg>
           </a>
         </div>
-
+-->
         <button
           type="button"
           onclick="icsApp.closeLoginPromptModal()"
@@ -3508,7 +3512,10 @@
                     }
                   });
                   if (hasNew) {
-                    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                    container.scrollTo({
+                      top: container.scrollHeight,
+                      behavior: 'smooth'
+                    });
                   }
                 }
               }
@@ -4035,7 +4042,10 @@
                 });
 
                 if (hasNew) {
-                  container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                  container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                  });
                 }
               }
             }
@@ -4167,7 +4177,10 @@
             </div>
           `;
           container.appendChild(div);
-          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth'
+          });
         }
 
         try {

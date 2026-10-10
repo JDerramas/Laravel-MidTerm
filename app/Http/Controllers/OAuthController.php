@@ -39,7 +39,7 @@ class OAuthController extends Controller
             'client_id'             => $clientId,
             'redirect_uri'          => $redirectUri,
             'response_type'         => 'code',
-            'scope'                 => 'openid profile email student_id qr avatar',
+            'scope'                 => 'openid profile email student_id avatar',
             'state'                 => $state,
             'code_challenge'        => $codeChallenge,
             'code_challenge_method' => 'S256',
@@ -218,31 +218,68 @@ class OAuthController extends Controller
             // 3. Save student profile into active session
             session(['student_user' => $studentProfile]);
 
-            // 4. Update / Cache local student model
-            \App\Models\Student::updateOrCreate(
-                ['student_id' => $studentId],
-                [
-                    'name'       => $name,
-                    'email'      => $email,
-                    'department' => $course,
-                    'section'    => $section,
-                    'year_level' => $yearLevel,
-                    'avatar'     => $avatar,
-                    'status'     => 'Enrolled',
-                ]
-            );
+            // 4. Update / Cache local student model safely (match by email or student_id)
+            try {
+                $existingStudent = \App\Models\Student::where('email', $email)
+                    ->orWhere('student_id', $studentId)
+                    ->first();
+
+                if ($existingStudent) {
+                    $updateFields = [
+                        'name'       => $name ?: $existingStudent->name,
+                        'email'      => $email,
+                        'department' => $course ?: $existingStudent->department,
+                        'section'    => $section ?: $existingStudent->section,
+                        'year_level' => $yearLevel ?: $existingStudent->year_level,
+                        'status'     => 'Enrolled',
+                    ];
+                    if (!empty($avatar)) {
+                        $updateFields['avatar'] = $avatar;
+                    }
+                    if (!empty($studentId) && $studentId !== $existingStudent->student_id) {
+                        $idTaken = \App\Models\Student::where('student_id', $studentId)
+                            ->where('id', '!=', $existingStudent->id)
+                            ->exists();
+                        if (!$idTaken) {
+                            $updateFields['student_id'] = $studentId;
+                        }
+                    }
+                    $existingStudent->update($updateFields);
+                } else {
+                    \App\Models\Student::create([
+                        'student_id' => $studentId,
+                        'name'       => $name,
+                        'email'      => $email,
+                        'department' => $course,
+                        'section'    => $section,
+                        'year_level' => $yearLevel,
+                        'avatar'     => $avatar,
+                        'status'     => 'Enrolled',
+                    ]);
+                }
+            } catch (\Throwable $studentDbEx) {
+                Log::warning('Non-blocking student model sync warning: ' . $studentDbEx->getMessage());
+            }
 
             // 5. Record entry in Audit Trail
-            ActivityLog::record(
-                'LOGIN',
-                "Student [{$name} ({$studentId})] authenticated successfully via OnePass OIDC SSO.",
-                $studentId,
-                $name,
-                'Student Store'
-            );
+            try {
+                ActivityLog::record(
+                    'LOGIN',
+                    "Student [{$name} ({$studentId})] authenticated successfully via OnePass OIDC SSO.",
+                    $studentId,
+                    $name,
+                    'Student Store'
+                );
+            } catch (\Throwable $logEx) {
+                Log::warning('Non-blocking ActivityLog record warning: ' . $logEx->getMessage());
+            }
 
             // 6. Sync to Supabase Auth cloud database
-            $this->syncToSupabase($studentProfile);
+            try {
+                $this->syncToSupabase($studentProfile);
+            } catch (\Throwable $supaEx) {
+                Log::warning('Non-blocking Supabase sync warning: ' . $supaEx->getMessage());
+            }
 
             return redirect()->route('home')->with('success', "Welcome, {$name}! You are now signed in with your verified ICS OnePass identity.");
 
