@@ -254,27 +254,6 @@
   <main id="admin-view-container" class="flex-1 pb-28 lg:pb-16 transition-opacity duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
 
-      <!-- Admin Mobile Horizontal Tab Navigation (Quick 1-Tap on Phones & Tablets) -->
-      <div class="lg:hidden mb-4 overflow-x-auto pb-1 -mx-2 px-2 flex items-center gap-2 no-scrollbar">
-        <button onclick="icsApp.setAdminTab('dashboard')" id="admin-mob-tab-dashboard" class="admin-mob-tab flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-ics-800 text-white shadow border border-ics-600">
-          <span>📊 Dashboard</span>
-        </button>
-        <button onclick="icsApp.setAdminTab('infomgmt')" id="admin-mob-tab-infomgmt" class="admin-mob-tab flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
-          <span>📁 Info Mgmt</span>
-        </button>
-        <button onclick="icsApp.setAdminTab('reservations')" id="admin-mob-tab-reservations" class="admin-mob-tab flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
-          <span>📋 Queue</span>
-        </button>
-        <button onclick="icsApp.setAdminTab('reports')" id="admin-mob-tab-reports" class="admin-mob-tab flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
-          <span>📈 Reports</span>
-        </button>
-        <button onclick="icsApp.setAdminTab('usermgmt')" id="admin-mob-tab-usermgmt" class="admin-mob-tab flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
-          <span>👥 Users</span>
-        </button>
-        <button onclick="icsApp.setAdminTab('actlogs')" id="admin-mob-tab-actlogs" class="admin-mob-tab flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
-          <span>📜 Audit Logs</span>
-        </button>
-      </div>
 
       <!-- Admin Layout Grid: Sidebar Navigation + Main Panel -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
