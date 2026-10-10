@@ -132,8 +132,8 @@ SLIDE 4: SYSTEM ARCHITECTURE & TECH STACK
 
   [Tier 4: Identity & Persistence Layer]
   • OnePass OAuth 2.0 / OIDC Identity Provider (RFC 6749, RFC 7636 PKCE S256).
-  • MySQL 8.0 InnoDB Storage Engine (ACID Compliant, 7 Normalized Tables).
-  • Production Ready: Deployable on Render.com, Railway.app, or Cloudflare Tunnel.
+  • TiDB Serverless Cloud (MySQL 8.0 Compatible, AWS Singapore, Port 4000, SSL CA Encrypted).
+  • Live Production Deployment: Containerized via Docker on Render.com with UptimeRobot 24/7 Keep-Alive.
 
 • RECOMMENDED VISUAL:
   - Architecture flow diagram:
@@ -154,7 +154,7 @@ SLIDE 5: DATABASE ARCHITECTURE & SCHEMA INTEGRITY
 
 • EXACT ON-SLIDE TEXT:
   [Slide Title]: Database Architecture & Schema Integrity
-  [Subtitle]: MySQL 8.0 InnoDB Engine with Full ACID Compliance
+  [Subtitle]: TiDB Serverless Cloud on AWS Singapore (MySQL 8.0 Compatible)
 
   [The 7 Core Normalized Tables]:
   1. products: Dynamic JSON size counts and atomic stock units.

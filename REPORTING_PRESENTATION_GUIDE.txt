@@ -111,22 +111,22 @@ MEMBER 2 (Backend Logic & Security - Task 1 & Task 4A):
 
 (Ipapasa ang mic kay Member 3)
 
-MEMBER 3 (Database Architecture & Dev Setup - Task 3 & Task 4B):
+MEMBER 3 (Database Architecture & Cloud DevOps - Task 3 & Task 4B):
 "Para naman po sa aming Database Layer at System Support:
-1. Ang aming database ay tumatakbo sa MySQL 8.0 gamit ang InnoDB storage engine upang magarantiyahan ang full ACID compliance (Atomicity, Consistency, Isolation, Durability).
-2. Mayroon po kaming pitong (7) tables kabilang ang `students` identity table, na may strict Foreign Key constraints at B-Tree indexes sa `student_id`, `reservation_ref`, at `status`.
-3. Naka-integrate din po ang aming system sa Supabase Cloud (`oyzvcqaytavbfwdrgili.supabase.co`) para sa real-time cloud auth synchronization.
-4. Ginamit po namin ang 'JSON Snapshot Pattern' sa mga order items at product sizes upang maiwasan ang historical price corruption at mapabilis ang read latency.
-5. Sa aspeto ng Dev Setup at Git Workflow, ang aming credentials ay nakahiwalay sa `.env` file, may malinis kaming `.gitignore`, at binuo ang database gamit ang reproducible Laravel Migrations at Seeders."
+1. Ang aming database ay na-migrate po mula sa local XAMPP patungo sa TiDB Serverless Cloud (MySQL-compatible) na naka-host sa AWS Singapore sa Port 4000.
+2. Naka-enable po ang secure TLS/SSL encrypted connection gamit ang system CA certificates, kaya 24/7 accessible at persistent ang aming data kahit saan mag-log in ang evaluator.
+3. Mayroon po kaming 7 normalized tables na may strict Foreign Key constraints, Unique constraints sa emails at student IDs, at B-Tree indexes para sa sub-millisecond query performance.
+4. Ginamit po namin ang 'JSON Snapshot Pattern' sa order items at product sizes upang maiwasan ang historical price corruption kapag nagbago ang presyo sa hinaharap.
+5. Sa aspeto ng Cloud Deployment, naka-containerize ang buong Laravel app gamit ang custom Dockerfile sa Render Cloud (URL: https://laravel-midterm-8n2y.onrender.com) na may 24/7 automated keep-alive mula sa UptimeRobot."
 
 (Ipapasa ang mic pabalik kay Member 1)
 
 MEMBER 1 (Project Documentation & Standards - Task 5):
 "Panghuli po, para sa aming Task 5: Project Documentation:
-(Buksan ang README.md sa VS Code o Browser)
-1. Ang aming repository po ay may kumpleto at propesyonal na `README.md` na naglalaman ng tech stack badges, system problem statement, step-by-step local installation guide, ASCII ERD diagram, at kumpletong REST API route catalog.
+(Buksan ang README.md sa VS Code o Browser: https://laravel-midterm-8n2y.onrender.com)
+1. Ang aming repository po ay may kumpleto at propesyonal na `README.md` na naglalaman ng production cloud badges, system problem statement, step-by-step local installation guide, ASCII ERD diagram, at kumpletong REST API route catalog na may 21 endpoints.
 2. Ang bawat function sa aming codebase ay sumusunod sa PHPDoc at JSDoc commenting standards na nagdedeklara ng `@param` at `@return` types.
-3. Mayroon din po kaming limang nakahiwalay na technical guides para sa Frontend, Backend, Database, System Support, at Documentation Defense Guide na tinitiyak ang seamless maintenance at developer onboarding."
+3. Mayroon din po kaming kumpletong incident management logs kung saan naka-record kung paano namin naresolba ang Docker 500 error, OnePass 400 Bad Request, at ang SQL 1062 duplicate key constraint bug sa aming cloud database."
 
 
 --------------------------------------------------------------------------------

@@ -159,7 +159,7 @@ SLIDE 5: DATABASE ARCHITECTURE & SCHEMA HIGHLIGHTS
 
 • EXACT ON-SLIDE TEXT:
   [Slide Title]: Database Architecture & Schema Integrity
-  [Subtitle]: MySQL 8.0 InnoDB Engine with Full ACID Compliance
+  [Subtitle]: TiDB Serverless Cloud on AWS Singapore (MySQL 8.0 InnoDB Compatible)
 
   [Core Tables (7 Normalized Tables)]:
   1. products: Catalog inventory with JSON size counts & atomic stock units
