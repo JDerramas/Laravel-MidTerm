@@ -107,6 +107,24 @@
       scrollbar-width: none;
     }
 
+    /* Mobile View: Strictly hide desktop sidebar navigation so only bottom icon nav bar is used */
+    #admin-desktop-sidebar {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      overflow: hidden !important;
+      pointer-events: none !important;
+    }
+    @media screen and (min-width: 1024px) {
+      #admin-desktop-sidebar {
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        overflow: visible !important;
+        pointer-events: auto !important;
+      }
+    }
+
     /* Print Slip Styles */
     @media print {
       body * {
@@ -265,7 +283,7 @@
         <!-- SIDEBAR NAVIGATION (Matching Whiteboard wireframe) -->
         <!-- Dashboard | INFO MGMT | REPORTS | USER MGMT | ACT LOGS -->
         <!-- ======================================================== -->
-        <aside class="hidden lg:block lg:col-span-3 bg-slate-900/90 rounded-3xl border border-slate-800 p-4 shadow-2xl sticky top-24">
+        <aside id="admin-desktop-sidebar" class="hidden lg:block lg:col-span-3 bg-slate-900/90 rounded-3xl border border-slate-800 p-4 shadow-2xl sticky top-24">
           <div class="p-3 mb-3 bg-gradient-to-br from-ics-900/90 to-slate-950 rounded-2xl border border-ics-800/80">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-ics-800 border border-ics-600 flex items-center justify-center p-1 flex-shrink-0">
@@ -388,7 +406,7 @@
         <!-- ======================================================== -->
         <!-- MAIN ADMIN CONTENT AREA -->
         <!-- ======================================================== -->
-        <div class="lg:col-span-9 space-y-6">
+        <div class="col-span-12 lg:col-span-9 space-y-6 w-full">
 
           <!-- ======================================================== -->
           <!-- MODULE 1: DASHBOARD (Sales vs Stock Analytics) -->
