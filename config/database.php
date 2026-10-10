@@ -59,10 +59,42 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA', (!in_array(env('DB_HOST', '127.0.0.1'), ['127.0.0.1', 'localhost']) ? env('DB_SSL_CA', true) : null)),
-                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT', false),
-            ], fn($val) => !is_null($val) && $val !== '' && $val !== false) : [],
+            'options' => extension_loaded('pdo_mysql') ? (function () {
+                $host = env('DB_HOST', '127.0.0.1');
+                $isLocal = in_array($host, ['127.0.0.1', 'localhost']);
+                if ($isLocal) {
+                    return [];
+                }
+
+                $ca = env('MYSQL_ATTR_SSL_CA', env('DB_SSL_CA'));
+                if (empty($ca) || $ca === true || $ca === 'true' || $ca === '1' || !is_file($ca)) {
+                    $bundled = function_exists('database_path') ? database_path('cacert.pem') : (__DIR__ . '/../database/cacert.pem');
+                    $candidates = [
+                        $bundled,
+                        '/etc/ssl/certs/ca-certificates.crt', // Debian / Ubuntu / Official Docker PHP
+                        '/etc/pki/tls/certs/ca-bundle.crt',  // RedHat / CentOS
+                        '/etc/ssl/cert.pem',                 // Alpine Linux / macOS
+                    ];
+                    $ca = null;
+                    foreach ($candidates as $candidate) {
+                        if (is_file($candidate)) {
+                            $ca = $candidate;
+                            break;
+                        }
+                    }
+                }
+
+                $options = [
+                    PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT', false),
+                ];
+
+                if ($ca && is_file($ca)) {
+                    $attr = (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA);
+                    $options[$attr] = $ca;
+                }
+
+                return $options;
+            })() : [],
         ],
 
         'mariadb' => [

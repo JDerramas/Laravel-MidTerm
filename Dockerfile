@@ -4,6 +4,7 @@ FROM php:8.3-apache
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    ca-certificates \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
@@ -45,7 +46,7 @@ ENV APP_NAME="ICS Merch Store" \
     DB_DATABASE=my_laravel \
     DB_USERNAME=2Myo9Z5wk3AswFy.root \
     DB_PASSWORD=Jf5bnPqoLUSWfIap \
-    MYSQL_ATTR_SSL_CA=true \
+    MYSQL_ATTR_SSL_CA=/etc/ssl/certs/ca-certificates.crt \
     MYSQL_ATTR_SSL_VERIFY_SERVER_CERT=false \
     SESSION_DRIVER=database \
     CACHE_STORE=array \
