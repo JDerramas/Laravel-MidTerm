@@ -171,6 +171,21 @@
         <!-- Portal Link Switcher & Controls -->
         <div class="flex items-center gap-2 sm:gap-3">
 
+          <!-- Activity Notifications Bell Button -->
+          <button
+            type="button"
+            onclick="icsApp.setAdminTab('actlogs')"
+            class="relative p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 hover:border-cyan-500 transition shadow flex items-center justify-center group"
+            title="Activity Audit Logs & Live Notifications">
+            <svg class="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span id="admin-top-actlogs-ping" class="absolute -top-1 -right-1 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+            </span>
+          </button>
+
           <!-- Switch to Student Store Button -->
           <a
             href="{{ route('home') }}"
@@ -199,6 +214,18 @@
               </p>
             </div>
           </div>
+
+          <!-- Dedicated Admin Sign Out Button -->
+          <button
+            type="button"
+            onclick="icsApp.adminLogout()"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-950/70 hover:bg-rose-900 text-rose-200 border border-rose-800/80 hover:border-rose-600 transition flex items-center gap-1.5 shadow"
+            title="Sign out of Admin Console">
+            <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span class="hidden sm:inline">Sign Out</span>
+          </button>
 
         </div>
 
@@ -334,6 +361,7 @@
                 </svg>
                 <span>ACT LOGS (Audit Trail)</span>
               </div>
+              <span id="admin-nav-actlogs-badge" class="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 font-mono text-cyan-300">{{ count($activityLogs) }}</span>
             </button>
 
             <!-- 7. Support Tickets & Chat Helpdesk -->
@@ -597,7 +625,7 @@
                       <th class="py-2.5 px-3">DATE / TIMESTAMP</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-slate-800 text-slate-300">
+                  <tbody id="dashboard-recent-activity-tbody" class="divide-y divide-slate-800 text-slate-300">
                     @foreach($activityLogs->take(5) as $log)
                     <tr class="hover:bg-slate-800/40">
                       <td class="py-2 px-3 font-mono text-ics-gold font-bold">{{ $log->user_code }}</td>
@@ -1843,6 +1871,16 @@
         this.renderAdminTicketsList();
         this.renderActivityLogsTable();
 
+        @if(session('success'))
+          this.showToast(@json(session('success')), 'success');
+        @endif
+        @if(session('info'))
+          this.showToast(@json(session('info')), 'info');
+        @endif
+        @if(session('error'))
+          this.showToast(@json(session('error')), 'error');
+        @endif
+
         // Restore active admin tab: stays on current section upon edit, delete, or reload
         let initialTab = 'dashboard';
         try {
@@ -1966,6 +2004,61 @@
                       container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
                     }
                   }
+                }
+              }
+            }
+
+            // 4. Real-time Activity Logs Sync & LIVE SYSTEM NOTIFICATIONS (Login, Logout, Reservations, etc.)
+            if (data.activity_logs && Array.isArray(data.activity_logs)) {
+              const incomingLogs = data.activity_logs;
+              
+              if (!this._lastSeenActivityLogId) {
+                this._lastSeenActivityLogId = incomingLogs.length > 0 
+                  ? Math.max(...incomingLogs.map(l => Number(l.id) || 0)) 
+                  : 0;
+              } else {
+                const brandNewLogs = incomingLogs.filter(l => Number(l.id) > this._lastSeenActivityLogId);
+                
+                if (brandNewLogs.length > 0) {
+                  this._lastSeenActivityLogId = Math.max(...incomingLogs.map(l => Number(l.id) || 0));
+
+                  // Alert with Toast for new logs (especially LOGIN & LOGOUT)
+                  brandNewLogs.forEach(log => {
+                    let toastType = 'info';
+                    let actionBadge = '⚡';
+                    
+                    if (log.action === 'LOGIN') {
+                      toastType = 'success';
+                      actionBadge = '🔑 LOGIN';
+                    } else if (log.action === 'LOGOUT') {
+                      toastType = 'warning';
+                      actionBadge = '🚪 LOGOUT';
+                    } else if (log.action === 'CREATE') {
+                      toastType = 'success';
+                      actionBadge = '📦 NEW';
+                    } else if (log.action === 'DELETE') {
+                      toastType = 'error';
+                      actionBadge = '🗑️ DELETE';
+                    } else if (log.action === 'UPDATE') {
+                      toastType = 'info';
+                      actionBadge = '✏️ UPDATE';
+                    } else {
+                      actionBadge = `📋 ${log.action}`;
+                    }
+
+                    this.showToast(`<strong>${actionBadge}:</strong> ${log.activity || 'Activity recorded'}`, toastType);
+                    this.playNotificationChime();
+                  });
+
+                  this.activityLogs = incomingLogs;
+
+                  // Update sidebar badge
+                  const badge = document.getElementById('admin-nav-actlogs-badge');
+                  if (badge) badge.textContent = incomingLogs.length;
+
+                  // Update tables in real-time
+                  this.renderActivityLogsTable();
+                  this.renderRecentActivitySnippet();
                 }
               }
             }
@@ -3949,6 +4042,89 @@
         } catch (err) {
           console.error(err);
           this.showToast('Network error while clearing activity logs.', 'error');
+        }
+      }
+
+      /**
+       * REALTIME RECENT ACTIVITY DASHBOARD SNIPPET
+       */
+      renderRecentActivitySnippet() {
+        const tbody = document.getElementById('dashboard-recent-activity-tbody');
+        if (!tbody) return;
+        const allLogs = Array.isArray(this.activityLogs) ? this.activityLogs : Object.values(this.activityLogs || {});
+        const recent = allLogs.slice(0, 5);
+        tbody.innerHTML = '';
+        if (recent.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 text-xs">No recent activity logs.</td></tr>';
+          return;
+        }
+        recent.forEach(log => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/40 transition';
+          const act = (log.action || '').toUpperCase();
+          let badgeClass = 'bg-blue-950 text-blue-300 border border-blue-800';
+          if (act === 'CREATE') badgeClass = 'bg-emerald-950 text-emerald-300 border border-emerald-800';
+          else if (act === 'UPDATE') badgeClass = 'bg-amber-950 text-amber-300 border border-amber-800';
+          else if (act === 'DELETE') badgeClass = 'bg-rose-950 text-rose-300 border border-rose-800';
+          else if (act === 'LOGIN') badgeClass = 'bg-purple-950 text-purple-300 border border-purple-800';
+          else if (act === 'LOGOUT') badgeClass = 'bg-slate-800 text-slate-300 border border-slate-700';
+
+          const createdDate = log.created_at ? new Date(log.created_at).toLocaleString([], {
+            month: '2-digit', day: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          }) : 'Recently';
+
+          tr.innerHTML = `
+            <td class="py-2 px-3 font-mono text-ics-gold font-bold">${log.user_code || 'USR-001'}</td>
+            <td class="py-2 px-3">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono ${badgeClass}">${act}</span>
+            </td>
+            <td class="py-2 px-3">${log.activity || ''}</td>
+            <td class="py-2 px-3 font-mono text-slate-400 text-[11px]">${createdDate}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      /**
+       * GENTLE WEB AUDIO SYNTH CHIME
+       * Provides instant audio notification feedback on new activities
+       */
+      playNotificationChime() {
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(880.00, ctx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.08, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.3);
+        } catch (e) {}
+      }
+
+      /**
+       * ADMIN CONSOLE LOGOUT
+       */
+      async adminLogout() {
+        if (!confirm('Are you sure you want to sign out of the Admin Console?')) return;
+        try {
+          await fetch('{{ route("admin.logout") }}', {
+            method: 'POST',
+            headers: {
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            }
+          });
+          window.location.href = '{{ route("home") }}';
+        } catch (e) {
+          window.location.href = '{{ route("admin.logout") }}';
         }
       }
 

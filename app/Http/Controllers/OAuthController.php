@@ -296,16 +296,28 @@ class OAuthController extends Controller
     {
         $user = session('student_user');
         if ($user) {
-            ActivityLog::record(
-                'LOGOUT',
-                "Student [{$user['name']} ({$user['student_id']})] signed out of session.",
-                $user['student_id'],
-                $user['name'],
-                'Student Store'
-            );
+            try {
+                ActivityLog::record(
+                    'LOGOUT',
+                    "Student [{$user['name']} ({$user['student_id']})] signed out of session.",
+                    $user['student_id'],
+                    $user['name'],
+                    'Student Store'
+                );
+            } catch (\Throwable $logEx) {
+                Log::warning('Non-blocking ActivityLog logout warning: ' . $logEx->getMessage());
+            }
         }
 
-        session()->forget('student_user');
+        session()->forget(['student_user', 'admin_audit_logged']);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'You have been signed out of your OnePass student session.'
+            ]);
+        }
+
         return redirect()->route('home')->with('info', 'You have been signed out of your OnePass student session.');
     }
 

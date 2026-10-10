@@ -117,6 +117,20 @@ class MerchController extends Controller
             return redirect()->route('home')->with('error', "Access Denied: Your account ({$userEmail}) is not authorized as an Administrator in User Management.");
         }
 
+        // Audit Trail: Record Admin Login once per session
+        if (!session('admin_audit_logged')) {
+            try {
+                ActivityLog::record(
+                    'LOGIN',
+                    "Admin [{$adminUser->name} ({$adminUser->user_code})] authenticated and accessed the Admin Console.",
+                    $adminUser->user_code,
+                    $adminUser->name,
+                    'Admin Console'
+                );
+                session(['admin_audit_logged' => true]);
+            } catch (\Throwable $e) {}
+        }
+
         // 1. Fetch records from each database table using Eloquent queries
         $products = Product::where('is_active', true)->orderBy('id', 'asc')->get();
         $reservations = Reservation::with('activeTicket')
@@ -1393,6 +1407,11 @@ class MerchController extends Controller
             $categoryStats[$cat]['sold'] += intval($p->units_sold);
         }
 
+        $activityLogs = [];
+        if ($scope === 'admin') {
+            $activityLogs = ActivityLog::orderBy('created_at', 'desc')->take(200)->get();
+        }
+
         return response()->json([
             'success'             => true,
             'timestamp'           => now()->toIso8601String(),
@@ -1402,6 +1421,7 @@ class MerchController extends Controller
             'support_tickets'     => $supportTickets,
             'active_ticket'       => $activeTicket,
             'open_tickets_count'  => $openTicketsCount,
+            'activity_logs'       => $activityLogs,
             'metrics'             => [
                 'total_products'  => $products->count(),
                 'total_stock'     => $totalStockUnits,
@@ -1414,6 +1434,41 @@ class MerchController extends Controller
                 'category_stats'  => $categoryStats,
             ]
         ]);
+    }
+
+    /**
+     * Dedicated Admin Console Sign Out with Audit Logging
+     */
+    public function adminLogout(Request $request)
+    {
+        $studentUser = session('student_user');
+        $userEmail = strtolower(trim($studentUser['email'] ?? ''));
+        $adminUser = $userEmail ? SystemUser::whereRaw('LOWER(TRIM(email)) = ?', [$userEmail])->first() : null;
+
+        $operatorCode = $adminUser->user_code ?? $studentUser['student_id'] ?? 'USR-001';
+        $operatorName = $adminUser->name ?? $studentUser['name'] ?? 'Administrator';
+
+        try {
+            ActivityLog::record(
+                'LOGOUT',
+                "Admin [{$operatorName} ({$operatorCode})] signed out of the Admin Console.",
+                $operatorCode,
+                $operatorName,
+                'Admin Console'
+            );
+        } catch (\Throwable $e) {}
+
+        session()->forget(['student_user', 'admin_audit_logged']);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Admin session signed out successfully.',
+                'redirect' => route('home')
+            ]);
+        }
+
+        return redirect()->route('home')->with('info', "Admin session signed out successfully.");
     }
 
     /**

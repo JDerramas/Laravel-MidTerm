@@ -29,6 +29,7 @@ Route::match(['get', 'post'], '/oauth/logout', [OAuthController::class, 'logout'
 Route::get('/', [MerchController::class, 'index'])->name('home');
 Route::get('/admin', [MerchController::class, 'admin'])->name('admin');
 Route::get('/admin/dashboard', [MerchController::class, 'admin'])->name('admin.dashboard');
+Route::match(['get', 'post'], '/admin/logout', [MerchController::class, 'adminLogout'])->name('admin.logout');
 
 Route::get('/api/realtime/sync', [MerchController::class, 'getRealtimeSync'])->name('api.realtime.sync');
 Route::get('/api/realtisyncme/', [MerchController::class, 'getRealtimeSync']);

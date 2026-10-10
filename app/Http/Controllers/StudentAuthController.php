@@ -208,16 +208,18 @@ class StudentAuthController extends Controller
     {
         $stu = session('student_user');
         if ($stu) {
-            ActivityLog::record(
-                'LOGOUT',
-                "Student [{$stu['name']} ({$stu['student_id']})] signed out of session.",
-                $stu['student_id'],
-                $stu['name'],
-                'Student Store'
-            );
+            try {
+                ActivityLog::record(
+                    'LOGOUT',
+                    "Student [{$stu['name']} ({$stu['student_id']})] signed out of session.",
+                    $stu['student_id'],
+                    $stu['name'],
+                    'Student Store'
+                );
+            } catch (\Throwable $e) {}
         }
 
-        session()->forget('student_user');
+        session()->forget(['student_user', 'admin_audit_logged']);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

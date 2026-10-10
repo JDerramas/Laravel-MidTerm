@@ -2132,6 +2132,16 @@
         this.updateStudentMyTicketsCount();
         this.startRealtimeSync();
 
+        @if(session('success'))
+          this.showToast(@json(session('success')), 'success');
+        @endif
+        @if(session('info'))
+          this.showToast(@json(session('info')), 'info');
+        @endif
+        @if(session('error'))
+          this.showToast(@json(session('error')), 'error');
+        @endif
+
         // Silently pre-warm OnePass Render server in background to avoid OAuth cold-start delays
         try {
           fetch('https://onepass-gdbe.onrender.com/', {
