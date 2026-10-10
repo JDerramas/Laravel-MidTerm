@@ -43,8 +43,8 @@ return [
     ],
 
     'onepass' => [
-        'client_id' => env('ONEPASS_CLIENT_ID', 'cp3_client_GEO6TVWojyxq9i7bM2LS'),
-        'client_secret' => env('ONEPASS_CLIENT_SECRET', 'cp3_sec_UbzWwxTbaKO5jmqmZ2O5HGxpnWRMjV2I82iQ'),
+        'client_id' => env('ONEPASS_CLIENT_ID', 'cp3_client_ksPuSaN7bL7lAF9W8Enk'),
+        'client_secret' => env('ONEPASS_CLIENT_SECRET', 'cp3_sec_nQxEeSfQXyRHdfecwA0yb6JPF5OZAOs5yXpl'),
         'issuer_url' => env('ONEPASS_ISSUER_URL', 'https://onepass-gdbe.onrender.com'),
         'redirect_uri' => env('ONEPASS_REDIRECT_URI', 'http://127.0.0.1:8000/oauth/callback'),
     ],

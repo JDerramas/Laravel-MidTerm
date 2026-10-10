@@ -49,8 +49,8 @@ ENV APP_NAME="ICS Merch Store" \
     MYSQL_ATTR_SSL_VERIFY_SERVER_CERT=false \
     SESSION_DRIVER=database \
     CACHE_STORE=array \
-    ONEPASS_CLIENT_ID=cp3_client_GEO6TVWojyxq9i7bM2LS \
-    ONEPASS_CLIENT_SECRET=cp3_sec_UbzWwxTbaKO5jmqmZ2O5HGxpnWRMjV2I82iQ \
+    ONEPASS_CLIENT_ID=cp3_client_ksPuSaN7bL7lAF9W8Enk \
+    ONEPASS_CLIENT_SECRET=cp3_sec_nQxEeSfQXyRHdfecwA0yb6JPF5OZAOs5yXpl \
     ONEPASS_ISSUER_URL=https://onepass-gdbe.onrender.com
 
 # Setup directory structure and permissions for storage, database, and bootstrap/cache
