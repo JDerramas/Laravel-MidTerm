@@ -1,0 +1,234 @@
+================================================================================
+     MENSAHE AT STEP-BY-STEP EXPLANATION PARA SA ATING GROUP CHAT (GC)
+      (COPY-PASTE MO ITO SA GC NIYO PARA MA-GETS NILA AT MAY MA-REPORT SILA)
+================================================================================
+Mula kay: Jilo Derramas
+Para sa: Groupmates / Team Members (CP3 Midterm Project)
+Proyekto: ICS Apparel & Merchandise Reservation System
+Live Website Link: https://laravel-midterm-8n2y.onrender.com
+GitHub Repo: https://github.com/JDerramas/Laravel-MidTerm.git
+================================================================================
+
+Guys, basahin niyo 'to nang buo at maigi. 
+
+Dahil ako ang gumawa ng buong system natin mula backend, frontend, database, deployment, support, hanggang documentation—inilista ko dito step-by-step kung ano eksakto yung mga ginawa ko at kung paano tumatakbo ang bawat part. 
+
+Ginawa ko ito para ma-gets niyo talaga yung flow, maintindihan niyo yung system, at higit sa lahat, may masabi at maipaliwanag kayo sa reporting natin nang hindi tayo nangangapa. 
+
+Heto ang buong kwento at technical breakdown ng ginawa ko:
+
+--------------------------------------------------------------------------------
+1. DATABASE: PAANO KO NILIPAT SA TiDB CLOUD (AWS SINGAPORE)
+--------------------------------------------------------------------------------
+• Bakit ko nilipat mula sa XAMPP papunta sa Cloud Database?
+  Noong una, sa local XAMPP MySQL (localhost) lang tumatakbo ang database natin. 
+  Pero dahil inilabas at ni-deploy ko yung website natin sa internet sa Render.com, 
+  hindi kayang basahin ng cloud server sa Render yung database sa laptop ko kapag 
+  pinatay ko ang laptop o nawalan ng WiFi. Kaya kinailangan ko ng totoong cloud database 
+  na 24/7 gising.
+
+• Anong database ang ginamit ko?
+  Gumamit ako ng **TiDB Serverless Cloud**. Naka-host ito sa **AWS Singapore (ap-southeast-1)**. 
+  Bakit TiDB? Kasi 100% compatible ito sa MySQL 8.0, sobrang bilis ng latency dahil nasa 
+  Singapore lang, at may secure cloud storage.
+
+• Step-by-step kung paano ko nilipat:
+  1. Gumawa ako ng cluster sa TiDB Cloud console. 
+  2. Kinuha ko yung credentials: host (`gateway01.ap-southeast-1.prod.aws.tidbcloud.com`), 
+     database name (`my_laravel`), at ang **Port 4000** (tandaan niyo: Port 4000 ang TiDB, 
+     hindi default na 3306).
+  3. In-export ko yung buong schema at data mula sa XAMPP patungo sa `database/my_laravel.sql`.
+  4. Inayos ko yung `config/database.php` sa Laravel para i-enable ang TLS/SSL connection 
+     gamit ang system CA certificates (`/etc/ssl/certs/ca-certificates.crt`). Kapag walang SSL, 
+     haharangin ng TiDB ang koneksyon.
+  5. In-import ko yung 7 core tables natin sa TiDB Cloud at siniguradong gumagana lahat.
+
+• Yung Error na hinarap ko sa database at paano ko naayos:
+  Nung nag-login ako gamit ang campus OnePass account ko, biglang lumabas yung error na:
+  `SQLSTATE[23000] 1062 Duplicate entry sa students_email_unique`.
+  
+  Bakit nag-error? 
+  Sa database natin, naka-set na `UNIQUE` ang email ng students. May existing record na 
+  yung email ko sa database dati pero ang student ID ko roon ay `251505`. Nung nag-login 
+  ako sa OnePass, nagpadala ang OnePass ng bagong user ID na `28`. Ang lumang code ay 
+  nag-attempt mag-insert ng bagong student gamit ang ID 28 at ang email ko. Dahil bawal ang 
+  duplicate email, nag-crash ang database!
+  
+  Paano ko naayos?
+  1. In-update ko sa database yung student ID ko na maging `28` para tugma sa OnePass at sa 
+     mga reservations ko.
+  2. Sa backend (`OAuthController.php`), binago ko yung logic: ginawa kong **Smart Lookup**. 
+     Hahanapin muna ng system kung umiiral na yung email O yung student ID. Kung meron na, 
+     **i-uupdate** na lang nito yung record imbes na mag-insert ng bago.
+  3. Binalot ko sa `try / catch` block para kahit magka-glitch, hindi magka-crash ang screen.
+
+
+--------------------------------------------------------------------------------
+2. BACKEND: LOGIC, ROUTING, AUTHENTICATION, AT STOCKS
+--------------------------------------------------------------------------------
+• Ano ang ginawa ko sa Backend?
+  Gumamit ako ng **Laravel 11 (PHP 8.2+)** na may MVC (Model-View-Controller) architecture.
+  Nasa `app/Http/Controllers/MerchController.php` at `OAuthController.php` ang bulk ng code.
+
+• REST API Endpoints na ginawa ko:
+  - `GET /` -> Student Storefront page.
+  - `GET /admin` -> Dedicated Admin Dashboard.
+  - `GET /api/realtime/sync` -> Nagbibigay ng pinakabagong stock, chat messages, at activity logs 
+    bawat 2 seconds nang walang page reload.
+  - `POST /api/reservations` -> Gumagawa ng bagong order na may auto-generated reference code 
+    (`ICS-2026-XXXXX`).
+  - `PATCH /api/reservations/{id}/status` -> Nagbabago ng status (Pending, Ready for Pickup, 
+    Claimed, Cancelled).
+  - `POST /admin/logout` -> Nagla-log out sa admin at nagre-record ng official LOGOUT sa activity log.
+
+• OnePass OAuth 2.0 PKCE Integration:
+  Wala tayong manual username at password para sa mga estudyante. Gumamit ako ng campus 
+  Single Sign-On (SSO) gamit ang **RFC 7636 PKCE S256** standard.
+  Pag-click ng "Continue with OnePass", magdidirekta sa OnePass server. Pagka-authorize, 
+  nagbabalik ito ng verified token na naglalaman ng pangalan, student ID, institutional email, 
+  course, year level, section, at avatar photo.
+
+• Stock Validation & Anti-Overselling:
+  Bago makapag-checkout ang student, chine-check ng backend kung may available stock pa sa 
+  napiling size (XS, S, M, L, XL, 2XL). 
+  - Kapag nag-order, awtomatikong nababawasan ang `current_stock` at nadadagdagan ang `units_reserved`.
+  - Kapag kinansela ang order, kusa at awtomatikong ibinabalik ng backend ang stock sa inventory!
+
+• Role-Based Access Control (RBAC):
+  Hindi lahat pwedeng pumasok sa `/admin`. Sinusuri ng backend kung ang email na nag-login ay 
+  nakalista sa `system_users` table bilang Active Admin. Kung regular student email lang, 
+  automatic na Access Denied.
+
+
+--------------------------------------------------------------------------------
+3. FRONTEND: UI/UX, CART, SIZE GUIDE, AT REAL-TIME ENGINE
+--------------------------------------------------------------------------------
+• Disenyo at hitsura:
+  Gumamit ako ng **Tailwind CSS** para sa custom ICS branding (Crimson Red, Gold accents, at 
+  Dark Slate) na may modern glassmorphic look.
+  - Dalawa ang main views natin: `merch.blade.php` (para sa students) at `admin.blade.php` 
+    (para sa council/officers).
+  - Mobile responsive: may sliding mobile drawer para swabe gamitin kahit sa cellphone.
+
+• Mga features na ginawa ko sa Student Portal:
+  - Dynamic Catalog na may search bar at category tabs (Collegiate, PE, Department, Accessories).
+  - Size Guide Modal: pwedeng mag-toggle sa pagitan ng **Inches (in)** at **Centimeters (cm)**.
+  - Cart Drawer: pwedeng magdagdag ng items, mag-adjust ng quantity, at mag-proceed to checkout.
+  - GCash Payment Modal: pwedeng mag-enter ng reference number at mag-upload ng photo ng receipt.
+
+• Real-Time Polling Engine (Walang Page Refresh):
+  Sa halip na kailanganin pang mag-F5 o mag-reload ng browser, gumawa ako ng JavaScript loop 
+  na nagfe-fetch sa `/api/realtime/sync` tuwing **2 segundo**.
+  Kapag may nag-order, nag-cancel, o nagbago ang stock, kusa itong nag-uupdate sa screen.
+
+• Live Floating Toast Notifications at Synth Chime Sound:
+  Tuwing may bagong nag-login, nag-logout, o may pumasok na bagong order:
+  1. Lumalabas ang floating **Toast Notification** sa itaas ng screen:
+     - 🟢 Green para sa Login at Bagong Reservation
+     - 🟡 Amber para sa Logout
+     - 🔴 Red para sa Deletion o Error
+  2. Tumutunog ang malinis na chime sound gamit ang **Web Audio API (`AudioContext`)** ng browser 
+     nang hindi kailangan ng external mp3 file!
+  3. May pulsing **Notification Bell** sa header ng admin panel.
+
+
+--------------------------------------------------------------------------------
+4. SYSTEM SUPPORT & DEVOPS: RENDER CLOUD, DOCKER, AT UPTIMEROBOT
+--------------------------------------------------------------------------------
+• Live Cloud Hosting sa Render.com:
+  Naka-host at live sa internet ang buong system natin:
+  👉 **https://laravel-midterm-8n2y.onrender.com**
+
+• Docker Containerization:
+  Gumawa ako ng custom `Dockerfile` base sa PHP 8.2 na may Nginx/Apache at Composer.
+  - **Web Root Isolation:** Ini-lock ko ang server sa `/public/` directory para hindi ma-leak 
+    sa internet ang `.env` file at ang source code natin para sa security.
+
+• UptimeRobot 24/7 Keep-Alive:
+  Dahil libre ang tier ng Render, natutulog (sleep mode) ang server kapag walang bumibisita 
+  sa loob ng 15 minuto, na nagdudulot ng 30-50 seconds na loading delay.
+  Para maiwasan ito, nag-setup ako ng automated monitor sa **UptimeRobot** na nagpi-ping sa 
+  website natin tuwing **5 minuto**. Dahil laging may pumapasok na request, laging gising 
+  at mabilis mag-load ang website natin kapag binuksan ng prof!
+
+• Two-Way Customer Helpdesk & Turn-Taking Anti-Spam:
+  - Pwedeng magbukas ng ticket ang estudyante gamit ang reference code ng order niya.
+  - May live chat sa pagitan ng student at admin.
+  - **Anti-Spam Turn-Taking:** Bawal mag-spam o magpadala ng sunod-sunod na message ang student 
+    hangga't hindi pa sumasagot ang admin!
+  - **Conflict Lock (`⚠️ ON HOLD`):** Habang may bukas na reklamo ang student, naka-lock sa 
+    admin queue ang button na i-mark as "Ready for Pickup" o "Claimed" para hindi maipamigay 
+    ang damit nang may problema pa.
+  - **1-Click Cancel Reservation:** Kapag pinindot ng admin sa chat ang "Approve & Cancel", 
+    automatic na magiging Cancelled ang order at kusang ibabalik ang stock sa inventory!
+
+
+--------------------------------------------------------------------------------
+5. DOCUMENTATION: MARKDOWN AT CODE COMMENTS
+--------------------------------------------------------------------------------
+• Master README.md:
+  Inayos ko ang `README.md` sa GitHub repository. Nilagyan ko ito ng live Render badges, 
+  ASCII Entity-Relationship Diagram (ERD) ng 7 tables, visual flow, at kumpletong 
+  table ng 21 REST API endpoints.
+
+• Code Comments:
+  Nilagyan ko ng pormal na PHPDoc at JSDoc comments (`@param`, `@return`) ang mga functions 
+  sa controllers at scripts para kapag tiningnan ng prof ang code sa VS Code, makikita niyang 
+  malinis at may standard ang pagkakasulat.
+
+• Defense Guides:
+  Ginawan ko ang bawat isa sainyo ng designated reviewer files na nasa repository:
+  - `REPORT_PART1_BACKEND.txt`
+  - `REPORT_PART2_FRONTEND.txt`
+  - `REPORT_PART3_DATABASE_ADMIN.txt`
+  - `REPORT_PART4_SYSTEM_SUPPORT.txt`
+  - `REPORT_PART5_DOCUMENTATION.txt`
+  - `KAGRUPO_DEFENSE_MASTER_EXPLANATION.txt`
+
+
+================================================================================
+6. GABAY: ANO ANG SASABIHIN NG BAWAT ISA SA REPORTING
+================================================================================
+Para hindi kayo malito kung sino ang magsasalita sa bawat topic, heto ang hatian:
+
+👤 KUNG IKAW ANG SA BACKEND:
+- I-explain mo ang Laravel 11 MVC architecture at routes sa `routes/web.php`.
+- I-explain mo kung paano gumagana ang OnePass OAuth 2.0 PKCE authentication na walang 
+  plain-text passwords.
+- I-explain mo kung paano chine-check ang stock sa bawat size bago mag-order para maiwasan 
+  ang double-booking o overselling.
+
+👤 KUNG IKAW ANG SA FRONTEND:
+- I-explain mo ang dual-portal UI na gawa sa Tailwind CSS (Student Storefront at Admin Console).
+- I-highlight mo ang 2-second real-time polling engine sa JavaScript na nag-uupdate nang 
+  kusa nang walang page refresh.
+- I-demo mo yung floating toast notifications at Web Audio chime sounds kapag may nag-login, 
+  nag-logout, o nag-order.
+- Ipakita mo yung Size Guide modal na may toggle ng inches at centimeters.
+
+👤 KUNG IKAW ANG SA DATABASE:
+- I-explain mo kung paano natin inilipat ang database mula XAMPP papunta sa TiDB Serverless 
+  Cloud sa AWS Singapore gamit ang Port 4000 at TLS/SSL encryption.
+- Banggitin mo ang 7 normalized tables natin (`products`, `reservations`, `students`, etc.) 
+  at ang JSON columns para sa dynamic size counts.
+- I-kwento mo yung na-encounter nating Duplicate Entry 1062 bug sa login at kung paano natin 
+  inayos gamit ang Smart Lookup (`where email or student_id`) at defensive update.
+
+👤 KUNG IKAW ANG SA SYSTEM SUPPORT / DEVOPS:
+- I-explain mo ang live deployment sa Render.com gamit ang Docker container at kung bakit 
+  naka-point sa `public/` ang document root para sa security.
+- Banggitin mo ang UptimeRobot keep-alive monitor na nagpi-ping every 5 minutes para laging 
+  gising ang server.
+- I-explain mo ang Helpdesk chat, ang turn-taking anti-spam rule, at ang Conflict Lock 
+  (`⚠️ ON HOLD`) na pumipigil sa maling pag-release ng damit.
+
+👤 KUNG IKAW ANG SA DOCUMENTATION:
+- Ipakita mo ang `README.md` sa screen: i-highlight ang live badges, live link, visual ERD 
+  diagram, at ang catalog ng 21 REST API endpoints.
+- Ipakita mo ang PHPDoc code comments sa `MerchController.php` bilang patunay ng malinis 
+  na software documentation standards.
+
+--------------------------------------------------------------------------------
+Buo na ang system natin at 100% live sa internet. Aralin niyo 'tong maigi para pagdating 
+ng defense, kayang-kaya nating ipaliwanag nang sabay-sabay at mataas ang makuha nating grade!
+================================================================================
