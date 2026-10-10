@@ -31,4 +31,15 @@ class Reservation extends Model
         'items' => 'array',
         'total_amount' => 'float',
     ];
+
+    public function supportTickets()
+    {
+        return $this->hasMany(SupportTicket::class, 'reservation_ref', 'ref_code');
+    }
+
+    public function activeTicket()
+    {
+        return $this->hasOne(SupportTicket::class, 'reservation_ref', 'ref_code')
+            ->whereIn('status', ['Open', 'In Progress']);
+    }
 }

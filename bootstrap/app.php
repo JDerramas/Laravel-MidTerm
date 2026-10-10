@@ -13,7 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: [
             'api/*',
+            'student/*',
         ]);
+
+        // Prevent single-threaded PHP CLI server (php artisan serve) from locking up persistent sockets on Windows
+        $middleware->append(\App\Http\Middleware\CloseConnectionForCliServer::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

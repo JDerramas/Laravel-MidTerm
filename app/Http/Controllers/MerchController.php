@@ -19,30 +19,131 @@ class MerchController extends Controller
      */
     public function index(Request $request)
     {
-        // 1. Fetch records from each database table using simple Eloquent queries
+        // 1. Fetch active merchandise products for the catalog
         $products = Product::where('is_active', true)->orderBy('id', 'asc')->get();
-        $reservations = Reservation::orderBy('created_at', 'desc')->get();
+
+        // 2. Check for active student session
+        $studentUser = session('student_user');
+
+        // 3. User-to-User Privacy Guard: Fetch reservations ONLY for the currently logged-in student
+        if ($studentUser) {
+            $userStuId = $studentUser['student_id'] ?? null;
+            $userEmail = $studentUser['email'] ?? null;
+            $userName  = $studentUser['name'] ?? null;
+
+            $reservations = Reservation::where(function ($q) use ($userStuId, $userEmail, $userName) {
+                if ($userStuId) {
+                    $q->where('student_id', $userStuId);
+                }
+                if ($userEmail) {
+                    $q->orWhere('student_id', $userEmail);
+                }
+                if ($userName) {
+                    $q->orWhere('student_name', $userName);
+                }
+            })->where(function ($q) {
+                $q->where('status', '!=', 'Cancelled')
+                  ->orWhere('updated_at', '>=', now()->subMinutes(10));
+            })->orderBy('created_at', 'desc')->get();
+        } else {
+            // Unauthenticated guest: empty list so other students' orders are NEVER visible
+            $reservations = collect([]);
+        }
+
+        // 4. Fetch Helpdesk Tickets & active count for student support
+        if ($studentUser) {
+            $supportTickets = SupportTicket::with(['messages', 'reservation'])
+                ->where(function ($q) use ($studentUser) {
+                    $q->where('student_id', $studentUser['student_id'] ?? '')
+                        ->orWhere('student_name', $studentUser['name'] ?? '');
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(20)
+                ->get();
+            $openTicketsCount = SupportTicket::where(function ($q) use ($studentUser) {
+                $q->where('student_id', $studentUser['student_id'] ?? '')
+                    ->orWhere('student_name', $studentUser['name'] ?? '');
+            })->whereIn('status', ['Open', 'In Progress'])->count();
+        } else {
+            $supportTickets = collect([]);
+            $openTicketsCount = 0;
+        }
+
+        // 5. Fetch verified student roster for local direct sign-in modal
+        $studentsList = \App\Models\Student::where('status', 'Enrolled')->orderBy('id', 'asc')->get();
+
+        // 6. Check if current student has active admin privileges in system_users
+        $isAdminUser = false;
+        if ($studentUser && !empty($studentUser['email'])) {
+            $userEmailLower = strtolower(trim($studentUser['email']));
+            $isAdminUser = SystemUser::whereRaw('LOWER(TRIM(email)) = ?', [$userEmailLower])
+                ->where('status', 'Active')
+                ->exists();
+        }
+
+        // 7. Return the student view
+        return view('merch', compact(
+            'products',
+            'reservations',
+            'supportTickets',
+            'openTicketsCount',
+            'studentUser',
+            'studentsList',
+            'isAdminUser'
+        ));
+    }
+
+
+    /**
+     * DEDICATED ADMIN PORTAL: Renders admin.blade.php with all management modules
+     * (Dashboard KPIs, Products CRUD, Reservations Queue, Reports, Users, Logs, Helpdesk)
+     */
+    public function admin(Request $request)
+    {
+        // 0. ACCESS CONTROL GUARD: Check OnePass authenticated student/user session
+        $studentUser = session('student_user');
+        if (!$studentUser) {
+            return redirect()->route('home')->with('error', 'Access Restricted: Please sign in with your OnePass campus account first to access the Admin Console.');
+        }
+
+        $userEmail = strtolower(trim($studentUser['email'] ?? ''));
+
+        // Check if user's email exists in User Management (system_users) and is Active
+        $adminUser = SystemUser::whereRaw('LOWER(TRIM(email)) = ?', [$userEmail])
+            ->where('status', 'Active')
+            ->first();
+
+        if (!$adminUser) {
+            return redirect()->route('home')->with('error', "Access Denied: Your account ({$userEmail}) is not authorized as an Administrator in User Management.");
+        }
+
+        // 1. Fetch records from each database table using Eloquent queries
+        $products = Product::where('is_active', true)->orderBy('id', 'asc')->get();
+        $reservations = Reservation::with('activeTicket')
+            ->where(function ($q) {
+                $q->where('status', '!=', 'Cancelled')
+                  ->orWhere('updated_at', '>=', now()->subMinutes(10));
+            })
+            ->orderBy('created_at', 'desc')->get();
         $activityLogs = ActivityLog::orderBy('created_at', 'desc')->take(50)->get();
         $users = SystemUser::orderBy('id', 'asc')->get();
 
-        // 2. Simple math calculations for dashboard KPI summary cards
+        // 2. Compute Dashboard KPI summary metrics
         $totalProducts = $products->count();
         $totalStockUnits = $products->sum('current_stock');
         $totalSoldUnits = $products->sum('units_sold');
         $totalReservedUnits = $products->sum('units_reserved');
-        
-        // Total sales revenue (Units Sold x Price)
+
         $totalRevenue = 0;
         foreach ($products as $p) {
             $totalRevenue += ($p->units_sold * $p->price);
         }
 
-        // Count reservations by status
         $pendingReservationsCount = $reservations->where('status', 'Pending')->count();
         $readyReservationsCount   = $reservations->where('status', 'Ready for Pickup')->count();
         $claimedReservationsCount = $reservations->where('status', 'Claimed')->count();
 
-        // 3. Sales vs Stock calculation for each item (Dashboard & Reports)
+        // 3. Compute Sales vs Stock per item
         $salesVsStock = [];
         foreach ($products as $p) {
             $initial = $p->initial_stock > 0 ? $p->initial_stock : ($p->current_stock + $p->units_sold + $p->units_reserved);
@@ -65,7 +166,7 @@ class MerchController extends Controller
                 'initial_stock' => $initial,
                 'current_stock' => $p->current_stock,
                 'units_sold'    => $p->units_sold,
-                'units_reserved'=> $p->units_reserved,
+                'units_reserved' => $p->units_reserved,
                 'revenue'       => $p->units_sold * $p->price,
                 'stock_pct'     => $stockPct,
                 'sold_pct'      => $soldPct,
@@ -74,25 +175,44 @@ class MerchController extends Controller
             ];
         }
 
-        // Total initial stock across all items
         $totalInitialStock = 0;
         foreach ($salesVsStock as $item) {
             $totalInitialStock += $item['initial_stock'];
         }
 
-        // 4. Record entry in Activity Logs (Module 5 Audit Trail requirement)
-        ActivityLog::record('READ', 'Opened ICS Merch & Reservation Dashboard', 'USR-001', 'E. Moreno', 'Dashboard');
-
-        // 5. Fetch Support Helpdesk Tickets & Stats
+        // 4. Fetch Support Helpdesk Tickets
         $supportTickets = SupportTicket::with(['messages', 'reservation'])->orderBy('created_at', 'desc')->get();
         $openTicketsCount = $supportTickets->whereIn('status', ['Open', 'In Progress'])->count();
 
-        // 6. Pass data variables to the view
-        return view('merch', compact(
+        // 5. Category Performance Stats for Admin Charts
+        $categoryStats = [
+            'general'     => ['label' => 'Collegiate',    'stock' => 0, 'sold' => 0],
+            'pe'          => ['label' => 'Athletics & PE', 'stock' => 0, 'sold' => 0],
+            'department'  => ['label' => 'Dept Apparel',  'stock' => 0, 'sold' => 0],
+            'accessory'   => ['label' => 'Accessories',   'stock' => 0, 'sold' => 0],
+        ];
+        foreach ($products as $p) {
+            $cat = strtolower(trim($p->category));
+            if ($cat === 'accessories') $cat = 'accessory';
+            if (!isset($categoryStats[$cat])) {
+                $categoryStats[$cat] = ['label' => ucfirst($cat), 'stock' => 0, 'sold' => 0];
+            }
+            $categoryStats[$cat]['stock'] += intval($p->current_stock);
+            $categoryStats[$cat]['sold'] += intval($p->units_sold);
+        }
+
+        // 6. Fetch verified OnePass students from database for User Management
+        $verifiedStudents = \App\Models\Student::orderBy('name', 'asc')->get();
+
+        // 7. Return dedicated admin blade view
+        return view('admin', compact(
             'products',
             'reservations',
             'activityLogs',
             'users',
+            'adminUser',
+            'studentUser',
+            'verifiedStudents',
             'supportTickets',
             'openTicketsCount',
             'totalProducts',
@@ -104,7 +224,8 @@ class MerchController extends Controller
             'pendingReservationsCount',
             'readyReservationsCount',
             'claimedReservationsCount',
-            'salesVsStock'
+            'salesVsStock',
+            'categoryStats'
         ));
     }
 
@@ -237,6 +358,20 @@ class MerchController extends Controller
         $oldStatus = $reservation->status;
         $newStatus = $validated['status'];
 
+        // Conflict prevention: If there is an unresolved support ticket for this reservation, block claiming/readying
+        if (in_array($newStatus, ['Claimed', 'Ready for Pickup'])) {
+            $activeTicket = SupportTicket::where('reservation_ref', $reservation->ref_code)
+                ->whereIn('status', ['Open', 'In Progress'])
+                ->first();
+
+            if ($activeTicket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot mark as {$newStatus}: This reservation has an active Helpdesk Support Ticket [{$activeTicket->ticket_code} - {$activeTicket->reason}]. Please resolve or address the ticket first to prevent conflicts.",
+                ], 422);
+            }
+        }
+
         $reservation->status = $newStatus;
         if ($request->has('payment_status')) {
             $reservation->payment_status = $request->input('payment_status');
@@ -302,6 +437,60 @@ class MerchController extends Controller
             'success' => true,
             'message' => "Reservation status updated to {$newStatus}",
             'reservation' => $reservation,
+        ]);
+    }
+
+    /**
+     * ADMIN: Permanently Delete Reservation from database and UI
+     */
+    public function destroyReservation($id)
+    {
+        $reservation = Reservation::findOrFail($id);
+        $refCode = $reservation->ref_code;
+        $status = $reservation->status;
+
+        // If not already Claimed or Cancelled, restore reserved units back to available stock
+        if ($status !== 'Claimed' && $status !== 'Cancelled') {
+            if (is_array($reservation->items)) {
+                foreach ($reservation->items as $item) {
+                    $prod = Product::where('item_code', $item['productId'] ?? '')
+                        ->orWhere('id', $item['productId'] ?? 0)
+                        ->first();
+                    if ($prod) {
+                        $qty = intval($item['quantity'] ?? 1);
+                        $prod->units_reserved = max(0, ($prod->units_reserved ?? 0) - $qty);
+                        $prod->current_stock = ($prod->current_stock ?? 0) + $qty;
+                        if (is_array($prod->sizes) && isset($item['size']) && isset($prod->sizes[$item['size']])) {
+                            $sizes = $prod->sizes;
+                            $sizes[$item['size']] = ($sizes[$item['size']] ?? 0) + $qty;
+                            $prod->sizes = $sizes;
+                        }
+                        $prod->save();
+                    }
+                }
+            }
+        }
+
+        // Delete any related support tickets
+        SupportTicket::where('reservation_ref', $refCode)->delete();
+
+        // Delete the reservation from database
+        $reservation->delete();
+
+        // Record in Audit Trail log
+        ActivityLog::record(
+            'DELETE',
+            "Permanently deleted reservation [{$refCode}] ({$status}) from database records",
+            'USR-002',
+            'J. Derramas',
+            'Reservations'
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Reservation [{$refCode}] permanently deleted from database.",
+            'deleted_id' => $id,
+            'ref_code' => $refCode
         ]);
     }
 
@@ -477,63 +666,103 @@ class MerchController extends Controller
 
     /**
      * ADMIN: Add New User (User Management CRUD)
+     * Strictly verifies email against the OnePass student database
      */
     public function storeUser(Request $request)
     {
         $validated = $request->validate([
             'user_code'  => 'required|string|unique:system_users,user_code|max:50',
-            'name'       => 'required|string|max:255',
+            'name'       => 'nullable|string|max:255',
             'email'      => 'required|email|unique:system_users,email|max:255',
             'role'       => 'required|string|max:50',
-            'department' => 'required|string|max:100',
+            'department' => 'nullable|string|max:100',
         ]);
+
+        $searchEmail = strtolower(trim($validated['email']));
+
+        // Database Guard: Verify that the email exists in the verified students database
+        $student = \App\Models\Student::whereRaw('LOWER(TRIM(email)) = ?', [$searchEmail])->first();
+
+        if (!$student) {
+            return response()->json([
+                'success' => false,
+                'message' => "Hindi mahanap ang email [{$validated['email']}] sa database. Kailangang rehistrado o nakapag-login na ang estudyante sa OnePass gamit ang exactong email na ito bago mabigyan ng admin access.",
+            ], 422);
+        }
+
+        // Auto-match exact student attributes if name or dept wasn't provided
+        $userName = !empty($validated['name']) ? trim($validated['name']) : $student->name;
+        $userDept = !empty($validated['department']) ? trim($validated['department']) : ($student->department ?: 'AIS');
 
         $user = SystemUser::create([
             'user_code'  => strtoupper(trim($validated['user_code'])),
-            'name'       => $validated['name'],
-            'email'      => $validated['email'],
+            'name'       => $userName,
+            'email'      => $searchEmail,
             'role'       => $validated['role'],
-            'department' => $validated['department'],
+            'department' => $userDept,
             'status'     => 'Active',
         ]);
 
+        $adminName = session('student_user.name') ?? 'Admin';
+        $adminCode = session('student_user.student_id') ?? 'USR-001';
+
         ActivityLog::record(
             'CREATE',
-            "Registered new user account: '{$user->name}' ({$user->role}) [{$user->user_code}]",
-            'USR-001',
-            'E. Moreno',
+            "Registered system user account: '{$user->name}' ({$user->role}) [{$user->user_code}] linked to OnePass email [{$user->email}]",
+            $adminCode,
+            $adminName,
             'User Management'
         );
 
         return response()->json([
             'success' => true,
-            'message' => 'User account created successfully!',
+            'message' => "User account matagumpay na na-create para kay {$user->name} ({$user->email})!",
             'user' => $user,
         ]);
     }
 
     /**
      * ADMIN: Update User
+     * Strictly verifies email against the OnePass student database
      */
     public function updateUser(Request $request, $id)
     {
         $user = SystemUser::findOrFail($id);
 
         $validated = $request->validate([
-            'name'       => 'required|string|max:255',
+            'name'       => 'nullable|string|max:255',
             'email'      => 'required|email|max:255|unique:system_users,email,' . $id,
             'role'       => 'required|string|max:50',
-            'department' => 'required|string|max:100',
+            'department' => 'nullable|string|max:100',
             'status'     => 'required|in:Active,Inactive',
         ]);
 
+        $searchEmail = strtolower(trim($validated['email']));
+
+        // Database Guard: Ensure updated email exists in the student database
+        $student = \App\Models\Student::whereRaw('LOWER(TRIM(email)) = ?', [$searchEmail])->first();
+        if (!$student) {
+            return response()->json([
+                'success' => false,
+                'message' => "Hindi mahanap ang email [{$validated['email']}] sa database. Kailangang rehistrado sa OnePass ang account na ito.",
+            ], 422);
+        }
+
+        $validated['email'] = $searchEmail;
+        if (empty($validated['name'])) {
+            $validated['name'] = $student->name;
+        }
+
         $user->update($validated);
+
+        $adminName = session('student_user.name') ?? 'Admin';
+        $adminCode = session('student_user.student_id') ?? 'USR-001';
 
         ActivityLog::record(
             'UPDATE',
             "Updated account info for '{$user->name}' [{$user->user_code}]",
-            'USR-001',
-            'E. Moreno',
+            $adminCode,
+            $adminName,
             'User Management'
         );
 
@@ -749,12 +978,20 @@ class MerchController extends Controller
             }
         }
 
-        $messages = $ticket->messages()->orderBy('created_at', 'asc')->get();
+        $query = $ticket->messages()->orderBy('created_at', 'asc');
+
+        if ($request->filled('after_id')) {
+            $query->where('id', '>', (int)$request->query('after_id'));
+        }
+
+        $messages = $query->get();
 
         return response()->json([
-            'success'  => true,
-            'ticket'   => $ticket,
-            'messages' => $messages,
+            'success'       => true,
+            'ticket'        => $ticket,
+            'ticket_status' => $ticket->status,
+            'messages'      => $messages,
+            'last_id'       => $messages->last()?->id ?? (int)$request->query('after_id', 0),
         ]);
     }
 
@@ -804,9 +1041,10 @@ class MerchController extends Controller
         }
 
         return response()->json([
-            'success' => true,
-            'message' => $msg,
-            'ticket'  => $ticket->fresh(['messages', 'reservation']),
+            'success'        => true,
+            'message'        => $msg,
+            'message_record' => $msg,
+            'ticket'         => $ticket->fresh(['messages', 'reservation']),
         ]);
     }
 
@@ -963,5 +1201,215 @@ class MerchController extends Controller
             'reservation' => $reservation,
         ]);
     }
-}
 
+    /**
+     * API: Delete Resolved Support Ticket
+     * Only allowed if ticket status is 'Resolved'.
+     * If user is student, verifies that ticket belongs to that student.
+     * Prevents accidental deletion of active/pending tickets.
+     */
+    public function deleteTicket(Request $request, $id)
+    {
+        $ticket = SupportTicket::findOrFail($id);
+
+        // Strict rule: Only allow deletion if ticket is already Resolved
+        if ($ticket->status !== 'Resolved') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete ticket: Ticket must be marked as Resolved before deletion to prevent accidental loss of active support inquiries.',
+            ], 422);
+        }
+
+        // Ownership validation for student
+        $studentId = $request->input('student_id');
+        $role = $request->input('role', 'student');
+        $isAdmin = ($role === 'admin') || $request->filled('admin_name');
+
+        if (!$isAdmin) {
+            if (empty($studentId) || $ticket->student_id !== $studentId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: You can only delete your own resolved support tickets.',
+                ], 403);
+            }
+        }
+
+        $code = $ticket->ticket_code;
+        $deleterName = $isAdmin ? ($request->input('admin_name') ?? 'ICS Admin Support') : ($ticket->student_name ?: 'Student');
+
+        // Delete associated messages first
+        $ticket->messages()->delete();
+        $ticket->delete();
+
+        ActivityLog::record(
+            'DELETE',
+            "Deleted resolved support ticket [{$code}] by {$deleterName}",
+            $isAdmin ? 'USR-001' : ($studentId ?: 'STUDENT'),
+            $deleterName,
+            'Support Helpdesk'
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Resolved support ticket [{$code}] has been successfully deleted.",
+        ]);
+    }
+
+    /**
+     * FUNCTION 19: REALTIME LIVE SYNC API
+     * Returns lightweight JSON with latest products (stock), reservations (queue & status),
+     * support tickets & chat messages, and admin dashboard KPI metrics.
+     * Polled automatically by frontend without requiring page reloads.
+     */
+    public function getRealtimeSync(Request $request)
+    {
+        // 1. Fetch active products with current stock and sizing inventory
+        $products = Product::where('is_active', true)
+            ->select('id', 'item_code', 'name', 'category', 'gender', 'price', 'initial_stock', 'current_stock', 'units_sold', 'units_reserved', 'sizes', 'image_path')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // 2. Fetch latest reservations with privacy & role scoping
+        $trackingCode = $request->query('tracking_code');
+        $scope = $request->query('scope');
+        $studentUser = session('student_user');
+
+        if ($scope === 'admin') {
+            // Admin scope: verify authenticated administrator in system_users
+            $userEmail = strtolower(trim($studentUser['email'] ?? ''));
+            $isAdmin = $userEmail && SystemUser::whereRaw('LOWER(TRIM(email)) = ?', [$userEmail])->where('status', 'Active')->exists();
+
+            if ($isAdmin) {
+                $reservations = Reservation::with('activeTicket')
+                    ->where(function ($q) {
+                        $q->where('status', '!=', 'Cancelled')
+                          ->orWhere('updated_at', '>=', now()->subMinutes(10));
+                    })
+                    ->orderBy('created_at', 'desc')->take(50)->get();
+            } else {
+                $reservations = collect([]);
+            }
+        } else {
+            // Student storefront scope: strictly filter by the currently logged-in student!
+            if ($studentUser) {
+                $userStuId = $studentUser['student_id'] ?? null;
+                $userEmail = $studentUser['email'] ?? null;
+                $userName  = $studentUser['name'] ?? null;
+
+                $reservations = Reservation::where(function ($q) use ($userStuId, $userEmail, $userName) {
+                    if ($userStuId) $q->where('student_id', $userStuId);
+                    if ($userEmail) $q->orWhere('student_id', $userEmail);
+                    if ($userName)  $q->orWhere('student_name', $userName);
+                })->where(function ($q) {
+                    $q->where('status', '!=', 'Cancelled')
+                      ->orWhere('updated_at', '>=', now()->subMinutes(10));
+                })->with('activeTicket')->orderBy('created_at', 'desc')->take(20)->get();
+            } else {
+                $reservations = collect([]);
+            }
+        }
+
+        // Specific tracked reservation if student is tracking an order
+        $trackedReservation = null;
+        if (!empty($trackingCode)) {
+            $trackedReservation = Reservation::where('ref_code', $trackingCode);
+
+            // If regular student, ensure they can only track their own order
+            if ($scope !== 'admin' && $studentUser) {
+                $userStuId = $studentUser['student_id'] ?? '';
+                $userEmail = $studentUser['email'] ?? '';
+                $userName  = $studentUser['name'] ?? '';
+                $trackedReservation = $trackedReservation->where(function ($q) use ($userStuId, $userEmail, $userName) {
+                    if ($userStuId) $q->where('student_id', $userStuId);
+                    if ($userEmail) $q->orWhere('student_id', $userEmail);
+                    if ($userName)  $q->orWhere('student_name', $userName);
+                });
+            }
+            $trackedReservation = $trackedReservation->first();
+        }
+
+        // 3. Support Tickets & chat messages
+        $activeTicketId = $request->query('ticket_id');
+        $activeTicket = null;
+        if (!empty($activeTicketId)) {
+            $activeTicket = SupportTicket::with('messages')->find($activeTicketId);
+        }
+
+        if ($scope === 'admin') {
+            $supportTickets = SupportTicket::with(['messages', 'reservation'])->orderBy('created_at', 'desc')->take(30)->get();
+            $openTicketsCount = SupportTicket::whereIn('status', ['Open', 'In Progress'])->count();
+            $pendingCount = Reservation::where('status', 'Pending')->count();
+            $readyCount   = Reservation::where('status', 'Ready for Pickup')->count();
+            $claimedCount = Reservation::where('status', 'Claimed')->count();
+        } else {
+            // Student storefront scope: return student's own tickets in real-time
+            if ($studentUser) {
+                $userStuId = $studentUser['student_id'] ?? '';
+                $userName  = $studentUser['name'] ?? '';
+                $supportTickets = SupportTicket::with(['messages', 'reservation'])
+                    ->where(function ($q) use ($userStuId, $userName) {
+                        if ($userStuId) $q->where('student_id', $userStuId);
+                        if ($userName)  $q->orWhere('student_name', $userName);
+                    })->orderBy('created_at', 'desc')->take(10)->get();
+                $openTicketsCount = SupportTicket::where(function ($q) use ($userStuId, $userName) {
+                    if ($userStuId) $q->where('student_id', $userStuId);
+                    if ($userName)  $q->orWhere('student_name', $userName);
+                })->whereIn('status', ['Open', 'In Progress'])->count();
+            } else {
+                $supportTickets = collect([]);
+                $openTicketsCount = 0;
+            }
+            $pendingCount = 0;
+            $readyCount   = 0;
+            $claimedCount = 0;
+        }
+
+        // 4. Compute live KPI summary metrics for Admin Dashboard
+        $totalStockUnits = $products->sum('current_stock');
+        $totalSoldUnits  = $products->sum('units_sold');
+        $totalReservedUnits = $products->sum('units_reserved');
+
+        $totalRevenue = 0;
+        foreach ($products as $p) {
+            $totalRevenue += ($p->units_sold * $p->price);
+        }
+
+        $categoryStats = [
+            'general'     => ['label' => 'Collegiate',    'stock' => 0, 'sold' => 0],
+            'pe'          => ['label' => 'Athletics & PE', 'stock' => 0, 'sold' => 0],
+            'department'  => ['label' => 'Dept Apparel',  'stock' => 0, 'sold' => 0],
+            'accessory'   => ['label' => 'Accessories',   'stock' => 0, 'sold' => 0],
+        ];
+        foreach ($products as $p) {
+            $cat = strtolower(trim($p->category));
+            if ($cat === 'accessories') $cat = 'accessory';
+            if (!isset($categoryStats[$cat])) {
+                $categoryStats[$cat] = ['label' => ucfirst($cat), 'stock' => 0, 'sold' => 0];
+            }
+            $categoryStats[$cat]['stock'] += intval($p->current_stock);
+            $categoryStats[$cat]['sold'] += intval($p->units_sold);
+        }
+
+        return response()->json([
+            'success'             => true,
+            'timestamp'           => now()->toIso8601String(),
+            'products'            => $products,
+            'reservations'        => $reservations,
+            'tracked_reservation' => $trackedReservation,
+            'support_tickets'     => $supportTickets,
+            'active_ticket'       => $activeTicket,
+            'open_tickets_count'  => $openTicketsCount,
+            'metrics'             => [
+                'total_products'  => $products->count(),
+                'total_stock'     => $totalStockUnits,
+                'total_sold'      => $totalSoldUnits,
+                'total_reserved'  => $totalReservedUnits,
+                'total_revenue'   => $totalRevenue,
+                'pending_count'   => $pendingCount,
+                'ready_count'     => $readyCount,
+                'claimed_count'   => $claimedCount,
+                'category_stats'  => $categoryStats,
+            ]
+        ]);
+    }
+}
