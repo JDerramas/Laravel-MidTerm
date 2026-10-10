@@ -71,3 +71,8 @@ Route::post('/api/support-tickets/{id}/cancel-reservation', [MerchController::cl
 
 Route::delete('/api/support/tickets/{id}', [MerchController::class, 'deleteTicket'])->name('api.support.tickets.delete');
 Route::delete('/api/support-tickets/{id}', [MerchController::class, 'deleteTicket']);
+
+// Activity Logs API
+Route::get('/api/activity-logs', [MerchController::class, 'getActivityLogs'])->name('api.activity.logs');
+Route::delete('/api/activity-logs', [MerchController::class, 'clearActivityLogs'])->name('api.activity.logs.clear');
+Route::post('/api/activity-logs/clear', [MerchController::class, 'clearActivityLogs']);

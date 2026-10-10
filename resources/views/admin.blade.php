@@ -1126,8 +1126,19 @@
                   </p>
                 </div>
 
-                <!-- Action filter -->
+                <!-- Header Action Buttons & Filter -->
                 <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onclick="icsApp.clearActivityLogs()"
+                    class="px-3 py-1.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800 transition flex items-center gap-1.5 shadow-sm text-xs font-bold cursor-pointer"
+                    title="Permanently clear activity audit logs">
+                    <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span>Clear Logs</span>
+                  </button>
+
                   <select id="act-log-filter-action" onchange="icsApp.filterActivityLogs(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white">
                     <option value="all">All Actions</option>
                     <option value="CREATE">CREATE</option>
@@ -1174,6 +1185,16 @@
                     @endforeach
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Activity Logs Pagination Controls (50 logs per page, up to 200 logs) -->
+              <div id="act-logs-pagination-container" class="mt-4 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div id="act-logs-page-info" class="text-slate-400 font-mono text-[11px]">
+                  Showing 1 to 50 of {{ count($activityLogs) }} logs
+                </div>
+                <div id="act-logs-pagination-buttons" class="flex items-center gap-1.5 flex-wrap">
+                  <!-- Dynamically rendered by icsApp.renderActivityLogsTable() -->
+                </div>
               </div>
 
             </div>
@@ -1806,6 +1827,11 @@
         this.activeStudentTicketId = null;
         this.adminTicketFilter = 'all';
 
+        // Activity Logs Pagination & Filter State (50 items/page, up to 200 items)
+        this.actLogsCurrentPage = 1;
+        this.actLogsPerPage = 50;
+        this.actLogsFilterAction = 'all';
+
         this.init();
       }
 
@@ -1815,6 +1841,7 @@
         this.initTracker();
         this.updateMobileDrawerContent();
         this.renderAdminTicketsList();
+        this.renderActivityLogsTable();
 
         // Restore active admin tab: stays on current section upon edit, delete, or reload
         let initialTab = 'dashboard';
@@ -2386,6 +2413,8 @@
           if (this.activeAdminTicketId) {
             this.selectAdminTicket(this.activeAdminTicketId);
           }
+        } else if (tabName === 'actlogs') {
+          this.renderActivityLogsTable();
         }
       }
 
@@ -3749,16 +3778,178 @@
         });
       }
 
-      filterActivityLogs(action) {
-        const rows = document.querySelectorAll('#activity-logs-tbody tr');
-        rows.forEach(r => {
-          const act = r.getAttribute('data-action');
-          if (action === 'all' || act === action) {
-            r.classList.remove('hidden');
-          } else {
-            r.classList.add('hidden');
-          }
+      // ==========================================
+      // ACTIVITY AUDIT LOGS: PAGINATION & PURGE
+      // (50 logs per page, up to 200 logs, clear logs)
+      // ==========================================
+      renderActivityLogsTable() {
+        const tbody = document.getElementById('activity-logs-tbody');
+        if (!tbody) return;
+
+        const allLogs = Array.isArray(this.activityLogs) ? this.activityLogs : Object.values(this.activityLogs || {});
+        const actionFilter = this.actLogsFilterAction || 'all';
+
+        const filtered = allLogs.filter(log => {
+          if (!log) return false;
+          if (actionFilter === 'all') return true;
+          return (log.action || '').toUpperCase() === actionFilter.toUpperCase();
         });
+
+        const perPage = this.actLogsPerPage || 50;
+        const totalLogs = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(totalLogs / perPage));
+
+        if (this.actLogsCurrentPage > totalPages) {
+          this.actLogsCurrentPage = totalPages;
+        }
+        if (this.actLogsCurrentPage < 1) {
+          this.actLogsCurrentPage = 1;
+        }
+
+        const startIndex = (this.actLogsCurrentPage - 1) * perPage;
+        const endIndex = Math.min(startIndex + perPage, totalLogs);
+        const currentSlice = filtered.slice(startIndex, endIndex);
+
+        tbody.innerHTML = '';
+
+        if (currentSlice.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" class="py-12 text-center text-slate-500 font-sans">
+                <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <p class="font-bold text-xs text-slate-400">No activity logs found</p>
+                <p class="text-[11px] text-slate-600 mt-0.5">Audit actions (CREATE, UPDATE, DELETE) will appear here.</p>
+              </td>
+            </tr>
+          `;
+        } else {
+          currentSlice.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-800/40 transition';
+            tr.setAttribute('data-action', log.action || '');
+
+            const act = (log.action || '').toUpperCase();
+            let badgeClass = 'bg-blue-950 text-blue-300 border border-blue-800';
+            if (act === 'CREATE') badgeClass = 'bg-emerald-950 text-emerald-300 border border-emerald-800';
+            else if (act === 'UPDATE') badgeClass = 'bg-amber-950 text-amber-300 border border-amber-800';
+            else if (act === 'DELETE') badgeClass = 'bg-rose-950 text-rose-300 border border-rose-800';
+            else if (act === 'LOGIN') badgeClass = 'bg-purple-950 text-purple-300 border border-purple-800';
+            else if (act === 'LOGOUT') badgeClass = 'bg-slate-800 text-slate-300 border border-slate-700';
+
+            const createdDate = log.created_at ? new Date(log.created_at).toLocaleString([], {
+              month: '2-digit', day: '2-digit', year: 'numeric',
+              hour: '2-digit', minute: '2-digit'
+            }) : 'Recently';
+
+            tr.innerHTML = `
+              <td class="py-3 px-3 font-mono text-ics-gold font-bold">${log.user_code || 'USR-001'}</td>
+              <td class="py-3 px-3">
+                <span class="px-2.5 py-1 rounded text-[10px] font-bold font-mono ${badgeClass}">
+                  ${act}
+                </span>
+              </td>
+              <td class="py-3 px-3 text-slate-200">${log.activity || ''}</td>
+              <td class="py-3 px-3 text-[10px] text-slate-400 font-mono">${log.module || 'General'}</td>
+              <td class="py-3 px-3 font-mono text-slate-400 text-[11px]">${createdDate}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        // Render Pagination Info & Buttons
+        const infoEl = document.getElementById('act-logs-page-info');
+        if (infoEl) {
+          const from = totalLogs > 0 ? startIndex + 1 : 0;
+          infoEl.textContent = `Showing ${from} to ${endIndex} of ${totalLogs} logs (Page ${this.actLogsCurrentPage} of ${totalPages})`;
+        }
+
+        const btnContainer = document.getElementById('act-logs-pagination-buttons');
+        if (btnContainer) {
+          btnContainer.innerHTML = '';
+          if (totalPages > 1) {
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.disabled = this.actLogsCurrentPage <= 1;
+            prevBtn.className = `px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition ${
+              this.actLogsCurrentPage <= 1
+                ? 'bg-slate-950/50 text-slate-600 border border-slate-800 cursor-not-allowed'
+                : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-700 cursor-pointer hover:bg-slate-800'
+            }`;
+            prevBtn.innerHTML = '&larr; Prev';
+            prevBtn.onclick = () => this.setActivityLogsPage(this.actLogsCurrentPage - 1);
+            btnContainer.appendChild(prevBtn);
+
+            // Numbered buttons: 1, 2, 3, 4, etc.
+            for (let p = 1; p <= totalPages; p++) {
+              const pageBtn = document.createElement('button');
+              pageBtn.type = 'button';
+              const isCurrent = p === this.actLogsCurrentPage;
+              pageBtn.className = `px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition ${
+                isCurrent
+                  ? 'bg-ics-800 text-white border border-ics-600 shadow'
+                  : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800 hover:bg-slate-800 cursor-pointer'
+              }`;
+              pageBtn.textContent = p;
+              pageBtn.onclick = () => this.setActivityLogsPage(p);
+              btnContainer.appendChild(pageBtn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.disabled = this.actLogsCurrentPage >= totalPages;
+            nextBtn.className = `px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition ${
+              this.actLogsCurrentPage >= totalPages
+                ? 'bg-slate-950/50 text-slate-600 border border-slate-800 cursor-not-allowed'
+                : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-700 cursor-pointer hover:bg-slate-800'
+            }`;
+            nextBtn.innerHTML = 'Next &rarr;';
+            nextBtn.onclick = () => this.setActivityLogsPage(this.actLogsCurrentPage + 1);
+            btnContainer.appendChild(nextBtn);
+          }
+        }
+      }
+
+      setActivityLogsPage(page) {
+        this.actLogsCurrentPage = page;
+        this.renderActivityLogsTable();
+      }
+
+      filterActivityLogs(action) {
+        this.actLogsFilterAction = action;
+        this.actLogsCurrentPage = 1;
+        this.renderActivityLogsTable();
+      }
+
+      async clearActivityLogs() {
+        if (!confirm('Are you sure you want to permanently clear all activity audit logs?\n\nThis will purge historical audit records from the database to prevent database overload.')) {
+          return;
+        }
+
+        try {
+          const res = await fetch(`{{ url('api/activity-logs') }}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            }
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            this.showToast(data.message || 'All activity logs cleared successfully!', 'success');
+            this.activityLogs = Array.isArray(data.logs) ? data.logs : [];
+            this.actLogsCurrentPage = 1;
+            this.renderActivityLogsTable();
+          } else {
+            this.showToast(data.message || 'Could not clear activity logs.', 'warning');
+          }
+        } catch (err) {
+          console.error(err);
+          this.showToast('Network error while clearing activity logs.', 'error');
+        }
       }
 
       // ==========================================

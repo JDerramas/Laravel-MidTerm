@@ -125,7 +125,7 @@ class MerchController extends Controller
                   ->orWhere('updated_at', '>=', now()->subMinutes(10));
             })
             ->orderBy('created_at', 'desc')->get();
-        $activityLogs = ActivityLog::orderBy('created_at', 'desc')->take(50)->get();
+        $activityLogs = ActivityLog::orderBy('created_at', 'desc')->take(200)->get();
         $users = SystemUser::orderBy('id', 'asc')->get();
 
         // 2. Compute Dashboard KPI summary metrics
@@ -966,7 +966,10 @@ class MerchController extends Controller
      */
     public function getTicketMessages(Request $request, $id)
     {
-        $ticket = SupportTicket::with('reservation')->findOrFail($id);
+        $isPolling = $request->filled('after_id');
+        $ticket = $isPolling
+            ? SupportTicket::select('id', 'student_id', 'status', 'subject', 'category')->findOrFail($id)
+            : SupportTicket::with('reservation')->findOrFail($id);
 
         // Privacy check
         if ($request->has('student_id') && !empty($request->student_id)) {
@@ -1410,6 +1413,50 @@ class MerchController extends Controller
                 'claimed_count'   => $claimedCount,
                 'category_stats'  => $categoryStats,
             ]
+        ]);
+    }
+
+    /**
+     * API: Clear all activity audit logs to avoid database overload.
+     * Truncates the logs table and records a fresh administrative purge log.
+     */
+    public function clearActivityLogs(Request $request)
+    {
+        $studentUser = session('student_user');
+        $adminName = $studentUser['name'] ?? 'ICS Admin';
+        $adminCode = $studentUser['student_id'] ?? 'USR-001';
+
+        // Purge existing activity logs
+        ActivityLog::truncate();
+
+        // Record the purge action itself as the initial log entry
+        ActivityLog::record(
+            'DELETE',
+            "All activity audit trail logs were cleared by {$adminName}",
+            $adminCode,
+            $adminName,
+            'Activity Logs'
+        );
+
+        $freshLogs = ActivityLog::orderBy('created_at', 'desc')->take(200)->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All activity audit logs have been successfully cleared.',
+            'logs'    => $freshLogs,
+        ]);
+    }
+
+    /**
+     * API: Fetch latest activity audit logs (up to 200 items)
+     */
+    public function getActivityLogs(Request $request)
+    {
+        $logs = ActivityLog::orderBy('created_at', 'desc')->take(200)->get();
+
+        return response()->json([
+            'success' => true,
+            'logs'    => $logs,
         ]);
     }
 }
