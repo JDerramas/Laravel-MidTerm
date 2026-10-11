@@ -21,8 +21,28 @@ class Student extends Model
         'contact',
         'avatar',
         'status',
+        'snoozed_until',
+        'warning_count',
+        'ban_reason',
         'password',
     ];
+
+    protected $casts = [
+        'snoozed_until' => 'datetime',
+        'warning_count' => 'integer',
+    ];
+
+    public function isBanned(): bool
+    {
+        return $this->status === 'Banned';
+    }
+
+    public function isSnoozed(): bool
+    {
+        if ($this->status !== 'Snoozed') return false;
+        if ($this->snoozed_until === null) return true;
+        return $this->snoozed_until->isFuture();
+    }
 
     /**
      * Get 2-letter initials for avatar fallback

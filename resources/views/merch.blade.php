@@ -1992,14 +1992,17 @@
             class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-600 font-sans"></textarea>
         </div>
 
-        <!-- Anti-Spam Safety Notice -->
-        <div class="p-3 rounded-2xl bg-blue-950/30 border border-blue-900/50 flex items-start gap-2.5 text-[11px] text-slate-300">
-          <svg class="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Anti-Spam Safety Notice & Daily Limit -->
+        <div class="p-3 rounded-2xl bg-blue-950/40 border border-blue-900/60 flex items-start gap-2.5 text-[11px] text-slate-300">
+          <svg class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <span class="font-bold text-blue-300">Privacy & Anti-Spam Policy:</span>
-            Your support conversation is private and only visible to you and authorized ICS council officers. To avoid spam, only one active ticket per request is allowed.
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="font-bold text-cyan-300">Support Ticket Guidelines:</span>
+              <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-900/80 text-blue-200 border border-blue-700">Max 5 tickets / day</span>
+            </div>
+            Limit ng <strong>5 tickets bawat araw</strong> lamang ang pinapayagan bawat student. Iwasan ang pag-spam upang mapanatiling aktibo ang iyong account at maiwasan ang snooze/ban.
           </div>
         </div>
 

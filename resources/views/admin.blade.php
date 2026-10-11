@@ -1629,19 +1629,181 @@
           </section>
 
           <!-- ======================================================== -->
-          <!-- MODULE 5: USER MANAGEMENT (CRUD) -->
+          <!-- ======================================================== -->
+          <!-- MODULE 5: USER MANAGEMENT & STUDENT MODERATION -->
           <!-- ======================================================== -->
           <section id="admin-sec-usermgmt" class="admin-tab-section hidden space-y-6">
 
-            <div class="bg-slate-900/90 rounded-3xl border border-slate-800 p-6 shadow-xl">
-              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+            <!-- Sub Navigation Tabs: Student Directory (Default) vs Staff Admins -->
+            <div class="flex items-center gap-3 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 w-fit">
+              <button
+                type="button"
+                id="btn-subtab-students"
+                onclick="icsApp.switchUserSubTab('students')"
+                class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span>Student Directory (Students Only)</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-950/60 font-mono text-cyan-200">{{ isset($studentUsers) ? $studentUsers->count() : 0 }}</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-subtab-staff"
+                onclick="icsApp.switchUserSubTab('staff')"
+                class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/60">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>System Staff &amp; Admins</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 font-mono text-slate-300">{{ $users->count() }}</span>
+              </button>
+            </div>
+
+            <!-- PANEL 1: STUDENT DIRECTORY (STUDENTS ONLY - NO ADMINS) -->
+            <div id="panel-usermgmt-students" class="bg-slate-900/90 rounded-3xl border border-slate-800 p-6 shadow-xl space-y-5">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                 <div>
                   <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
-                    <span>User Management (User CRUD)</span>
+                    <span>Student Users Directory</span>
+                    <span id="student-count-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800">
+                      {{ isset($studentUsers) ? $studentUsers->count() : 0 }} Registered Students
+                    </span>
+                  </h3>
+                  <p class="text-xs text-slate-400">
+                    Lahat ng student users (walang admin). Mag-search habang nagta-type, at mag-apply ng <strong>Snooze (Warning)</strong> o <strong>Ban</strong> para sa mga abusadong account.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Real-time Live Search Input Bar -->
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  id="student-search-input"
+                  oninput="icsApp.filterStudentDirectory(this.value)"
+                  placeholder="Type here to search by Name, Student ID, Email, Department, Year, Status..."
+                  class="w-full bg-slate-950 border border-slate-700/80 rounded-2xl pl-10 pr-4 py-3 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 shadow-inner"
+                />
+              </div>
+
+              <!-- Students Table -->
+              <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
+                <table class="w-full text-left text-xs sm:text-sm">
+                  <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
+                    <tr>
+                      <th class="py-3.5 px-4">STUDENT ID</th>
+                      <th class="py-3.5 px-4">STUDENT NAME</th>
+                      <th class="py-3.5 px-4">EMAIL ADDRESS</th>
+                      <th class="py-3.5 px-4">DEPARTMENT / YEAR</th>
+                      <th class="py-3.5 px-4">WARNINGS &amp; STATUS</th>
+                      <th class="py-3.5 px-4 text-right">MODERATION ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody id="students-tbody" class="divide-y divide-slate-800 text-slate-300">
+                    @forelse(($studentUsers ?? []) as $s)
+                    <tr class="hover:bg-slate-800/40 transition student-row" data-search="{{ strtolower($s->student_id . ' ' . $s->name . ' ' . $s->email . ' ' . $s->department . ' ' . $s->year_level . ' ' . $s->status) }}">
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block">{{ $s->student_id }}</span>
+                      </td>
+                      <td class="py-3.5 px-4 font-bold text-white whitespace-nowrap">{{ $s->name }}</td>
+                      <td class="py-3.5 px-4 font-mono text-xs text-slate-300 whitespace-nowrap">{{ $s->email }}</td>
+                      <td class="py-3.5 px-4 text-xs text-slate-300 whitespace-nowrap">
+                        <div>{{ $s->department }}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">{{ $s->year_level }} {{ $s->section ? "({$s->section})" : '' }}</div>
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        @if($s->status === 'Banned')
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-950 text-rose-300 border border-rose-800 flex items-center gap-1 w-fit">
+                          <span>🚫</span> BANNED
+                        </span>
+                        @if(!empty($s->ban_reason))
+                        <span class="block text-[10px] text-rose-400 mt-1 max-w-[180px] truncate" title="{{ $s->ban_reason }}">{{ $s->ban_reason }}</span>
+                        @endif
+                        @elseif($s->status === 'Snoozed')
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1 w-fit">
+                          <span>⚠️</span> SNOOZED (Warned)
+                        </span>
+                        <span class="block text-[10px] text-amber-300/80 mt-1">
+                          Warnings: <strong class="text-amber-200">{{ $s->warning_count ?? 1 }}</strong>
+                          @if($s->snoozed_until) &bull; {{ $s->snoozed_until->diffForHumans() }} @endif
+                        </span>
+                        @else
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1 w-fit">
+                          <span>✓</span> Active Enrolled
+                        </span>
+                        @if(($s->warning_count ?? 0) > 0)
+                        <span class="block text-[10px] text-amber-400/80 mt-0.5 font-mono">Past Warnings: {{ $s->warning_count }}</span>
+                        @endif
+                        @endif
+                      </td>
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1.5">
+                          <!-- Snooze / Warning Button -->
+                          <button
+                            type="button"
+                            onclick="icsApp.snoozeStudentModal({{ $s->id }}, '{{ addslashes($s->name) }}')"
+                            class="px-2.5 py-1.5 rounded-xl bg-amber-950/70 hover:bg-amber-900 text-amber-300 text-xs font-bold transition border border-amber-800 flex items-center gap-1 cursor-pointer shadow-sm"
+                            title="Snooze student (Cooldown / Warning for 24h)">
+                            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Snooze</span>
+                          </button>
+
+                          <!-- Ban Button -->
+                          <button
+                            type="button"
+                            onclick="icsApp.banStudentModal({{ $s->id }}, '{{ addslashes($s->name) }}')"
+                            class="px-2.5 py-1.5 rounded-xl bg-rose-950/70 hover:bg-rose-900 text-rose-300 text-xs font-bold transition border border-rose-800 flex items-center gap-1 cursor-pointer shadow-sm"
+                            title="Ban student account">
+                            <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                            <span>Ban</span>
+                          </button>
+
+                          <!-- Unban Button -->
+                          <button
+                            type="button"
+                            onclick="icsApp.unbanStudent({{ $s->id }}, '{{ addslashes($s->name) }}')"
+                            class="px-2.5 py-1.5 rounded-xl bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 text-xs font-bold transition border border-emerald-800 flex items-center gap-1 cursor-pointer shadow-sm"
+                            title="Unban and restore to active">
+                            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Unban</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    @empty
+                    <tr>
+                      <td colspan="6" class="p-8 text-center text-slate-400 text-xs">
+                        No student accounts found.
+                      </td>
+                    </tr>
+                    @endforelse
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Search Empty Notice -->
+              <div id="students-search-empty" class="hidden p-8 text-center bg-slate-950 rounded-2xl border border-slate-800 text-slate-400 text-xs">
+                🔍 Walang tumutugmang student account para sa iyong hinanap. Subukang baguhin ang iyong keyword.
+              </div>
+            </div>
+
+            <!-- PANEL 2: SYSTEM STAFF & ADMINS (CRUD) -->
+            <div id="panel-usermgmt-staff" class="hidden bg-slate-900/90 rounded-3xl border border-slate-800 p-6 shadow-xl space-y-5">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                <div>
+                  <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+                    <span>System Staff &amp; Administrators</span>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950 text-purple-300 border border-purple-800">{{ $users->count() }} Accounts</span>
                   </h3>
                   <p class="text-xs text-slate-400">
-                    Configure faculty advisers, student officers, team leaders, and student roles.
+                    Configure faculty advisers, student officers, team leaders, and administrative accounts.
                   </p>
                 </div>
 
@@ -1661,7 +1823,7 @@
                 <table class="w-full text-left text-xs sm:text-sm">
                   <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
-                      <th class="py-3.5 px-4">User Code / Student ID</th>
+                      <th class="py-3.5 px-4">User Code / ID</th>
                       <th class="py-3.5 px-4">Name</th>
                       <th class="py-3.5 px-4">Email Address</th>
                       <th class="py-3.5 px-4">Role</th>
@@ -1711,6 +1873,7 @@
                   </tbody>
                 </table>
               </div>
+            </div>
 
             </div>
 
@@ -4511,6 +4674,134 @@
           setTimeout(() => window.location.reload(), 800);
         } catch (e) {
           setTimeout(() => window.location.reload(), 800);
+        }
+      }
+
+      // ==========================================
+      // STUDENT DIRECTORY & MODERATION (SEARCH, SNOOZE, BAN, UNBAN)
+      // ==========================================
+      switchUserSubTab(tab) {
+        const btnStudents = document.getElementById('btn-subtab-students');
+        const btnStaff = document.getElementById('btn-subtab-staff');
+        const panelStudents = document.getElementById('panel-usermgmt-students');
+        const panelStaff = document.getElementById('panel-usermgmt-staff');
+
+        if (tab === 'students') {
+          if (btnStudents) {
+            btnStudents.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow';
+          }
+          if (btnStaff) {
+            btnStaff.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/60';
+          }
+          if (panelStudents) panelStudents.classList.remove('hidden');
+          if (panelStaff) panelStaff.classList.add('hidden');
+        } else {
+          if (btnStudents) {
+            btnStudents.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/60';
+          }
+          if (btnStaff) {
+            btnStaff.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-purple-700 to-purple-800 text-white shadow';
+          }
+          if (panelStudents) panelStudents.classList.add('hidden');
+          if (panelStaff) panelStaff.classList.remove('hidden');
+        }
+      }
+
+      filterStudentDirectory(query) {
+        const q = (query || '').toLowerCase().trim();
+        const rows = document.querySelectorAll('#students-tbody tr.student-row');
+        let matchCount = 0;
+        rows.forEach(row => {
+          const text = row.getAttribute('data-search') || row.textContent.toLowerCase();
+          if (!q || text.includes(q)) {
+            row.style.display = '';
+            matchCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        const emptyEl = document.getElementById('students-search-empty');
+        if (emptyEl) {
+          if (matchCount === 0 && rows.length > 0) {
+            emptyEl.classList.remove('hidden');
+          } else {
+            emptyEl.classList.add('hidden');
+          }
+        }
+      }
+
+      async snoozeStudentModal(id, name) {
+        const hours = prompt(`Snooze / Warning para kay ${name}:\nIlang oras (hours) ang cooldown kung saan hindi siya makakapag-submit ng bagong ticket?`, "24");
+        if (hours === null) return;
+        const numHours = parseInt(hours) || 24;
+        try {
+          const res = await fetch(`{{ url('api/students') }}/${id}/snooze`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ hours: numHours })
+          });
+          const data = await res.json();
+          if (data.success) {
+            this.showToast(data.message, 'warning');
+            setTimeout(() => window.location.reload(), 900);
+          } else {
+            this.showToast(data.message || 'Failed to snooze student', 'error');
+          }
+        } catch(e) {
+          this.showToast('Network error while applying snooze', 'error');
+        }
+      }
+
+      async banStudentModal(id, name) {
+        const reason = prompt(`I-BAN si ${name}?\nIlagay ang dahilan para sa ban (e.g. Abusive behavior, ticket spamming):`, "Abusive behavior / Ticket spamming");
+        if (reason === null) return;
+        try {
+          const res = await fetch(`{{ url('api/students') }}/${id}/ban`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason })
+          });
+          const data = await res.json();
+          if (data.success) {
+            this.showToast(data.message, 'error');
+            setTimeout(() => window.location.reload(), 900);
+          } else {
+            this.showToast(data.message || 'Failed to ban student', 'error');
+          }
+        } catch(e) {
+          this.showToast('Network error while applying ban', 'error');
+        }
+      }
+
+      async unbanStudent(id, name) {
+        if (!confirm(`I-unban at ibalik sa Active / Enrolled status si ${name}?`)) return;
+        try {
+          const res = await fetch(`{{ url('api/students') }}/${id}/unban`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            }
+          });
+          const data = await res.json();
+          if (data.success) {
+            this.showToast(data.message, 'success');
+            setTimeout(() => window.location.reload(), 900);
+          } else {
+            this.showToast(data.message || 'Failed to unban student', 'error');
+          }
+        } catch(e) {
+          this.showToast('Network error while unbanning student', 'error');
         }
       }
 

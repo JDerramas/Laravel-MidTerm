@@ -83,3 +83,8 @@ Route::delete('/api/support-tickets/{id}', [MerchController::class, 'deleteTicke
 Route::get('/api/activity-logs', [MerchController::class, 'getActivityLogs'])->name('api.activity.logs');
 Route::delete('/api/activity-logs', [MerchController::class, 'clearActivityLogs'])->name('api.activity.logs.clear');
 Route::post('/api/activity-logs/clear', [MerchController::class, 'clearActivityLogs']);
+
+// Student Directory & Moderation API (Snooze, Ban, Unban)
+Route::post('/api/students/{id}/snooze', [MerchController::class, 'snoozeStudent'])->name('api.students.snooze');
+Route::post('/api/students/{id}/ban', [MerchController::class, 'banStudent'])->name('api.students.ban');
+Route::post('/api/students/{id}/unban', [MerchController::class, 'unbanStudent'])->name('api.students.unban');

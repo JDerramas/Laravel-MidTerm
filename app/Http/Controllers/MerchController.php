@@ -240,8 +240,46 @@ class MerchController extends Controller
             $categoryStats[$cat]['sold'] += intval($p->units_sold);
         }
 
-        // 6. Fetch verified OnePass students from database for User Management
-        $verifiedStudents = \App\Models\Student::orderBy('name', 'asc')->get();
+        // 6. Fetch verified students for Student Directory (Excluding Admins)
+        $adminEmails = SystemUser::where('role', 'like', '%Admin%')
+            ->pluck('email')
+            ->map(fn($e) => strtolower(trim($e)))
+            ->filter()
+            ->toArray();
+
+        if ($adminUser && !empty($adminUser->email)) {
+            $adminEmails[] = strtolower(trim($adminUser->email));
+        }
+
+        // Auto-sync students from reservations if not already in students table
+        try {
+            $resStudents = Reservation::select('student_name', 'student_id', 'department', 'year_level', 'contact')
+                ->whereNotNull('student_id')
+                ->distinct()
+                ->get();
+            foreach ($resStudents as $rs) {
+                if (empty($rs->student_id)) continue;
+                \App\Models\Student::firstOrCreate(
+                    ['student_id' => $rs->student_id],
+                    [
+                        'name' => $rs->student_name,
+                        'email' => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $rs->student_id)) . '@student.npc.edu.ph',
+                        'department' => $rs->department ?: 'Associate in Information Systems (AIS)',
+                        'year_level' => $rs->year_level ?: '2nd Year',
+                        'contact' => $rs->contact,
+                        'status' => 'Enrolled',
+                    ]
+                );
+            }
+        } catch (\Throwable $e) {}
+
+        // ALL USERS EXCEPT ADMIN (Student role only / non-admins)
+        $studentUsers = \App\Models\Student::all()->filter(function ($s) use ($adminEmails) {
+            $sEmail = strtolower(trim($s->email ?? ''));
+            return !in_array($sEmail, $adminEmails);
+        })->sortBy('name')->values();
+
+        $verifiedStudents = $studentUsers;
 
         // 7. Fetch official claimed orders ledger for physical pickup tracking & sign-off audit
         $claimedReservations = Reservation::where('status', 'Claimed')
@@ -256,6 +294,7 @@ class MerchController extends Controller
             'claimedReservations',
             'activityLogs',
             'users',
+            'studentUsers',
             'adminUser',
             'studentUser',
             'verifiedStudents',
@@ -340,6 +379,15 @@ class MerchController extends Controller
                     'message' => 'For GCash Online, please provide at least one verification: either your GCash Reference Number OR upload a Receipt Screenshot.',
                 ], 422);
             }
+        }
+
+        // Moderation Check: Block banned students from placing reservations
+        $studentModCheck = \App\Models\Student::where('student_id', $validated['student_id'])->first();
+        if ($studentModCheck && $studentModCheck->isBanned()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Banned Account: Hindi ka pinapayagang mag-reserve dahil sa paglabag sa alituntunin.',
+            ], 403);
         }
 
         // Generate unique Reference Code (e.g. ICS-2026-X941K)
@@ -1194,6 +1242,36 @@ class MerchController extends Controller
             'message'      => 'required|string',
         ]);
 
+        // Moderation Check: Is student Banned or Snoozed?
+        $studentMod = \App\Models\Student::where('student_id', $request->student_id)->first();
+        if ($studentMod) {
+            if ($studentMod->isBanned()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Banned Account: Hindi ka pinapayagang mag-file ng support ticket dahil sa paglabag sa alituntunin.',
+                ], 403);
+            }
+            if ($studentMod->isSnoozed()) {
+                $untilStr = $studentMod->snoozed_until ? $studentMod->snoozed_until->diffForHumans() : 'pansamantala';
+                return response()->json([
+                    'success' => false,
+                    'message' => "Naka-snooze ang iyong account ({$untilStr}) dahil sa warning. Hindi ka muna makakapag-submit ng bagong ticket.",
+                ], 403);
+            }
+        }
+
+        // Daily Limit: Maximum 5 tickets per day per student
+        $todayTicketsCount = SupportTicket::where('student_id', $request->student_id)
+            ->whereDate('created_at', today())
+            ->count();
+
+        if ($todayTicketsCount >= 5) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nakaabot ka na sa limit na 5 tickets ngayong araw (Maximum 5 tickets per day). Pakisubukan muli bukas.',
+            ], 429);
+        }
+
         // Anti-spam rule 1: If student already has an unresolved ticket for this specific reservation
         if ($request->filled('reservation_ref')) {
             $existingActive = SupportTicket::where('student_id', $request->student_id)
@@ -1926,6 +2004,104 @@ class MerchController extends Controller
         return response()->json([
             'success' => true,
             'logs'    => $logs,
+        ]);
+    }
+
+    /**
+     * MODERATION: Snooze / warn a student (temporary timeout / restriction)
+     */
+    public function snoozeStudent(Request $request, $id)
+    {
+        $student = \App\Models\Student::findOrFail($id);
+        $hours = intval($request->input('hours', 24));
+        if ($hours <= 0) $hours = 24;
+
+        $student->status = 'Snoozed';
+        $student->snoozed_until = now()->addHours($hours);
+        $student->warning_count = ($student->warning_count ?? 0) + 1;
+        $student->save();
+
+        // Audit Trail
+        $adminUser = session('student_user');
+        $adminName = $adminUser['name'] ?? 'Admin';
+        $adminCode = $adminUser['student_id'] ?? 'ADM-01';
+
+        ActivityLog::record(
+            'UPDATE',
+            "Student [{$student->name} ({$student->student_id})] was SNOOZED for {$hours}h (Warning #{$student->warning_count}) by {$adminName}",
+            $adminCode,
+            $adminName,
+            'User Moderation'
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Student {$student->name} has been snoozed for {$hours} hours (Warning Count: {$student->warning_count}).",
+            'student' => $student,
+        ]);
+    }
+
+    /**
+     * MODERATION: Ban a student (blocks reservations and tickets)
+     */
+    public function banStudent(Request $request, $id)
+    {
+        $student = \App\Models\Student::findOrFail($id);
+        $reason = $request->input('reason', 'Policy violation / spamming');
+
+        $student->status = 'Banned';
+        $student->ban_reason = $reason;
+        $student->save();
+
+        // Audit Trail
+        $adminUser = session('student_user');
+        $adminName = $adminUser['name'] ?? 'Admin';
+        $adminCode = $adminUser['student_id'] ?? 'ADM-01';
+
+        ActivityLog::record(
+            'UPDATE',
+            "Student [{$student->name} ({$student->student_id})] was BANNED (Reason: {$reason}) by {$adminName}",
+            $adminCode,
+            $adminName,
+            'User Moderation'
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Student {$student->name} has been BANNED.",
+            'student' => $student,
+        ]);
+    }
+
+    /**
+     * MODERATION: Unban / restore student to Active/Enrolled status
+     */
+    public function unbanStudent(Request $request, $id)
+    {
+        $student = \App\Models\Student::findOrFail($id);
+
+        $student->status = 'Enrolled';
+        $student->snoozed_until = null;
+        $student->ban_reason = null;
+        $student->save();
+
+        // Audit Trail
+        $adminUser = session('student_user');
+        $adminName = $adminUser['name'] ?? 'Admin';
+        $adminCode = $adminUser['student_id'] ?? 'ADM-01';
+
+        ActivityLog::record(
+            'UPDATE',
+            "Student [{$student->name} ({$student->student_id})] was UNBANNED / RESTORED by {$adminName}",
+            $adminCode,
+            $adminName,
+            'User Moderation'
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Student {$student->name} has been restored to Active / Enrolled status.",
+            'student' => $student,
         ]);
     }
 }
