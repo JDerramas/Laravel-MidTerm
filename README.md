@@ -24,6 +24,7 @@ The **ICS Apparel & Merchandise Reservation System** is a unified, full-stack we
 3. **Logistics Deadlocks**: Provides an automated **Conflict Lock Engine** (`⚠️ ON HOLD`) preventing premature item claims while a student has an unresolved helpdesk ticket.
 4. **Order Support Transparency**: Built-in real-time Helpdesk Chat with turn-taking anti-spam and strict resolved-only ticket deletion governance.
 5. **Real-Time Audit & Toast Notification Engine**: Live background polling, Web Audio API chime sounds, and floating toast notifications for administrative auditing across all logins, logouts, order creations, updates, and cancellations.
+6. **Dispute-Proof Claimed Orders & Release Ledger**: Eliminates lost paper sign-off sheets and manual spreadsheet discrepancies with automated dual-timestamp tracking (`created_at` purchased vs `claimed_at` physically released), officer accountability (`claimed_by`), and 1-click UTF-8 BOM CSV export for instant Excel/Google Sheets reconciliation.
 
 ---
 
@@ -106,11 +107,13 @@ The application is powered by **7 normalized tables** under the MySQL InnoDB sto
 | Cart Items  : items (JSON Snapshot)|                         | Ticket Status: status (Indexed)    |
 | Order Total : total_amount         |                         +------------------------------------+
 | Order Status: status               |                                          | 1
-+------------------------------------+                                          | 1 : N (Cascade Delete)
-                  ^                                                             v
+| Purchased At: created_at           |                                          | 1 : N (Cascade Delete)
+| Claimed At  : claimed_at           |                                          v
+| Released By : claimed_by           |                         +------------------------------------+
++------------------------------------+                         |          support_messages          |
+                  ^                                            |         (Chat Conversations)       |
                   |                                            +------------------------------------+
-                  | Snapshot Link                              |          support_messages          |
-+------------------------------------+                         |         (Chat Conversations)       |
+                  | Snapshot Link                              | Primary Key : id                   |
 |              products              |                         +------------------------------------+
 |       (Merchandise Catalog)        |                         | Primary Key : id                   |
 +------------------------------------+                         | Foreign Key : ticket_id            |
@@ -144,7 +147,7 @@ The application is powered by **7 normalized tables** under the MySQL InnoDB sto
 | Table Name | Description & Architectural Purpose |
 | :--- | :--- |
 | **`products`** | Stores the merchandise catalog items, unit pricing (`DECIMAL 10,2`), category filters, and real-time inventory counts per size (`XS`, `S`, `M`, `L`, `XL`, `2XL`). |
-| **`reservations`** | Stores student checkout orders, unique reference codes (`ref_code`), payment methods (Cash/GCash), uploaded receipt images, and order lifecycle states (`Pending`, `Ready for Pickup`, `Claimed`, `Cancelled`). |
+| **`reservations`** | Stores student checkout orders, unique reference codes (`ref_code`), payment methods (Cash/GCash), uploaded receipt images, order lifecycle states (`Pending`, `Ready for Pickup`, `Claimed`, `Cancelled`), physical pickup claim timestamps (`claimed_at`), and releasing officer identity (`claimed_by`). |
 | **`support_tickets`** | Logs student inquiries and complaints. When a ticket is active (`Open`), it automatically engages the **Conflict Lock** (`⚠️ ON HOLD`) on the corresponding reservation, preventing premature pickup. |
 | **`support_messages`** | Stores live chat transcripts between students and council officers. Protected by a **Turn-Taking Anti-Spam** rule and configured with `ON DELETE CASCADE` to clean up messages upon ticket deletion. |
 | **`system_users`** | Roster of authorized faculty advisers and student council administrators (e.g., `ics@npc.edu.ph`). Enforced by the RBAC middleware guard prior to granting access to `/admin`. |
@@ -183,7 +186,9 @@ The application is powered by **7 normalized tables** under the MySQL InnoDB sto
 | `POST`   | `/api/support/tickets/{id}/messages` | Send live chat message (Turn-taking anti-spam)            | Student/Admin |
 | `PATCH`  | `/api/support/tickets/{id}/status`   | Mark ticket as In Review / Resolved                       | Admin         |
 | `DELETE` | `/api/support/tickets/{id}`          | Delete resolved ticket (Cascade deletes messages)         | Student/Admin |
-| `GET`    | `/reports/export-csv`                | Download complete audit & reservation report              | Admin         |
+| `GET`    | `/reports/export-csv`                | Download Sales vs Stock inventory master list CSV         | Admin         |
+| `GET`    | `/reports/export-claimed-csv`        | Export Official Claimed Releases Logsheet (CSV for Excel) | Admin         |
+| `GET`    | `/api/reports/claimed-logs`          | Searchable claimed orders release ledger API              | Admin         |
 | `GET`    | `/oauth/login`                       | OnePass OIDC SSO authorization redirect with PKCE S256    | Public/Student|
 | `GET`    | `/oauth/callback`                    | Token exchange via `/api/oauth/token` & claims sync       | OnePass Server|
 | `GET`    | `/oauth/logout`                      | End verified student session & record audit log           | Student       |
