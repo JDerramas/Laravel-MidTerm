@@ -19,8 +19,8 @@ Artisan::command('ics:reset-stats', function () {
     \App\Models\ActivityLog::record(
         'UPDATE',
         'Reset system sales, revenue, and active reservations to zero for testing.',
-        'USR-010',
-        'ICS Administrator',
+        '251505',
+        'J. Derramas',
         'System'
     );
 

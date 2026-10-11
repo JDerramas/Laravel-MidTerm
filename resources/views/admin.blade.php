@@ -1230,7 +1230,7 @@
                 <table class="w-full text-left text-xs">
                   <thead class="text-slate-400 bg-slate-950 uppercase text-[10px] font-mono border-b border-slate-800">
                     <tr>
-                      <th class="py-3 px-3">User Code</th>
+                      <th class="py-3 px-3">User Code / Student ID</th>
                       <th class="py-3 px-3">Name</th>
                       <th class="py-3 px-3">Email Address</th>
                       <th class="py-3 px-3">Role</th>
@@ -1806,8 +1806,8 @@
         <input type="hidden" id="crud-user-id">
 
         <div>
-          <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">User Code *</label>
-          <input type="text" id="crud-user-code" required placeholder="e.g. USR-008" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+          <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">User Code / Student ID *</label>
+          <input type="text" id="crud-user-code" required placeholder="e.g. 251505 or 2026-79818" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
         </div>
         <div>
           <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Full Name *</label>
@@ -1971,7 +1971,7 @@
           $currentAdminPayload = $studentUser ?? [
             'name' => $adminUser->name ?? 'Administrator',
             'email' => $adminUser->email ?? '',
-            'student_id' => $adminUser->user_code ?? 'USR-001',
+            'student_id' => $adminUser->user_code ?? '251505',
             'department' => $adminUser->department ?? 'AIS',
             'year_level' => 'N/A',
             'section' => 'Admin',
@@ -3806,7 +3806,7 @@
       openAddUserModal() {
         document.getElementById('user-modal-title').textContent = 'Add New System User';
         document.getElementById('crud-user-id').value = '';
-        document.getElementById('crud-user-code').value = 'USR-0' + Math.floor(10 + Math.random() * 90);
+        document.getElementById('crud-user-code').value = '';
         document.getElementById('crud-user-name').value = '';
         document.getElementById('crud-user-email').value = '';
         document.getElementById('crud-user-role').value = 'Admin';
@@ -3852,8 +3852,12 @@
             feedbackEl.className = 'text-[10px] mt-1 text-emerald-400 font-bold flex items-center gap-1';
             feedbackEl.innerHTML = `✓ Verified Student in Database: <span class="text-white">${match.name}</span> (${match.student_id})`;
           }
+          const codeInput = document.getElementById('crud-user-code');
           const nameInput = document.getElementById('crud-user-name');
           const deptInput = document.getElementById('crud-user-dept');
+          if (codeInput && (!codeInput.value || codeInput.value === '' || codeInput.value.startsWith('USR-'))) {
+            codeInput.value = match.student_id;
+          }
           if (nameInput && (!nameInput.value || nameInput.value === '')) {
             nameInput.value = match.name;
           }
@@ -4096,7 +4100,7 @@
             }) : 'Recently';
 
             tr.innerHTML = `
-              <td class="py-3 px-3 font-mono text-ics-gold font-bold">${log.user_code || 'USR-001'}</td>
+              <td class="py-3 px-3 font-mono text-ics-gold font-bold">${log.user_code || '251505'}</td>
               <td class="py-3 px-3">
                 <span class="px-2.5 py-1 rounded text-[10px] font-bold font-mono ${badgeClass}">
                   ${act}
@@ -4329,7 +4333,7 @@
           }) : 'Recently';
 
           tr.innerHTML = `
-            <td class="py-2 px-3 font-mono text-ics-gold font-bold">${log.user_code || 'USR-001'}</td>
+            <td class="py-2 px-3 font-mono text-ics-gold font-bold">${log.user_code || '251505'}</td>
             <td class="py-2 px-3">
               <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono ${badgeClass}">${act}</span>
             </td>

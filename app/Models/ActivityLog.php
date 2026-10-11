@@ -20,7 +20,7 @@ class ActivityLog extends Model
     /**
      * Helper method to quickly record audit log entries
      */
-    public static function record($action, $activity, $userCode = 'USR-001', $userName = 'Admin', $module = 'General')
+    public static function record($action, $activity, $userCode = '251505', $userName = 'Admin', $module = 'General')
     {
         return self::create([
             'user_code'  => $userCode,

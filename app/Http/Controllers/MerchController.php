@@ -484,7 +484,7 @@ class MerchController extends Controller
         }
 
         // Record in Audit Trail log
-        $operatorCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? 'USR-002';
+        $operatorCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
         $operatorName = session('student_user.name') ?? session('admin_user.name') ?? 'J. Derramas';
 
         if ($newStatus === 'Claimed') {
@@ -564,11 +564,13 @@ class MerchController extends Controller
         $reservation->delete();
 
         // Record in Audit Trail log
+        $operatorCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
+        $operatorName = session('student_user.name') ?? session('admin_user.name') ?? 'J. Derramas';
         ActivityLog::record(
             'DELETE',
             "Permanently deleted reservation [{$refCode}] ({$status}) from database records",
-            'USR-002',
-            'J. Derramas',
+            $operatorCode,
+            $operatorName,
             'Reservations'
         );
 
@@ -642,11 +644,14 @@ class MerchController extends Controller
             'is_active'      => true,
         ]);
 
+        $operatorCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
+        $operatorName = session('student_user.name') ?? session('admin_user.name') ?? 'J. Derramas';
+
         ActivityLog::record(
             'CREATE',
             "Added new merchandise item: '{$product->name}' [{$product->item_code}] with initial stock: {$totalStock}",
-            'USR-002',
-            'J. Derramas',
+            $operatorCode,
+            $operatorName,
             'Information Management'
         );
 
@@ -711,11 +716,14 @@ class MerchController extends Controller
 
         $product->save();
 
+        $operatorCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
+        $operatorName = session('student_user.name') ?? session('admin_user.name') ?? 'J. Derramas';
+
         ActivityLog::record(
             'UPDATE',
             "Updated details and photo for item: '{$product->name}' [{$product->item_code}]",
-            'USR-002',
-            'J. Derramas',
+            $operatorCode,
+            $operatorName,
             'Information Management'
         );
 
@@ -736,11 +744,14 @@ class MerchController extends Controller
         $code = $product->item_code;
         $product->delete();
 
+        $operatorCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
+        $operatorName = session('student_user.name') ?? session('admin_user.name') ?? 'J. Derramas';
+
         ActivityLog::record(
             'DELETE',
             "Deleted merchandise item: '{$name}' [{$code}]",
-            'USR-002',
-            'J. Derramas',
+            $operatorCode,
+            $operatorName,
             'Information Management'
         );
 
@@ -790,7 +801,7 @@ class MerchController extends Controller
         ]);
 
         $adminName = session('student_user.name') ?? 'Admin';
-        $adminCode = session('student_user.student_id') ?? 'USR-001';
+        $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
 
         ActivityLog::record(
             'CREATE',
@@ -842,7 +853,7 @@ class MerchController extends Controller
         $user->update($validated);
 
         $adminName = session('student_user.name') ?? 'Admin';
-        $adminCode = session('student_user.student_id') ?? 'USR-001';
+        $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
 
         ActivityLog::record(
             'UPDATE',
@@ -869,11 +880,14 @@ class MerchController extends Controller
         $code = $user->user_code;
         $user->delete();
 
+        $adminName = session('student_user.name') ?? session('admin_user.name') ?? 'Admin';
+        $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
+
         ActivityLog::record(
             'DELETE',
             "Deleted user account: '{$name}' [{$code}]",
-            'USR-001',
-            'E. Moreno',
+            $adminCode,
+            $adminName,
             'User Management'
         );
 
@@ -919,11 +933,14 @@ class MerchController extends Controller
             fclose($handle);
         };
 
+        $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
+        $adminName = session('student_user.name') ?? session('admin_user.name') ?? 'Admin';
+
         ActivityLog::record(
             'READ',
             'Downloaded Sales vs Stock CSV Report',
-            'USR-001',
-            'E. Moreno',
+            $adminCode,
+            $adminName,
             'Reports'
         );
 
@@ -1073,7 +1090,7 @@ class MerchController extends Controller
             fclose($handle);
         };
 
-        $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? 'USR-001';
+        $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
         $adminName = session('student_user.name') ?? session('admin_user.name') ?? 'Admin Officer';
 
         ActivityLog::record(
@@ -1324,10 +1341,11 @@ class MerchController extends Controller
                 'is_system'   => true,
             ]);
 
+            $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
             ActivityLog::record(
                 'UPDATE',
                 "Admin {$adminName} marked support ticket {$ticket->ticket_code} as Resolved",
-                'USR-001',
+                $adminCode,
                 $adminName,
                 'Support Helpdesk'
             );
@@ -1432,10 +1450,11 @@ class MerchController extends Controller
         ]);
 
         // 5. Activity Log
+        $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
         ActivityLog::record(
             'UPDATE',
             "Admin approved cancellation for reservation {$reservation->ref_code} through Support Ticket {$ticket->ticket_code}",
-            'USR-001',
+            $adminCode,
             $adminName,
             'Reservation Logistics'
         );
@@ -1487,10 +1506,12 @@ class MerchController extends Controller
         $ticket->messages()->delete();
         $ticket->delete();
 
+        $operatorCode = $isAdmin ? (session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505') : ($studentId ?: 'STUDENT');
+
         ActivityLog::record(
             'DELETE',
             "Deleted resolved support ticket [{$code}] by {$deleterName}",
-            $isAdmin ? 'USR-001' : ($studentId ?: 'STUDENT'),
+            $operatorCode,
             $deleterName,
             'Support Helpdesk'
         );
@@ -1681,7 +1702,7 @@ class MerchController extends Controller
         $userEmail = strtolower(trim($studentUser['email'] ?? ''));
         $adminUser = $userEmail ? SystemUser::whereRaw('LOWER(TRIM(email)) = ?', [$userEmail])->first() : null;
 
-        $operatorCode = $adminUser->user_code ?? $studentUser['student_id'] ?? 'USR-001';
+        $operatorCode = $adminUser->user_code ?? $studentUser['student_id'] ?? '251505';
         $operatorName = $adminUser->name ?? $studentUser['name'] ?? 'Administrator';
 
         try {
@@ -1716,7 +1737,7 @@ class MerchController extends Controller
     {
         $studentUser = session('student_user');
         $adminName = $studentUser['name'] ?? 'ICS Admin';
-        $adminCode = $studentUser['student_id'] ?? 'USR-001';
+        $adminCode = $studentUser['student_id'] ?? session('admin_user.user_code') ?? '251505';
 
         // Purge existing activity logs
         ActivityLog::truncate();
