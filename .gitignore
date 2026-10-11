@@ -26,3 +26,4 @@ scratch/
 database/_archi_backup/
 *.txt
 !public/robots.txt
+public/test_admin_mobile.html
