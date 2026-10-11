@@ -3280,42 +3280,63 @@
           return;
         }
 
+        this.isProcessingReceipt = true;
+        const fileNameEl = document.getElementById('receipt-file-name');
+        if (fileNameEl) fileNameEl.textContent = 'Optimizing receipt image...';
+
         const reader = new FileReader();
+        reader.onerror = () => {
+          this.isProcessingReceipt = false;
+          this.showToast('Failed to read image file. Please try again.', 'error');
+        };
+
         reader.onload = (event) => {
           const rawData = event.target.result;
           const img = new Image();
+          img.onerror = () => {
+            this.isProcessingReceipt = false;
+            this.showToast('Failed to load image preview.', 'error');
+          };
+
           img.onload = () => {
-            const maxDim = 1200;
-            let width = img.width;
-            let height = img.height;
+            try {
+              const maxDim = 850;
+              let width = img.width;
+              let height = img.height;
 
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
+              if (width > maxDim || height > maxDim) {
+                if (width > height) {
+                  height = Math.round((height * maxDim) / width);
+                  width = maxDim;
+                } else {
+                  width = Math.round((width * maxDim) / height);
+                  height = maxDim;
+                }
               }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              // 0.75 compression produces clear text at ~50KB - 80KB payload
+              this.receiptBase64 = canvas.toDataURL('image/jpeg', 0.75);
+            } catch(cvErr) {
+              // Fallback to raw data if canvas fails
+              this.receiptBase64 = rawData;
+            } finally {
+              this.isProcessingReceipt = false;
             }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            this.receiptBase64 = canvas.toDataURL('image/jpeg', 0.82);
 
             const placeholder = document.getElementById('receipt-upload-placeholder');
             const previewContainer = document.getElementById('receipt-upload-preview-container');
             const previewImg = document.getElementById('receipt-upload-preview-img');
-            const fileName = document.getElementById('receipt-file-name');
 
             if (placeholder) placeholder.classList.add('hidden');
             if (previewContainer) previewContainer.classList.remove('hidden');
             if (previewImg) previewImg.src = this.receiptBase64;
-            if (fileName) fileName.textContent = file.name;
+            if (fileNameEl) fileNameEl.textContent = file.name;
             this.showToast('Payment receipt screenshot attached!', 'info');
           };
           img.src = rawData;
@@ -3325,6 +3346,12 @@
 
       async submitReservation(e) {
         e.preventDefault();
+
+        if (this.isProcessingReceipt) {
+          this.showToast('Please wait a moment, receipt image is still being optimized...', 'warning');
+          return;
+        }
+
         const subtotal = this.cart.reduce((sum, it) => sum + (it.price * it.quantity), 0);
         const fee = 10.00;
         const total = subtotal + fee;
@@ -3366,60 +3393,72 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Accept': 'application/json',
               'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify(payload)
           });
-          const data = await res.json();
 
-          if (data.success) {
-            // Celebrate with confetti
-            if (window.confetti) {
-              window.confetti({
-                particleCount: 120,
-                spread: 70,
-                origin: {
-                  y: 0.6
-                }
-              });
-            }
-
-            this.cart = [];
-            this.saveCartToStorage();
-            this.closeCheckoutModal();
-            this.showToast('Reservation successfully recorded in queue!', 'success');
-
-            // Update Shopee-Style Live Tracker with New Reservation
-            if (data.reservation) {
-              if (!this.currentUser) {
-                this.currentUser = {
-                  name: data.reservation.student_name,
-                  student_id: data.reservation.student_id,
-                  email: ''
-                };
-              }
-              if (!Array.isArray(this.reservations)) {
-                this.reservations = [];
-              }
-              this.reservations.unshift(data.reservation);
-              this.activeTrackedRef = data.reservation.ref_code;
-              this.updateTrackerVisibility();
-
-              // Smoothly scroll to the Shopee-Style Order Tracker so student sees the progress bar immediately!
-              setTimeout(() => {
-                const trackerSection = document.getElementById('tracker-section');
-                if (trackerSection) {
-                  trackerSection.classList.remove('hidden');
-                  trackerSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-              }, 250);
-            }
-
-            // View Confirmation Slip
-            this.viewPrintClaimSlip(data.reservation);
-          } else {
-            this.showToast(data.message || 'Error creating reservation', 'error');
+          let data;
+          try {
+            data = await res.json();
+          } catch (parseErr) {
+            throw new Error('Server returned invalid response');
           }
+
+          if (!res.ok || !data.success) {
+            let errorMsg = data.message || 'Failed to complete reservation. Please try again.';
+            if (data.errors) {
+              errorMsg = Object.values(data.errors).flat().join(' ');
+            }
+            this.showToast(errorMsg, 'error');
+            return;
+          }
+
+          // Celebrate with confetti
+          if (window.confetti) {
+            window.confetti({
+              particleCount: 120,
+              spread: 70,
+              origin: {
+                y: 0.6
+              }
+            });
+          }
+
+          this.cart = [];
+          this.saveCartToStorage();
+          this.closeCheckoutModal();
+          this.showToast('Reservation successfully recorded in queue!', 'success');
+
+          // Update Shopee-Style Live Tracker with New Reservation
+          if (data.reservation) {
+            if (!this.currentUser) {
+              this.currentUser = {
+                name: data.reservation.student_name,
+                student_id: data.reservation.student_id,
+                email: ''
+              };
+            }
+            if (!Array.isArray(this.reservations)) {
+              this.reservations = [];
+            }
+            this.reservations.unshift(data.reservation);
+            this.activeTrackedRef = data.reservation.ref_code;
+            this.updateTrackerVisibility();
+
+            // Smoothly scroll to the Shopee-Style Order Tracker so student sees the progress bar immediately!
+            setTimeout(() => {
+              const trackerSection = document.getElementById('tracker-section');
+              if (trackerSection) {
+                trackerSection.classList.remove('hidden');
+                trackerSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 250);
+          }
+
+          // View Confirmation Slip
+          this.viewPrintClaimSlip(data.reservation);
         } catch (err) {
           console.error(err);
           this.showToast('Failed to complete reservation. Please try again.', 'error');

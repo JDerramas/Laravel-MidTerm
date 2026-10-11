@@ -27,3 +27,5 @@ database/_archi_backup/
 *.txt
 !public/robots.txt
 public/test_admin_mobile.html
+public/uploads/receipts/*
+!public/uploads/receipts/.gitkeep

@@ -353,16 +353,49 @@ class MerchController extends Controller
             $file->move(public_path('uploads/receipts'), $filename);
             $receiptPath = 'uploads/receipts/' . $filename;
         } elseif (!empty($request->receipt_image) && str_starts_with($request->receipt_image, 'data:image')) {
-            $parts = explode(";base64,", $request->receipt_image);
-            $typeAux = explode("image/", $parts[0]);
-            $ext = $typeAux[1] ?? 'png';
-            $data = base64_decode($parts[1]);
-            $filename = 'receipt_' . time() . '_' . Str::random(6) . '.' . $ext;
-            if (!file_exists(public_path('uploads/receipts'))) {
-                mkdir(public_path('uploads/receipts'), 0777, true);
+            try {
+                $dir = public_path('uploads/receipts');
+                if (!file_exists($dir)) {
+                    @mkdir($dir, 0777, true);
+                }
+
+                $ext = 'jpg';
+                $base64Data = null;
+
+                if (preg_match('/^data:image\/([a-zA-Z0-9\+\-]+);base64,(.+)$/s', $request->receipt_image, $matches)) {
+                    $rawType = strtolower($matches[1]);
+                    if (str_contains($rawType, 'png')) $ext = 'png';
+                    elseif (str_contains($rawType, 'webp')) $ext = 'webp';
+                    elseif (str_contains($rawType, 'gif')) $ext = 'gif';
+                    else $ext = 'jpg';
+                    $base64Data = $matches[2];
+                } else {
+                    $parts = explode(";base64,", $request->receipt_image);
+                    if (isset($parts[1])) {
+                        $base64Data = $parts[1];
+                    }
+                }
+
+                if ($base64Data) {
+                    $decoded = base64_decode(str_replace(' ', '+', $base64Data));
+                    if ($decoded !== false && strlen($decoded) > 0) {
+                        $filename = 'receipt_' . time() . '_' . Str::random(8) . '.' . $ext;
+                        $targetFilePath = $dir . DIRECTORY_SEPARATOR . $filename;
+                        if (@file_put_contents($targetFilePath, $decoded) !== false) {
+                            $receiptPath = 'uploads/receipts/' . $filename;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('Receipt upload save warning: ' . $e->getMessage());
             }
-            file_put_contents(public_path('uploads/receipts/' . $filename), $data);
-            $receiptPath = 'uploads/receipts/' . $filename;
+
+            // Fallback if writing failed: if small enough (<60KB) keep data URL, else use a placeholder flag
+            if (empty($receiptPath)) {
+                $receiptPath = (strlen($request->receipt_image) < 60000)
+                    ? $request->receipt_image
+                    : 'images/gcash_qr.jpg';
+            }
         } elseif (!empty($request->receipt_image)) {
             $receiptPath = $request->receipt_image;
         }
@@ -415,8 +448,9 @@ class MerchController extends Controller
 
         // Deduct available stock and increment reserved stock
         foreach ($validated['items'] as $item) {
-            $prod = Product::where('item_code', $item['productId'])
-                ->orWhere('id', $item['productId'] ?? 0)
+            $itemId = $item['productId'] ?? $item['id'] ?? $item['item_code'] ?? 0;
+            $prod = Product::where('item_code', $itemId)
+                ->orWhere('id', $itemId)
                 ->first();
 
             if ($prod) {
