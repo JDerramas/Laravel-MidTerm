@@ -69,8 +69,8 @@ class MerchController extends Controller
             $openTicketsCount = 0;
         }
 
-        // 5. Fetch verified student roster for local direct sign-in modal
-        $studentsList = \App\Models\Student::where('status', 'Enrolled')->orderBy('id', 'asc')->get();
+        // 5. Verified student roster (empty collection for storefront to optimize database query speed)
+        $studentsList = collect([]);
 
         // 6. Check if current student has active admin privileges in system_users
         $isAdminUser = false;

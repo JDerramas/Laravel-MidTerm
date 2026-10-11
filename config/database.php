@@ -86,6 +86,7 @@ return [
 
                 $options = [
                     PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT', false),
+                    PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
                 ];
 
                 if ($ca && is_file($ca)) {
