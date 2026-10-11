@@ -815,13 +815,13 @@
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
       <div class="bg-slate-900/90 rounded-3xl border border-slate-800/90 shadow-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
 
-        <!-- Category Filters (Horizontal Scroll on Mobile, Flex-Wrap on Desktop) -->
+        <!-- Category & Department Filters (Horizontal Scroll on Mobile, Flex-Wrap on Desktop) -->
         <div class="flex items-center gap-1.5 sm:gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
           <button
             data-cat="all"
             onclick="icsApp.setCategoryFilter('all')"
             class="cat-filter-btn flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold bg-ics-700 text-white shadow transition">
-            All Merch (10)
+            All Merch ({{ count($products) }})
           </button>
           <button
             data-cat="general"
@@ -830,16 +830,28 @@
             Collegiate Uniforms
           </button>
           <button
+            data-cat="CICS"
+            onclick="icsApp.setCategoryFilter('CICS')"
+            class="cat-filter-btn flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold bg-slate-800/80 hover:bg-slate-800 text-slate-300 transition">
+            ICS Tech
+          </button>
+          <button
+            data-cat="EDUC"
+            onclick="icsApp.setCategoryFilter('EDUC')"
+            class="cat-filter-btn flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold bg-slate-800/80 hover:bg-slate-800 text-slate-300 transition">
+            College of Educ
+          </button>
+          <button
+            data-cat="BSBA"
+            onclick="icsApp.setCategoryFilter('BSBA')"
+            class="cat-filter-btn flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold bg-slate-800/80 hover:bg-slate-800 text-slate-300 transition">
+            Business Admin (BSBA)
+          </button>
+          <button
             data-cat="pe"
             onclick="icsApp.setCategoryFilter('pe')"
             class="cat-filter-btn flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold bg-slate-800/80 hover:bg-slate-800 text-slate-300 transition">
-            Athletics & PE Wear
-          </button>
-          <button
-            data-cat="department"
-            onclick="icsApp.setCategoryFilter('department')"
-            class="cat-filter-btn flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold bg-slate-800/80 hover:bg-slate-800 text-slate-300 transition">
-            Dept & Varsity
+            Athletics & PE
           </button>
           <button
             data-cat="accessory"
@@ -874,6 +886,7 @@
           data-id="{{ $product->id }}"
           data-code="{{ $product->item_code }}"
           data-category="{{ $product->category }}"
+          data-dept="{{ $product->dept }}"
           onclick="icsApp.openProductModal('{{ $product->id }}')">
 
           <!-- Thumbnail Image Container (Compact on Mobile, Enlarge on Modal Click) -->
@@ -2903,11 +2916,16 @@
         const cards = document.querySelectorAll('.product-card');
         cards.forEach(card => {
           const category = card.getAttribute('data-category');
+          const dept = card.getAttribute('data-dept');
           const code = (card.getAttribute('data-code') || '').toLowerCase();
           const title = (card.querySelector('h3')?.textContent || '').toLowerCase();
           const desc = (card.querySelector('p')?.textContent || '').toLowerCase();
 
-          const matchesCat = (this.categoryFilter === 'all' || category === this.categoryFilter);
+          const matchesCat = (
+            this.categoryFilter === 'all' || 
+            category === this.categoryFilter || 
+            dept === this.categoryFilter
+          );
           const matchesQuery = (!this.searchQuery || title.includes(this.searchQuery) || code.includes(this.searchQuery) || desc.includes(this.searchQuery));
 
           if (matchesCat && matchesQuery) {
