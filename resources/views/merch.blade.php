@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>ICS Integrated Computer Society | Apparel & Merch Reservation System</title>
 
@@ -66,6 +66,14 @@
   </script>
 
   <style>
+    /* Prevent any horizontal page overflow on mobile devices */
+    html, body {
+      overflow-x: hidden !important;
+      max-width: 100vw !important;
+      width: 100% !important;
+      position: relative;
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
@@ -141,29 +149,29 @@
       <div class="flex items-center justify-between h-18 py-2">
 
         <!-- ICS Brand Identity & Emblem (Clean Responsive, No Midterm label) -->
-        <div class="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group flex-shrink-0" onclick="icsApp.switchPortalView('student')">
-          <div class="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-2xl p-0.5 bg-gradient-to-br from-ics-gold via-ics-700 to-ics-900 shadow-lg group-hover:scale-105 transition-transform duration-300">
+        <div class="flex items-center gap-2 sm:gap-3.5 cursor-pointer group flex-shrink-0 min-w-0" onclick="icsApp.switchPortalView('student')">
+          <div class="relative w-9 h-9 sm:w-12 sm:h-12 flex-shrink-0 rounded-2xl p-0.5 bg-gradient-to-br from-ics-gold via-ics-700 to-ics-900 shadow-lg group-hover:scale-105 transition-transform duration-300">
             <img src="{{ asset('images/ics-logo.png') }}"
               alt="ICS Integrated Computer Society"
               class="w-full h-full object-contain rounded-xl bg-ics-950 p-0.5">
           </div>
-          <div>
-            <div class="flex items-center gap-1.5 sm:gap-2">
-              <h1 class="text-sm sm:text-lg font-black tracking-tight leading-none text-white font-display uppercase flex items-center gap-1 sm:gap-1.5">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1 sm:gap-2">
+              <h1 class="text-xs sm:text-lg font-black tracking-tight leading-none text-white font-display uppercase flex items-center gap-1 sm:gap-1.5 truncate">
                 <span>ICS</span>
                 <span class="text-ics-gold font-normal">|</span>
-                <span class="bg-gradient-to-r from-red-400 via-ics-gold to-yellow-300 bg-clip-text text-transparent">Integrated Computer Society</span>
+                <span class="bg-gradient-to-r from-red-400 via-ics-gold to-yellow-300 bg-clip-text text-transparent hidden sm:inline">Integrated Computer Society</span>
+                <span class="bg-gradient-to-r from-red-400 via-ics-gold to-yellow-300 bg-clip-text text-transparent sm:hidden truncate">Merch Portal</span>
               </h1>
             </div>
-            <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
+            <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium hidden sm:flex items-center gap-1.5 mt-0.5">
               <span class="text-ics-gold font-semibold tracking-wider">Official Merch Portal</span>
-              <span>Apparel & Merch Reservation System</span>
             </p>
           </div>
         </div>
 
         <!-- View Switcher & Action Controls -->
-        <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
 
 
           <!-- Desktop Size Guide Trigger -->
@@ -190,10 +198,8 @@
             </span>
           </button>
 
-          <!-- Mobile Active Portal Pill Indicator -->
-          <span id="header-active-portal-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-ics-950 text-ics-300 border border-ics-800 lg:hidden">
-            Student
-          </span>
+          <!-- Mobile Active Portal Pill Indicator (Hidden as requested) -->
+          <span id="header-active-portal-badge" class="hidden"></span>
 
           <!-- Unified Header User Profile & Auth Widget -->
           <div id="header-user-profile-container" class="relative hidden lg:block">
@@ -813,10 +819,10 @@
 
     <!-- Toolbar: Search & Category Filter Buttons -->
     <section class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 mt-6">
-      <div class="bg-slate-900/90 rounded-3xl border border-slate-800/90 shadow-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div class="bg-slate-900/90 rounded-3xl border border-slate-800/90 shadow-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between min-w-0 w-full">
 
         <!-- Category & Department Filters (Horizontal Scroll on Mobile, Flex-Wrap on Desktop) -->
-        <div class="flex items-center gap-1.5 sm:gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+        <div class="flex items-center gap-1.5 sm:gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar min-w-0">
           <button
             data-cat="all"
             onclick="icsApp.setCategoryFilter('all')"
@@ -2001,12 +2007,14 @@
         <!-- Ticket Header Banner with Instant Back Navigation -->
         <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs gap-2">
           <div class="flex items-center gap-2.5 min-w-0">
-            <button 
-              type="button" 
-              onclick="icsApp.switchStudentSupportTab('history')" 
+            <button
+              type="button"
+              onclick="icsApp.switchStudentSupportTab('history')"
               class="px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold flex items-center gap-1.5 transition border border-slate-700 shadow-sm cursor-pointer flex-shrink-0"
               title="Back to my tickets history">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
               <span>Back</span>
             </button>
             <div class="min-w-0">
@@ -2156,13 +2164,13 @@
         this.startRealtimeSync();
 
         @if(session('success'))
-          this.showToast(@json(session('success')), 'success');
+        this.showToast(@json(session('success')), 'success');
         @endif
         @if(session('info'))
-          this.showToast(@json(session('info')), 'info');
+        this.showToast(@json(session('info')), 'info');
         @endif
         @if(session('error'))
-          this.showToast(@json(session('error')), 'error');
+        this.showToast(@json(session('error')), 'error');
         @endif
 
         // Silently pre-warm OnePass Render server in background to avoid OAuth cold-start delays
@@ -2931,8 +2939,8 @@
           const desc = (card.querySelector('p')?.textContent || '').toLowerCase();
 
           const matchesCat = (
-            this.categoryFilter === 'all' || 
-            category === this.categoryFilter || 
+            this.categoryFilter === 'all' ||
+            category === this.categoryFilter ||
             dept === this.categoryFilter
           );
           const matchesQuery = (!this.searchQuery || title.includes(this.searchQuery) || code.includes(this.searchQuery) || desc.includes(this.searchQuery));

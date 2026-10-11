@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>ICS Admin Console | Apparel & Merch Reservation System</title>
 
@@ -69,6 +69,14 @@
   </script>
 
   <style>
+    /* Prevent horizontal page overflow on mobile devices */
+    html, body {
+      overflow-x: hidden !important;
+      max-width: 100vw !important;
+      width: 100% !important;
+      position: relative;
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
@@ -162,27 +170,27 @@
   <!-- ======================================================== -->
   <header class="sticky top-0 z-40 bg-ics-dark/95 backdrop-blur-md border-b border-ics-900/80 shadow-2xl">
     <div class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
-      <div class="flex items-center justify-between h-18 py-2.5 gap-4">
+      <div class="flex items-center justify-between h-18 py-2.5 gap-2 sm:gap-4">
 
         <!-- ICS Brand Identity & Emblem -->
-        <a href="{{ route('admin') }}" class="flex items-center gap-2.5 sm:gap-3.5 group flex-shrink-0">
-          <div class="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-2xl p-0.5 bg-gradient-to-br from-amber-500 via-ics-700 to-ics-900 shadow-lg group-hover:scale-105 transition-transform duration-300">
+        <a href="{{ route('admin') }}" class="flex items-center gap-2 sm:gap-3.5 group flex-shrink-0 min-w-0">
+          <div class="relative w-9 h-9 sm:w-12 sm:h-12 flex-shrink-0 rounded-2xl p-0.5 bg-gradient-to-br from-amber-500 via-ics-700 to-ics-900 shadow-lg group-hover:scale-105 transition-transform duration-300">
             <img src="{{ asset('images/ics-logo.png') }}"
               alt="ICS Integrated Computer Society"
               class="w-full h-full object-contain rounded-xl bg-ics-950 p-0.5">
           </div>
-          <div>
-            <div class="flex items-center gap-2 sm:gap-2.5">
-              <h1 class="text-base sm:text-xl font-black tracking-tight leading-none text-white font-display uppercase flex items-center gap-1.5">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 sm:gap-2.5">
+              <h1 class="text-xs sm:text-lg lg:text-xl font-black tracking-tight leading-none text-white font-display uppercase flex items-center gap-1 sm:gap-1.5 truncate">
                 <span>ICS</span>
                 <span class="text-ics-gold font-normal">|</span>
                 <span class="bg-gradient-to-r from-red-400 via-ics-gold to-yellow-300 bg-clip-text text-transparent">Admin Console</span>
               </h1>
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-mono font-bold bg-amber-950/90 text-amber-300 border border-amber-800 shadow-sm">
+              <span class="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-950/90 text-amber-300 border border-amber-800 shadow-sm flex-shrink-0">
                 Staff &amp; Logistics
               </span>
             </div>
-            <p class="text-xs text-slate-300 font-medium flex items-center gap-2 mt-1">
+            <p class="text-[10px] sm:text-xs text-slate-300 font-medium hidden sm:flex items-center gap-2 mt-1">
               <span class="text-ics-gold font-semibold tracking-wider">Executive Management</span>
               <span class="text-slate-500">•</span>
               <span>Apparel &amp; Merch System</span>
@@ -191,35 +199,20 @@
         </a>
 
         <!-- Portal Link Switcher & Controls -->
-        <div class="flex items-center gap-2.5 sm:gap-3.5 flex-shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
 
-          <!-- Activity Notifications Bell Button -->
-          <button
-            type="button"
-            onclick="icsApp.setAdminTab('actlogs')"
-            class="relative p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700 hover:border-cyan-500 transition shadow flex items-center justify-center group flex-shrink-0"
-            title="Activity Audit Logs & Live Notifications">
-            <svg class="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <span id="admin-top-actlogs-ping" class="absolute -top-1 -right-1 flex h-3 w-3">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
-            </span>
-          </button>
-
-          <!-- Switch to Student Store Button -->
+          <!-- Desktop Direct Link: Switch to Student Store Button -->
           <a
             href="{{ route('home') }}"
-            class="whitespace-nowrap flex-shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-900/90 hover:bg-slate-800 text-slate-100 hover:text-white border border-slate-700 hover:border-ics-600 transition flex items-center gap-2 shadow-sm">
+            class="hidden md:flex whitespace-nowrap flex-shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-900/90 hover:bg-slate-800 text-slate-100 hover:text-white border border-slate-700 hover:border-ics-600 transition items-center gap-2 shadow-sm">
             <svg class="w-4 h-4 text-ics-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             <span class="font-bold tracking-wide">Go to Student Store</span>
           </a>
 
-          <!-- Admin Account Pill (ICS Black & Red Design) -->
-          <div class="whitespace-nowrap flex-shrink-0 flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-slate-900 border border-ics-900/80 shadow">
+          <!-- Desktop Admin Account Pill (ICS Black & Red Design) -->
+          <div class="hidden sm:flex whitespace-nowrap flex-shrink-0 items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-slate-900 border border-ics-900/80 shadow">
             @if(!empty($studentUser['avatar']))
               <img src="{{ $studentUser['avatar'] }}" alt="Profile" class="w-8 h-8 rounded-xl object-cover border border-ics-600 shadow flex-shrink-0">
             @else
@@ -227,7 +220,7 @@
                 {{ $studentUser['initials'] ?? strtoupper(substr($adminUser->name ?? 'AD', 0, 2)) }}
               </div>
             @endif
-            <div class="hidden sm:block text-left">
+            <div class="text-left">
               <p class="text-xs font-bold text-white leading-tight truncate max-w-[140px]" title="{{ $adminUser->name ?? $studentUser['name'] ?? 'Administrator' }}">
                 {{ $adminUser->name ?? $studentUser['name'] ?? 'Administrator' }}
               </p>
@@ -237,16 +230,28 @@
             </div>
           </div>
 
-          <!-- Dedicated Admin Sign Out Button -->
+          <!-- Desktop Dedicated Admin Sign Out Button -->
           <button
             type="button"
             onclick="icsApp.adminLogout()"
-            class="whitespace-nowrap flex-shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800/80 hover:border-rose-600 transition flex items-center gap-1.5 shadow"
+            class="hidden sm:flex whitespace-nowrap flex-shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800/80 hover:border-rose-600 transition items-center gap-1.5 shadow"
             title="Sign out of Admin Console">
             <svg class="w-4 h-4 text-rose-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
             </svg>
-            <span class="hidden sm:inline font-bold">Sign Out</span>
+            <span class="font-bold">Sign Out</span>
+          </button>
+
+          <!-- Mobile Hamburger Toggle Button (Access Go to Student Store & Admin Menu) -->
+          <button
+            type="button"
+            id="admin-mobile-hamburger-btn"
+            onclick="icsApp.toggleMobileDrawer()"
+            class="md:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-ics-700 text-slate-200 transition flex items-center justify-center focus:outline-none flex-shrink-0"
+            aria-label="Open Navigation Menu">
+            <svg class="w-5 h-5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
 
         </div>
@@ -254,6 +259,120 @@
       </div>
     </div>
   </header>
+
+  <!-- ======================================================== -->
+  <!-- MOBILE OFF-CANVAS NAVIGATION DRAWER (ADMIN) -->
+  <!-- ======================================================== -->
+  <div id="mobile-nav-backdrop" onclick="icsApp.closeMobileDrawer()" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300 md:hidden"></div>
+
+  <div id="mobile-nav-drawer" class="fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] z-50 bg-slate-900 border-l border-ics-900 shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out md:hidden overflow-y-auto">
+
+    <!-- Drawer Header -->
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60 sticky top-0 z-10 backdrop-blur-md">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 via-ics-700 to-ics-900 border border-amber-600/50 flex items-center justify-center p-1 shadow">
+          <img src="{{ asset('images/ics-logo.png') }}" alt="ICS" class="w-full h-full object-contain">
+        </div>
+        <div>
+          <h3 class="text-xs font-black text-white font-display uppercase tracking-wide">ICS Admin Console</h3>
+          <p class="text-[9px] text-ics-gold font-mono">Executive Management</p>
+        </div>
+      </div>
+      <button type="button" onclick="icsApp.closeMobileDrawer()" class="text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Drawer Body -->
+    <div class="p-4 space-y-4 flex-1">
+
+      <!-- PROMINENT BUTTON: GO TO STUDENT STORE -->
+      <a href="{{ route('home') }}" class="w-full p-3.5 rounded-2xl bg-gradient-to-r from-ics-800 to-ics-700 hover:from-ics-700 hover:to-ics-600 text-white font-bold text-xs flex items-center justify-between border border-ics-600 shadow-lg transition group">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-slate-950/70 border border-ics-500/50 flex items-center justify-center text-ics-gold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </div>
+          <div>
+            <p class="font-bold text-white text-xs">Go to Student Store</p>
+            <p class="text-[10px] text-ics-gold font-mono">Browse Apparel Catalog</p>
+          </div>
+        </div>
+        <svg class="w-4 h-4 text-ics-gold group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+
+      <!-- Admin Officer Profile Card -->
+      <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between shadow">
+        <div class="flex items-center gap-3">
+          @if(!empty($studentUser['avatar']))
+            <img src="{{ $studentUser['avatar'] }}" alt="Profile" class="w-10 h-10 rounded-xl object-cover border border-ics-600 shadow">
+          @else
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-xs shadow">
+              {{ $studentUser['initials'] ?? strtoupper(substr($adminUser->name ?? 'AD', 0, 2)) }}
+            </div>
+          @endif
+          <div>
+            <p class="text-xs font-bold text-white leading-tight">{{ $adminUser->name ?? $studentUser['name'] ?? 'Administrator' }}</p>
+            <p class="text-[10px] text-ics-gold font-mono leading-tight mt-0.5">{{ $adminUser->role ?? 'Executive Officer' }}</p>
+            <span class="inline-block px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800 mt-1">Staff Access</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Navigation Links -->
+      <div>
+        <p class="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-2 font-bold">Admin Navigation</p>
+        <div class="space-y-1.5 text-xs font-semibold">
+          <button type="button" onclick="icsApp.setAdminTab('dashboard'); icsApp.closeMobileDrawer();" class="w-full text-left px-3 py-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            <span>Executive Dashboard</span>
+          </button>
+          <button type="button" onclick="icsApp.setAdminTab('infomgmt'); icsApp.closeMobileDrawer();" class="w-full text-left px-3 py-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <span>Merchandise Inventory</span>
+          </button>
+          <button type="button" onclick="icsApp.setAdminTab('reservations'); icsApp.closeMobileDrawer();" class="w-full text-left px-3 py-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            <span>Reservation Queue</span>
+          </button>
+          <button type="button" onclick="icsApp.setAdminTab('claimed'); icsApp.closeMobileDrawer();" class="w-full text-left px-3 py-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Claimed Orders</span>
+          </button>
+          <button type="button" onclick="icsApp.setAdminTab('reports'); icsApp.closeMobileDrawer();" class="w-full text-left px-3 py-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span>Financial Reports</span>
+          </button>
+          <button type="button" onclick="icsApp.setAdminTab('usermgmt'); icsApp.closeMobileDrawer();" class="w-full text-left px-3 py-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <span>System Users</span>
+          </button>
+          <button type="button" onclick="icsApp.setAdminTab('actlogs'); icsApp.closeMobileDrawer();" class="w-full text-left px-3 py-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800">
+            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Activity Audit Logs</span>
+          </button>
+          <button type="button" onclick="icsApp.setAdminTab('support'); icsApp.closeMobileDrawer();" class="w-full text-left px-3 py-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <span>Support &amp; Student Chat</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dedicated Sign Out Button -->
+      <div class="pt-3 border-t border-slate-800">
+        <button type="button" onclick="icsApp.adminLogout(); icsApp.closeMobileDrawer();" class="w-full px-3.5 py-2.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 font-bold text-xs border border-rose-800 transition flex items-center justify-center gap-2 shadow">
+          <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          <span>Sign Out of Admin Console</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
 
   <main id="admin-view-container" class="flex-1 pb-28 md:pb-16 transition-opacity duration-300">
     <div class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 mt-6">
@@ -1698,10 +1817,10 @@
             </div>
 
             <!-- Two-Panel Helpdesk Layout -->
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl grid grid-cols-1 lg:grid-cols-12 min-h-[640px] mb-16 lg:mb-0">
 
               <!-- Left Sidebar: Conversations List ("sa gilid mga convo") -->
-              <div class="lg:col-span-5 xl:col-span-4 border-r border-slate-800 flex flex-col bg-slate-950/60">
+              <div id="admin-tickets-sidebar" class="lg:col-span-5 xl:col-span-4 border-r border-slate-800 flex flex-col bg-slate-950/60">
                 <!-- Search & Filters -->
                 <div class="p-3.5 border-b border-slate-800/80 space-y-2.5">
                   <div class="relative">
@@ -1716,7 +1835,7 @@
                     </svg>
                   </div>
                   <!-- Filter Pills -->
-                  <div class="flex items-center gap-1 text-[11px] overflow-x-auto pb-0.5">
+                  <div class="flex items-center gap-1 text-[11px] overflow-x-auto pb-0.5 no-scrollbar">
                     <button onclick="icsApp.setAdminTicketFilter('all')" id="ticket-filter-all" class="px-2.5 py-1 rounded-lg font-bold bg-slate-800 text-white transition flex-shrink-0">All</button>
                     <button onclick="icsApp.setAdminTicketFilter('Open')" id="ticket-filter-Open" class="px-2.5 py-1 rounded-lg font-bold bg-slate-950 text-slate-400 hover:text-white transition flex-shrink-0">Open</button>
                     <button onclick="icsApp.setAdminTicketFilter('In Progress')" id="ticket-filter-In Progress" class="px-2.5 py-1 rounded-lg font-bold bg-slate-950 text-slate-400 hover:text-white transition flex-shrink-0">In Progress</button>
@@ -1731,7 +1850,7 @@
               </div>
 
               <!-- Right Main Panel: Live Chat & Resolution Desk -->
-              <div class="lg:col-span-7 xl:col-span-8 flex flex-col bg-slate-950/40 relative">
+              <div id="admin-chat-main-panel" class="lg:col-span-7 xl:col-span-8 flex flex-col bg-slate-950/40 relative">
 
                 <!-- Empty State -->
                 <div id="admin-chat-empty-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500 min-h-[560px]">
@@ -1748,8 +1867,19 @@
                 <div id="admin-chat-active-panel" class="hidden flex-1 flex flex-col h-full">
 
                   <!-- Chat Header Bar -->
-                  <div class="p-4 border-b border-slate-800 bg-slate-900/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="p-3.5 sm:p-4 border-b border-slate-800 bg-slate-900/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
+                      <!-- Mobile Back to Ticket List Button -->
+                      <button
+                        type="button"
+                        onclick="icsApp.backToAdminTicketList()"
+                        class="lg:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition border border-slate-700 mb-2.5 shadow active:scale-95">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        <span>&larr; Back to Ticket List</span>
+                      </button>
+
                       <div class="flex items-center gap-2">
                         <span id="admin-active-ticket-code" class="text-xs font-mono font-bold text-ics-gold">TCK-2026-0001</span>
                         <span id="admin-active-ticket-reason-badge" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-950 text-rose-300 border border-rose-800">Cancel Reservation</span>
@@ -1809,14 +1939,14 @@
                   </div>
 
                   <!-- Messages Feed Stream -->
-                  <div id="admin-chat-messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[380px]">
+                  <div id="admin-chat-messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 min-h-[280px] max-h-[380px]">
                     <!-- Messages populated via JS -->
                   </div>
 
                   <!-- Admin Reply Box & Canned Responses -->
-                  <div class="p-3.5 border-t border-slate-800 bg-slate-900/90 space-y-2">
+                  <div class="p-3.5 border-t border-slate-800 bg-slate-900/90 space-y-2 pb-20 md:pb-3.5">
                     <!-- Quick Canned Replies -->
-                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px]">
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] no-scrollbar">
                       <span class="text-slate-500 font-bold uppercase text-[9px] flex-shrink-0">Quick Reply:</span>
                       <button onclick="icsApp.applyAdminCannedReply('Hello! We received your request and are reviewing your reservation details.')" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex-shrink-0 transition">Hello & review</button>
                       <button onclick="icsApp.applyAdminCannedReply('Your reservation cancellation has been approved and stocks have been restored.')" class="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex-shrink-0 transition">Cancel approved</button>
@@ -1858,37 +1988,37 @@
   </main>
 
   <!-- Admin Fixed Mobile Bottom Icon Navigation Bar (Only for phones < 768px) -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.8)] px-2 py-1.5 flex items-center justify-between gap-1 safe-area-pb">
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.8)] px-1.5 py-1.5 flex items-center justify-between gap-0.5 safe-area-pb overflow-x-auto no-scrollbar">
     <!-- Dashboard -->
     <button
       onclick="icsApp.setAdminTab('dashboard')"
       id="admin-bottom-tab-dashboard"
-      class="admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-white bg-ics-800 shadow transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-white bg-ics-800 shadow transition cursor-pointer"
       title="Dashboard">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-      <span class="text-[9px] font-bold mt-0.5 leading-none">Dash</span>
+      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Dash</span>
     </button>
 
     <!-- Info Mgmt / Products -->
     <button
       onclick="icsApp.setAdminTab('infomgmt')"
       id="admin-bottom-tab-infomgmt"
-      class="admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
       title="Merchandise Items">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-      <span class="text-[9px] font-bold mt-0.5 leading-none">Items</span>
+      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Items</span>
     </button>
 
     <!-- Reservation Queue -->
     <button
       onclick="icsApp.setAdminTab('reservations')"
       id="admin-bottom-tab-reservations"
-      class="admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
+      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
       title="Reservation Queue">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-      <span class="text-[9px] font-bold mt-0.5 leading-none">Queue</span>
+      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Queue</span>
       @if(($pendingReservationsCount ?? 0) > 0)
-      <span class="absolute top-1 right-2 w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+      <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
       @endif
     </button>
 
@@ -1896,52 +2026,52 @@
     <button
       onclick="icsApp.setAdminTab('claimed')"
       id="admin-bottom-tab-claimed"
-      class="admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
+      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
       title="Claimed Items">
-      <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <span class="text-[9px] font-bold mt-0.5 leading-none">Claimed</span>
+      <svg class="w-4.5 h-4.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Claimed</span>
     </button>
 
     <!-- Reports -->
     <button
       onclick="icsApp.setAdminTab('reports')"
       id="admin-bottom-tab-reports"
-      class="admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
       title="Reports">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-      <span class="text-[9px] font-bold mt-0.5 leading-none">Reports</span>
+      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Reports</span>
     </button>
 
     <!-- Users -->
     <button
       onclick="icsApp.setAdminTab('usermgmt')"
       id="admin-bottom-tab-usermgmt"
-      class="admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
       title="User Management">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-      <span class="text-[9px] font-bold mt-0.5 leading-none">Users</span>
+      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Users</span>
     </button>
 
     <!-- Audit Trail Logs -->
     <button
       onclick="icsApp.setAdminTab('actlogs')"
       id="admin-bottom-tab-actlogs"
-      class="admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
       title="Activity Logs">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <span class="text-[9px] font-bold mt-0.5 leading-none">Logs</span>
+      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Logs</span>
     </button>
 
     <!-- Support Chat Helpdesk -->
     <button
       onclick="icsApp.setAdminTab('support')"
       id="admin-bottom-tab-support"
-      class="admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
+      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
       title="Support Chat">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-      <span class="text-[9px] font-bold mt-0.5 leading-none">Chat</span>
+      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Chat</span>
       @if(($openTicketsCount ?? 0) > 0)
-      <span class="absolute top-1 right-2 w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+      <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
       @endif
     </button>
   </nav>
@@ -2952,9 +3082,9 @@
           const bottomTab = document.getElementById(`admin-bottom-tab-${t}`);
           if (bottomTab) {
             if (t === tabName) {
-              bottomTab.className = 'admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-white bg-ics-800 shadow transition cursor-pointer';
+              bottomTab.className = 'admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-white bg-ics-800 shadow transition cursor-pointer';
             } else {
-              bottomTab.className = 'admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative';
+              bottomTab.className = 'admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative';
             }
           }
         });
@@ -2970,6 +3100,11 @@
           this.renderAdminTicketsList();
           if (this.activeAdminTicketId) {
             this.selectAdminTicket(this.activeAdminTicketId);
+          } else if (window.innerWidth < 1024) {
+            const sidebar = document.getElementById('admin-tickets-sidebar');
+            const chatMain = document.getElementById('admin-chat-main-panel');
+            if (sidebar) sidebar.classList.remove('hidden');
+            if (chatMain) chatMain.classList.add('hidden');
           }
         } else if (tabName === 'claimed') {
           this.renderClaimedLedgerTable();
@@ -5028,6 +5163,17 @@
         this.renderAdminTicketsList();
       }
 
+      backToAdminTicketList() {
+        const sidebar = document.getElementById('admin-tickets-sidebar');
+        const chatMain = document.getElementById('admin-chat-main-panel');
+        if (sidebar) sidebar.classList.remove('hidden');
+        if (window.innerWidth < 1024 && chatMain) {
+          chatMain.classList.add('hidden');
+        }
+        this.activeAdminTicketId = null;
+        this.renderAdminTicketsList();
+      }
+
       async selectAdminTicket(ticketId) {
         this.activeAdminTicketId = ticketId;
         const ticket = (this.supportTickets || []).find(t => t.id === ticketId);
@@ -5039,6 +5185,19 @@
         const activePanel = document.getElementById('admin-chat-active-panel');
         if (emptyState) emptyState.classList.add('hidden');
         if (activePanel) activePanel.classList.remove('hidden');
+
+        // On mobile viewports (< 1024px): toggle chat into full view and scroll smoothly
+        if (window.innerWidth < 1024) {
+          const sidebar = document.getElementById('admin-tickets-sidebar');
+          const chatMain = document.getElementById('admin-chat-main-panel');
+          if (sidebar) sidebar.classList.add('hidden');
+          if (chatMain) chatMain.classList.remove('hidden');
+          if (activePanel) {
+            setTimeout(() => {
+              activePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 60);
+          }
+        }
 
         // Populate Header Bar
         const codeEl = document.getElementById('admin-active-ticket-code');
