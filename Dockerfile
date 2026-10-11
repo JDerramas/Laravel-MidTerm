@@ -61,6 +61,7 @@ ENV APP_NAME="ICS Merch Store" \
     MYSQL_ATTR_SSL_CA=/etc/ssl/certs/ca-certificates.crt \
     MYSQL_ATTR_SSL_VERIFY_SERVER_CERT=false \
     SESSION_DRIVER=file \
+    SESSION_LIFETIME=60 \
     CACHE_STORE=file \
     ONEPASS_CLIENT_ID=cp3_client_ksPuSaN7bL7lAF9W8Enk \
     ONEPASS_CLIENT_SECRET=cp3_sec_nQxEeSfQXyRHdfecwA0yb6JPF5OZAOs5yXpl \

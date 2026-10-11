@@ -309,7 +309,8 @@ class OAuthController extends Controller
             }
         }
 
-        session()->forget(['student_user', 'admin_audit_logged']);
+        session()->forget(['student_user', 'admin_audit_logged', 'student_last_activity']);
+        cookie()->queue(cookie()->forget(\App\Http\Middleware\PersistentStudentDeviceSession::COOKIE_NAME));
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

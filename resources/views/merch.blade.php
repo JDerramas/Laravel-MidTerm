@@ -2234,8 +2234,7 @@
           // fallback
         }
         this.currentUser = null;
-        this.renderLoggedOutStudentUi();
-        this.showToast('You have signed out of your student session.', 'info');
+        window.location.reload();
       }
 
       applyStudentToUi(user) {
