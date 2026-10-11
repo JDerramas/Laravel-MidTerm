@@ -329,7 +329,18 @@ class MerchController extends Controller
         }
 
         $paymentMethod = $request->input('payment_method', 'Cash on Pickup');
+        $paymentRef = trim($request->input('payment_reference') ?? '');
         $paymentStatus = ($paymentMethod === 'Cash on Pickup') ? 'Unpaid' : 'Pending Verification';
+
+        // GCash Online Validation: Require either Reference Number OR Receipt Image
+        if ($paymentMethod === 'GCash Online') {
+            if (empty($paymentRef) && empty($receiptPath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'For GCash Online, please provide at least one verification: either your GCash Reference Number OR upload a Receipt Screenshot.',
+                ], 422);
+            }
+        }
 
         // Generate unique Reference Code (e.g. ICS-2026-X941K)
         $refCode = 'ICS-' . date('Y') . '-' . strtoupper(Str::random(5));
@@ -349,7 +360,7 @@ class MerchController extends Controller
             'status'            => 'Pending',
             'payment_method'    => $paymentMethod,
             'payment_status'    => $paymentStatus,
-            'payment_reference' => $request->input('payment_reference'),
+            'payment_reference' => !empty($paymentRef) ? $paymentRef : null,
             'receipt_image'     => $receiptPath,
             'notes'             => $validated['notes'] ?? 'Online Reservation',
         ]);
@@ -375,10 +386,18 @@ class MerchController extends Controller
             }
         }
 
-        // Record in Audit Trail log
+        // Record in Audit Trail log with GCash details
+        $auditPaymentInfo = $paymentMethod;
+        if (!empty($paymentRef)) {
+            $auditPaymentInfo .= " [Ref: {$paymentRef}]";
+        }
+        if (!empty($receiptPath)) {
+            $auditPaymentInfo .= " [Receipt Attached]";
+        }
+
         ActivityLog::record(
             'CREATE',
-            "New reservation [{$refCode}] from {$validated['student_name']} ({$validated['student_id']}) with total PHP " . number_format($validated['total_amount'], 2),
+            "New reservation [{$refCode}] from {$validated['student_name']} ({$validated['student_id']}) with total PHP " . number_format($validated['total_amount'], 2) . " via {$auditPaymentInfo}",
             $validated['student_id'],
             $validated['student_name'],
             'Reservations'

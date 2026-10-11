@@ -1036,23 +1036,43 @@
                       </div>
 
                       @if(!empty($r->payment_reference))
-                      <p class="text-xs text-slate-300 font-mono mt-1">
-                        Ref: <span class="text-white font-semibold">{{ $r->payment_reference }}</span>
-                      </p>
+                      <div class="mt-2 p-1.5 rounded-lg bg-slate-950/80 border border-slate-800/80 flex items-center justify-between gap-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">GCash Ref:</span>
+                        <span class="font-mono text-xs font-bold text-ics-gold select-all">{{ $r->payment_reference }}</span>
+                      </div>
                       @endif
 
                       @if(!empty($r->receipt_image))
-                      <div class="mt-2">
-                        <button
-                          type="button"
-                          onclick="icsApp.openReceiptViewModal({{ json_encode($r) }})"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-blue-200 border border-blue-700 shadow transition cursor-pointer">
-                          <svg class="w-3.5 h-3.5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          <span>View Receipt</span>
-                        </button>
+                      <div class="mt-2.5 flex items-center gap-2.5">
+                        <div class="relative group cursor-pointer shrink-0" onclick="icsApp.openReceiptViewModal({{ json_encode($r) }})" title="Click to view full receipt image">
+                          <img
+                            src="{{ asset($r->receipt_image) }}"
+                            alt="Receipt"
+                            class="w-14 h-14 rounded-xl object-cover border-2 border-blue-500/80 group-hover:border-cyan-400 shadow-md group-hover:scale-105 transition-all duration-200"
+                            onerror="this.onerror=null; this.src='{{ asset('images/gcash_qr.jpg') }}';"
+                          />
+                          <div class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
+                            <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                          </div>
+                        </div>
+                        <div class="min-w-0">
+                          <button
+                            type="button"
+                            onclick="icsApp.openReceiptViewModal({{ json_encode($r) }})"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-blue-200 border border-blue-700 shadow transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <span>Inspect Receipt</span>
+                          </button>
+                          <p class="text-[10px] text-slate-400 mt-0.5">Click photo to zoom</p>
+                        </div>
+                      </div>
+                      @elseif(($r->payment_method ?? '') === 'GCash Online')
+                      <div class="mt-2 text-[11px] text-slate-400 italic flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Verified via GCash Ref</span>
                       </div>
                       @endif
                     </div>
@@ -4137,7 +4157,11 @@
         document.getElementById('receipt-view-amount').textContent = '₱' + Number(resObj.total_amount).toFixed(2);
         document.getElementById('receipt-view-gcash-ref').textContent = resObj.payment_reference || 'Not Provided';
 
-        const imgSrc = resObj.receipt_image ? (`{{ asset('') }}` + resObj.receipt_image) : '{{ asset("images/gcash_qr.jpg") }}';
+        const imgSrc = resObj.receipt_image ? (
+          (resObj.receipt_image.startsWith('http') || resObj.receipt_image.startsWith('data:'))
+            ? resObj.receipt_image
+            : (`{{ asset('') }}` + resObj.receipt_image.replace(/^\//, ''))
+        ) : '{{ asset("images/gcash_qr.jpg") }}';
         document.getElementById('receipt-view-img').src = imgSrc;
         document.getElementById('receipt-view-download-link').href = imgSrc;
 

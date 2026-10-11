@@ -1421,15 +1421,30 @@
             </div>
           </div>
 
+          <!-- GCash Verification Note: Either Ref No OR Receipt Screenshot Required -->
+          <div class="p-2.5 rounded-xl bg-blue-950/60 border border-blue-800/80 text-[11px] text-blue-200 flex items-center gap-2">
+            <span class="text-base flex-shrink-0">💡</span>
+            <div>
+              <p class="font-bold text-white">Payment Verification Requirement</p>
+              <p class="text-[10px] text-blue-300">Magbigay ng kahit <strong>isa (1)</strong>: <strong>GCash Reference Number</strong> <span class="text-ics-gold font-bold">OR</span> <strong>Receipt Screenshot</strong>.</p>
+            </div>
+          </div>
+
           <!-- GCash Reference Number -->
           <div>
-            <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">GCash Reference No. (Optional)</label>
-            <input type="text" id="chk-gcash-ref" placeholder="e.g. 1002 9384 1928" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder-slate-600">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[10px] font-bold text-slate-300 uppercase">GCash Reference No.</label>
+              <span class="text-[9px] font-mono font-bold text-blue-300 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">Reference No. OR Receipt</span>
+            </div>
+            <input type="text" id="chk-gcash-ref" placeholder="e.g. 1002 9384 1928" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-blue-500">
           </div>
 
           <!-- Upload Receipt (Screenshot) with preview -->
           <div>
-            <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Upload Payment Receipt Screenshot *</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[10px] font-bold text-slate-300 uppercase">Upload Payment Receipt Screenshot</label>
+              <span class="text-[9px] font-mono font-bold text-blue-300 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">Receipt OR Reference No.</span>
+            </div>
             <div class="relative border-2 border-dashed border-slate-700 hover:border-blue-400 rounded-2xl p-3 bg-slate-900/80 text-center transition">
               <input type="file" id="chk-receipt-file" accept="image/*" onchange="icsApp.handleReceiptFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
               <div id="receipt-upload-placeholder" class="space-y-1">
@@ -3257,19 +3272,50 @@
         const file = e.target.files[0];
         if (!file) return;
 
+        if (!file.type.startsWith('image/')) {
+          this.showToast('Please upload a valid image (PNG, JPG, WebP).', 'warning');
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = (event) => {
-          this.receiptBase64 = event.target.result;
-          const placeholder = document.getElementById('receipt-upload-placeholder');
-          const previewContainer = document.getElementById('receipt-upload-preview-container');
-          const previewImg = document.getElementById('receipt-upload-preview-img');
-          const fileName = document.getElementById('receipt-file-name');
+          const rawData = event.target.result;
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 1200;
+            let width = img.width;
+            let height = img.height;
 
-          if (placeholder) placeholder.classList.add('hidden');
-          if (previewContainer) previewContainer.classList.remove('hidden');
-          if (previewImg) previewImg.src = this.receiptBase64;
-          if (fileName) fileName.textContent = file.name;
-          this.showToast('Payment receipt attached!', 'info');
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            this.receiptBase64 = canvas.toDataURL('image/jpeg', 0.82);
+
+            const placeholder = document.getElementById('receipt-upload-placeholder');
+            const previewContainer = document.getElementById('receipt-upload-preview-container');
+            const previewImg = document.getElementById('receipt-upload-preview-img');
+            const fileName = document.getElementById('receipt-file-name');
+
+            if (placeholder) placeholder.classList.add('hidden');
+            if (previewContainer) previewContainer.classList.remove('hidden');
+            if (previewImg) previewImg.src = this.receiptBase64;
+            if (fileName) fileName.textContent = file.name;
+            this.showToast('Payment receipt screenshot attached!', 'info');
+          };
+          img.src = rawData;
         };
         reader.readAsDataURL(file);
       }
@@ -3280,9 +3326,14 @@
         const fee = 10.00;
         const total = subtotal + fee;
 
-        if (this.selectedPaymentMethod === 'GCash Online' && !this.receiptBase64) {
-          this.showToast('Please upload a screenshot of your GCash payment receipt to proceed!', 'warning');
-          return;
+        const gcashRef = (document.getElementById('chk-gcash-ref')?.value || '').trim();
+        const hasReceipt = Boolean(this.receiptBase64);
+
+        if (this.selectedPaymentMethod === 'GCash Online') {
+          if (!gcashRef && !hasReceipt) {
+            this.showToast('Please enter your GCash Reference Number OR upload a Receipt Screenshot!', 'warning');
+            return;
+          }
         }
 
         const payload = {
@@ -3297,9 +3348,15 @@
           items: this.cart,
           total_amount: total,
           payment_method: this.selectedPaymentMethod,
-          payment_reference: document.getElementById('chk-gcash-ref')?.value || '',
+          payment_reference: gcashRef,
           receipt_image: this.receiptBase64 || null
         };
+
+        const submitBtn = document.getElementById('chk-submit-btn');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<span>Processing Order...</span>`;
+        }
 
         try {
           const res = await fetch('{{ route("api.reservations.store") }}', {
@@ -3327,13 +3384,32 @@
             this.cart = [];
             this.saveCartToStorage();
             this.closeCheckoutModal();
-            this.showToast('Reservation successfully recorded!', 'success');
+            this.showToast('Reservation successfully recorded in queue!', 'success');
 
             // Update Shopee-Style Live Tracker with New Reservation
             if (data.reservation) {
+              if (!this.currentUser) {
+                this.currentUser = {
+                  name: data.reservation.student_name,
+                  student_id: data.reservation.student_id,
+                  email: ''
+                };
+              }
+              if (!Array.isArray(this.reservations)) {
+                this.reservations = [];
+              }
               this.reservations.unshift(data.reservation);
               this.activeTrackedRef = data.reservation.ref_code;
               this.updateTrackerVisibility();
+
+              // Smoothly scroll to the Shopee-Style Order Tracker so student sees the progress bar immediately!
+              setTimeout(() => {
+                const trackerSection = document.getElementById('tracker-section');
+                if (trackerSection) {
+                  trackerSection.classList.remove('hidden');
+                  trackerSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }, 250);
             }
 
             // View Confirmation Slip
@@ -3343,8 +3419,15 @@
           }
         } catch (err) {
           console.error(err);
-          this.showToast('Server sync completed with local confirmation!', 'success');
-          this.closeCheckoutModal();
+          this.showToast('Failed to complete reservation. Please try again.', 'error');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>Confirm & Lock In Reservation</span>
+            `;
+          }
         }
       }
 
