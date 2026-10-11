@@ -1501,6 +1501,110 @@ class MerchController extends Controller
     }
 
     /**
+     * API: Edit Reservation Items / Size from Support Ticket
+     * Allows Admin to adjust size or item specifications directly from support ticket.
+     */
+    public function editReservationFromTicket(Request $request, $id)
+    {
+        $ticket = SupportTicket::findOrFail($id);
+
+        if (!$ticket->reservation_ref) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This ticket is not linked to any specific reservation reference.',
+            ], 422);
+        }
+
+        $reservation = Reservation::where('ref_code', $ticket->reservation_ref)->first();
+        if (!$reservation) {
+            return response()->json([
+                'success' => false,
+                'message' => "Reservation [{$ticket->reservation_ref}] was not found in the system.",
+            ], 404);
+        }
+
+        if ($reservation->status === 'Cancelled') {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot edit items: Reservation [{$reservation->ref_code}] is already cancelled.",
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'new_size'   => 'nullable|string',
+            'remarks'    => 'nullable|string',
+            'admin_name' => 'nullable|string',
+        ]);
+
+        $newSize = trim($validated['new_size'] ?? '');
+        $remarks = trim($validated['remarks'] ?? '');
+        $adminName = $validated['admin_name'] ?? (session('student_user.name') ?? session('admin_user.name') ?? 'ICS Support Officer');
+
+        $items = is_string($reservation->items) ? json_decode($reservation->items, true) : $reservation->items;
+        $oldSize = 'N/A';
+        $itemTitle = 'Apparel';
+
+        if (is_array($items) && count($items) > 0 && !empty($newSize)) {
+            $oldSize = $items[0]['size'] ?? 'N/A';
+            $itemTitle = $items[0]['name'] ?? ($items[0]['title'] ?? 'Apparel');
+
+            if ($oldSize !== $newSize) {
+                // Adjust size stocks if product exists
+                $product = Product::where('item_code', $items[0]['productId'] ?? '')
+                    ->orWhere('id', $items[0]['productId'] ?? ($items[0]['id'] ?? 0))
+                    ->first();
+
+                if ($product && is_array($product->sizes)) {
+                    $sizes = $product->sizes;
+                    if (isset($sizes[$oldSize])) {
+                        $sizes[$oldSize] = ($sizes[$oldSize] ?? 0) + 1;
+                    }
+                    if (isset($sizes[$newSize])) {
+                        $sizes[$newSize] = max(0, ($sizes[$newSize] ?? 0) - 1);
+                    }
+                    $product->sizes = $sizes;
+                    $product->save();
+                }
+
+                $items[0]['size'] = $newSize;
+                $reservation->items = $items;
+                $reservation->save();
+            }
+        }
+
+        $auditDesc = "Size changed from [{$oldSize}] to [{$newSize}] for {$itemTitle}";
+        if (!empty($remarks)) {
+            $auditDesc .= " (Note: {$remarks})";
+        }
+
+        // Post system message in support chat
+        SupportMessage::create([
+            'ticket_id'   => $ticket->id,
+            'sender_type' => 'system',
+            'sender_name' => 'System',
+            'message'     => "Reservation [{$reservation->ref_code}] details UPDATED by {$adminName}: {$auditDesc}.",
+            'is_system'   => true,
+        ]);
+
+        // Activity log
+        $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
+        ActivityLog::record(
+            'UPDATE',
+            "Admin edited items for reservation {$reservation->ref_code} through Support Ticket {$ticket->ticket_code}: {$auditDesc}",
+            $adminCode,
+            $adminName,
+            'Reservation Logistics'
+        );
+
+        return response()->json([
+            'success'     => true,
+            'message'     => "Reservation {$reservation->ref_code} updated successfully! {$auditDesc}",
+            'ticket'      => $ticket->fresh(['messages', 'reservation']),
+            'reservation' => $reservation,
+        ]);
+    }
+
+    /**
      * API: Delete Resolved Support Ticket
      * Only allowed if ticket status is 'Resolved'.
      * If user is student, verifies that ticket belongs to that student.

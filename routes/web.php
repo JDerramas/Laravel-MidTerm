@@ -73,6 +73,9 @@ Route::patch('/api/support-tickets/{id}/status', [MerchController::class, 'updat
 Route::post('/api/support/tickets/{id}/cancel-reservation', [MerchController::class, 'cancelReservationFromTicket'])->name('api.support.tickets.cancel');
 Route::post('/api/support-tickets/{id}/cancel-reservation', [MerchController::class, 'cancelReservationFromTicket']);
 
+Route::post('/api/support/tickets/{id}/edit-reservation', [MerchController::class, 'editReservationFromTicket'])->name('api.support.tickets.edit_reservation');
+Route::post('/api/support-tickets/{id}/edit-reservation', [MerchController::class, 'editReservationFromTicket']);
+
 Route::delete('/api/support/tickets/{id}', [MerchController::class, 'deleteTicket'])->name('api.support.tickets.delete');
 Route::delete('/api/support-tickets/{id}', [MerchController::class, 'deleteTicket']);
 

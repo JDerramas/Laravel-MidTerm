@@ -1902,6 +1902,18 @@
                         <span>Cancel Order & Restock</span>
                       </button>
 
+                      <!-- Edit Item / Size Button -->
+                      <button
+                        id="admin-btn-edit-reservation"
+                        type="button"
+                        onclick="icsApp.adminOpenEditReservationModal()"
+                        class="hidden px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-950 hover:bg-blue-900 text-blue-200 border border-blue-700 transition flex items-center gap-1.5 shadow cursor-pointer">
+                        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span id="admin-btn-edit-reservation-label">Edit Item</span>
+                      </button>
+
                       <!-- Mark Done / Resolved Button -->
                       <button
                         id="admin-btn-mark-resolved"
@@ -2075,6 +2087,100 @@
       @endif
     </button>
   </nav>
+
+  <!-- Edit Reservation Item/Size Modal (Support Desk) -->
+  <div id="admin-edit-reservation-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative text-left">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div>
+          <h3 class="text-base font-black text-white font-display flex items-center gap-2">
+            <span class="text-blue-400">✏️</span>
+            <span>Edit Reservation Item / Size</span>
+          </h3>
+          <p class="text-xs text-slate-400">Adjust student apparel sizing per support ticket request</p>
+        </div>
+        <button type="button" onclick="icsApp.closeAdminEditReservationModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="admin-edit-reservation-form" onsubmit="icsApp.submitAdminEditReservation(event)" class="mt-4 space-y-4">
+        <!-- Linked Reference Info -->
+        <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between text-xs">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-slate-400 font-mono">Reservation Ref:</span>
+            <p id="edit-res-code" class="font-mono font-bold text-ics-gold text-sm">ICS-2026-XXXXX</p>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] uppercase font-bold text-slate-400 font-mono">Student:</span>
+            <p id="edit-res-student-name" class="font-bold text-white text-xs truncate max-w-[160px]">Student Name</p>
+          </div>
+        </div>
+
+        <!-- Current Item Info -->
+        <div class="p-3.5 rounded-2xl bg-blue-950/30 border border-blue-900/40 text-xs space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-300 font-medium">Item Name:</span>
+            <span id="edit-res-item-name" class="font-bold text-white">ICS Official Polo Shirt</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-300 font-medium">Current Registered Size:</span>
+            <span id="edit-res-current-size" class="font-mono font-bold px-2 py-0.5 rounded-lg bg-blue-950 text-blue-300 border border-blue-800">M</span>
+          </div>
+        </div>
+
+        <!-- New Size Selector -->
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wide">
+            Select New Size *
+          </label>
+          <select id="edit-res-new-size" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+            <option value="XS">Extra Small (XS)</option>
+            <option value="S">Small (S)</option>
+            <option value="M">Medium (M)</option>
+            <option value="L">Large (L)</option>
+            <option value="XL">Extra Large (XL)</option>
+            <option value="2XL">Double XL (2XL)</option>
+            <option value="3XL">Triple XL (3XL)</option>
+            <option value="FS">Free Size (FS)</option>
+          </select>
+        </div>
+
+        <!-- Remarks / Audit Note -->
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wide">
+            Adjustment Remarks (Logged in Ticket & Audit)
+          </label>
+          <input
+            type="text"
+            id="edit-res-remarks"
+            placeholder="e.g. Changed size per student request in ticket chat"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500">
+        </div>
+
+        <!-- Submit & Cancel Buttons -->
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+          <button
+            type="button"
+            onclick="icsApp.closeAdminEditReservationModal()"
+            class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            id="edit-res-submit-btn"
+            class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-blue-900/30">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Save & Apply Size Change</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <div id="product-crud-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-ics-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative text-left">
@@ -5228,9 +5334,14 @@
         if (sNameEl) sNameEl.textContent = ticket.student_name;
         if (sSubEl) sSubEl.textContent = `${ticket.student_id} / ${ticket.student_email || 'Verified Student'}`;
 
-        // Linked reservation banner & cancel order button
+        // Linked reservation banner, cancel order button, and edit item button
         const resBanner = document.getElementById('admin-active-ticket-res-banner');
         const cancelBtn = document.getElementById('admin-btn-cancel-reservation');
+        const editBtn = document.getElementById('admin-btn-edit-reservation');
+
+        const isCancelReason = ticket.reason === 'Cancel Reservation' || 
+          (ticket.reason && ticket.reason.toLowerCase().includes('cancel'));
+
         if (ticket.reservation_ref) {
           if (resBanner) resBanner.classList.remove('hidden');
           const resCodeEl = document.getElementById('admin-active-ticket-res-code');
@@ -5243,24 +5354,45 @@
             const resStatusEl = document.getElementById('admin-active-ticket-res-status');
             if (resStatusEl) resStatusEl.textContent = linkedRes.status;
           }
-          if (cancelBtn) {
-            cancelBtn.classList.remove('hidden');
-            if (linkedRes && linkedRes.status === 'Cancelled') {
-              cancelBtn.disabled = true;
-              cancelBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60';
-              cancelBtn.innerHTML = `<span>Order Already Cancelled</span>`;
-            } else {
-              cancelBtn.disabled = false;
-              cancelBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 transition flex items-center gap-1.5 shadow cursor-pointer';
-              cancelBtn.innerHTML = `
-                <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                <span>Cancel Order & Restock</span>
-              `;
+
+          if (isCancelReason) {
+            // IF CANCEL ORDER IS CHOSEN: show Cancel Order / Cancelled, HIDE Edit Item button!
+            if (editBtn) editBtn.classList.add('hidden');
+            if (cancelBtn) {
+              cancelBtn.classList.remove('hidden');
+              if (linkedRes && linkedRes.status === 'Cancelled') {
+                cancelBtn.disabled = true;
+                cancelBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed opacity-80 flex items-center gap-1.5';
+                cancelBtn.innerHTML = `
+                  <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  <span>Cancelled</span>
+                `;
+              } else {
+                cancelBtn.disabled = false;
+                cancelBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 transition flex items-center gap-1.5 shadow cursor-pointer';
+                cancelBtn.innerHTML = `
+                  <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  <span>Cancel Order & Restock</span>
+                `;
+              }
+            }
+          } else {
+            // IF CHANGE SIZE OR ANY OTHER REASON: show Edit Item button, HIDE Cancel button!
+            if (cancelBtn) cancelBtn.classList.add('hidden');
+            if (editBtn) {
+              editBtn.classList.remove('hidden');
+              const editLabel = document.getElementById('admin-btn-edit-reservation-label');
+              if (editLabel) {
+                editLabel.textContent = (ticket.reason === 'Change Item Size' || (ticket.reason && ticket.reason.toLowerCase().includes('size')))
+                  ? 'Edit Size'
+                  : 'Edit Item';
+              }
             }
           }
         } else {
           if (resBanner) resBanner.classList.add('hidden');
           if (cancelBtn) cancelBtn.classList.add('hidden');
+          if (editBtn) editBtn.classList.add('hidden');
         }
 
         // Status Done button toggle
@@ -5648,6 +5780,113 @@
         } catch (err) {
           console.error(err);
           this.showToast('Network error cancelling reservation.', 'error');
+        }
+      }
+
+      adminOpenEditReservationModal() {
+        if (!this.activeAdminTicketId) return;
+        const ticket = (this.supportTickets || []).find(t => t.id === this.activeAdminTicketId);
+        if (!ticket || !ticket.reservation_ref) {
+          this.showToast('No reservation linked to this support ticket.', 'warning');
+          return;
+        }
+
+        const linkedRes = (this.reservations || []).find(r => r.ref_code === ticket.reservation_ref);
+        const items = linkedRes ? (typeof linkedRes.items === 'string' ? JSON.parse(linkedRes.items) : linkedRes.items) : [];
+        const primaryItem = (Array.isArray(items) && items.length > 0) ? items[0] : null;
+
+        const codeEl = document.getElementById('edit-res-code');
+        if (codeEl) codeEl.textContent = ticket.reservation_ref;
+
+        const stuEl = document.getElementById('edit-res-student-name');
+        if (stuEl) stuEl.textContent = ticket.student_name;
+
+        const itemEl = document.getElementById('edit-res-item-name');
+        if (itemEl) itemEl.textContent = primaryItem ? (primaryItem.name || primaryItem.title || 'Uniform Apparel') : 'Apparel Item';
+
+        const currentSize = primaryItem ? (primaryItem.size || 'M') : 'M';
+        const curSizeEl = document.getElementById('edit-res-current-size');
+        if (curSizeEl) curSizeEl.textContent = currentSize;
+
+        const sizeSelect = document.getElementById('edit-res-new-size');
+        if (sizeSelect) sizeSelect.value = currentSize;
+
+        const remarksInput = document.getElementById('edit-res-remarks');
+        if (remarksInput) {
+          remarksInput.value = ticket.reason === 'Change Item Size'
+            ? 'Adjusted apparel size per student request in ticket chat'
+            : 'Updated reservation item per support inquiry';
+        }
+
+        const modal = document.getElementById('admin-edit-reservation-modal');
+        if (modal) modal.classList.remove('hidden');
+      }
+
+      closeAdminEditReservationModal() {
+        const modal = document.getElementById('admin-edit-reservation-modal');
+        if (modal) modal.classList.add('hidden');
+      }
+
+      async submitAdminEditReservation(e) {
+        e.preventDefault();
+        if (!this.activeAdminTicketId) return;
+        const ticket = (this.supportTickets || []).find(t => t.id === this.activeAdminTicketId);
+        if (!ticket || !ticket.reservation_ref) return;
+
+        const newSize = document.getElementById('edit-res-new-size')?.value;
+        const remarks = document.getElementById('edit-res-remarks')?.value;
+        const submitBtn = document.getElementById('edit-res-submit-btn');
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<span>Saving Changes...</span>`;
+        }
+
+        try {
+          const res = await fetch(`{{ url('api/support-tickets') }}/${ticket.id}/edit-reservation`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+              new_size: newSize,
+              remarks: remarks,
+              admin_name: 'ICS Support Officer'
+            })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            this.showToast(data.message || 'Reservation item updated successfully!', 'success');
+            this.closeAdminEditReservationModal();
+
+            // Update local reservation item state
+            const foundRes = (this.reservations || []).find(r => r.ref_code === ticket.reservation_ref);
+            if (foundRes && data.reservation) {
+              foundRes.items = data.reservation.items;
+            }
+
+            // Invalidate ticket chat cache and refresh messages
+            if (this._adminChatCache) {
+              delete this._adminChatCache[ticket.id];
+            }
+            this.selectAdminTicket(ticket.id);
+            this.renderAdminTicketsList();
+          } else {
+            this.showToast(data.message || 'Could not update reservation item.', 'warning');
+          }
+        } catch (err) {
+          console.error(err);
+          this.showToast('Network error updating reservation item.', 'error');
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>Save & Apply Size Change</span>
+            `;
+          }
         }
       }
 
