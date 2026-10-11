@@ -247,9 +247,9 @@
             type="button"
             id="admin-mobile-hamburger-btn"
             onclick="icsApp.toggleMobileDrawer()"
-            class="md:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-ics-700 text-slate-200 transition flex items-center justify-center focus:outline-none flex-shrink-0"
+            class="md:hidden p-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-ics-700 text-slate-200 transition flex items-center justify-center focus:outline-none flex-shrink-0"
             aria-label="Open Navigation Menu">
-            <svg class="w-5 h-5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
@@ -538,8 +538,8 @@
               <div class="relative overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950 rounded-3xl border border-slate-800/90 hover:border-indigo-500/50 p-5 sm:p-6 shadow-xl transition-all duration-300 group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Total Catalog Items</span>
-                  <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
                   </div>
@@ -555,8 +555,8 @@
               <div class="relative overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950 rounded-3xl border border-slate-800/90 hover:border-emerald-500/50 p-5 sm:p-6 shadow-xl transition-all duration-300 group">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">On-Hand Stock</span>
-                  <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
                     </svg>
                   </div>
@@ -572,8 +572,8 @@
               <div onclick="icsApp.setAdminTab('claimed')" class="relative overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950 rounded-3xl border border-slate-800/90 hover:border-cyan-500/50 p-5 sm:p-6 shadow-xl transition-all duration-300 cursor-pointer group" title="Click to view all claimed items and release records">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-slate-300 group-hover:text-cyan-300 uppercase tracking-wider transition">Units Claimed / Sold</span>
-                  <div class="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                   </div>
@@ -592,8 +592,8 @@
               <div onclick="icsApp.setAdminTab('reservations')" class="relative overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950 rounded-3xl border border-slate-800/90 hover:border-amber-500/50 p-5 sm:p-6 shadow-xl transition-all duration-300 cursor-pointer group" title="Click to view student reservation queue">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-slate-300 group-hover:text-amber-300 uppercase tracking-wider transition">Active Reservations</span>
-                  <div class="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                   </div>
@@ -1988,37 +1988,37 @@
   </main>
 
   <!-- Admin Fixed Mobile Bottom Icon Navigation Bar (Only for phones < 768px) -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.8)] px-1.5 py-1.5 flex items-center justify-between gap-0.5 safe-area-pb overflow-x-auto no-scrollbar">
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.8)] px-1 py-1 flex items-center justify-between gap-0.5 safe-area-pb overflow-x-auto no-scrollbar">
     <!-- Dashboard -->
     <button
       onclick="icsApp.setAdminTab('dashboard')"
       id="admin-bottom-tab-dashboard"
-      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-white bg-ics-800 shadow transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-white bg-ics-800 shadow transition cursor-pointer"
       title="Dashboard">
-      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Dash</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+      <span class="text-[7.5px] font-bold mt-0.5 leading-none truncate max-w-full">Dash</span>
     </button>
 
     <!-- Info Mgmt / Products -->
     <button
       onclick="icsApp.setAdminTab('infomgmt')"
       id="admin-bottom-tab-infomgmt"
-      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
       title="Merchandise Items">
-      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Items</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <span class="text-[7.5px] font-bold mt-0.5 leading-none truncate max-w-full">Items</span>
     </button>
 
     <!-- Reservation Queue -->
     <button
       onclick="icsApp.setAdminTab('reservations')"
       id="admin-bottom-tab-reservations"
-      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
+      class="admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
       title="Reservation Queue">
-      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Queue</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+      <span class="text-[7.5px] font-bold mt-0.5 leading-none truncate max-w-full">Queue</span>
       @if(($pendingReservationsCount ?? 0) > 0)
-      <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+      <span class="absolute top-0.5 right-1 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
       @endif
     </button>
 
@@ -2026,52 +2026,52 @@
     <button
       onclick="icsApp.setAdminTab('claimed')"
       id="admin-bottom-tab-claimed"
-      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
+      class="admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
       title="Claimed Items">
-      <svg class="w-4.5 h-4.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Claimed</span>
+      <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="text-[7.5px] font-bold mt-0.5 leading-none truncate max-w-full">Claimed</span>
     </button>
 
     <!-- Reports -->
     <button
       onclick="icsApp.setAdminTab('reports')"
       id="admin-bottom-tab-reports"
-      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
       title="Reports">
-      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Reports</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span class="text-[7.5px] font-bold mt-0.5 leading-none truncate max-w-full">Reports</span>
     </button>
 
     <!-- Users -->
     <button
       onclick="icsApp.setAdminTab('usermgmt')"
       id="admin-bottom-tab-usermgmt"
-      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
       title="User Management">
-      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Users</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      <span class="text-[7.5px] font-bold mt-0.5 leading-none truncate max-w-full">Users</span>
     </button>
 
     <!-- Audit Trail Logs -->
     <button
       onclick="icsApp.setAdminTab('actlogs')"
       id="admin-bottom-tab-actlogs"
-      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+      class="admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
       title="Activity Logs">
-      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Logs</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="text-[7.5px] font-bold mt-0.5 leading-none truncate max-w-full">Logs</span>
     </button>
 
     <!-- Support Chat Helpdesk -->
     <button
       onclick="icsApp.setAdminTab('support')"
       id="admin-bottom-tab-support"
-      class="admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
+      class="admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
       title="Support Chat">
-      <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-      <span class="text-[8.5px] font-bold mt-0.5 leading-none truncate max-w-full">Chat</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      <span class="text-[7.5px] font-bold mt-0.5 leading-none truncate max-w-full">Chat</span>
       @if(($openTicketsCount ?? 0) > 0)
-      <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+      <span class="absolute top-0.5 right-1 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
       @endif
     </button>
   </nav>
@@ -3082,9 +3082,9 @@
           const bottomTab = document.getElementById(`admin-bottom-tab-${t}`);
           if (bottomTab) {
             if (t === tabName) {
-              bottomTab.className = 'admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-white bg-ics-800 shadow transition cursor-pointer';
+              bottomTab.className = 'admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-white bg-ics-800 shadow transition cursor-pointer';
             } else {
-              bottomTab.className = 'admin-bottom-tab flex-1 min-w-0 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative';
+              bottomTab.className = 'admin-bottom-tab flex-1 min-w-0 py-1 px-0.5 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative';
             }
           }
         });
