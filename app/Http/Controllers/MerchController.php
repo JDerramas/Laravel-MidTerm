@@ -243,10 +243,17 @@ class MerchController extends Controller
         // 6. Fetch verified OnePass students from database for User Management
         $verifiedStudents = \App\Models\Student::orderBy('name', 'asc')->get();
 
-        // 7. Return dedicated admin blade view
+        // 7. Fetch official claimed orders ledger for physical pickup tracking & sign-off audit
+        $claimedReservations = Reservation::where('status', 'Claimed')
+            ->orderBy('claimed_at', 'desc')
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        // 8. Return dedicated admin blade view
         return view('admin', compact(
             'products',
             'reservations',
+            'claimedReservations',
             'activityLogs',
             'users',
             'adminUser',
@@ -419,6 +426,19 @@ class MerchController extends Controller
         } elseif ($newStatus === 'Ready for Pickup' && $reservation->payment_method === 'GCash Online') {
             $reservation->payment_status = 'Verified';
         }
+
+        // Set or clear physical pickup claim timestamp & releasing officer
+        if ($newStatus === 'Claimed') {
+            if (!$reservation->claimed_at) {
+                $reservation->claimed_at = now();
+            }
+            $currentAdminName = session('student_user.name') ?? session('admin_user.name') ?? 'J. Derramas (ICS Officer)';
+            $reservation->claimed_by = $request->input('claimed_by', $currentAdminName);
+        } elseif ($oldStatus === 'Claimed' && $newStatus !== 'Claimed') {
+            $reservation->claimed_at = null;
+            $reservation->claimed_by = null;
+        }
+
         $reservation->save();
 
         // If changed to 'Claimed': move item count from reserved to sold
@@ -464,13 +484,40 @@ class MerchController extends Controller
         }
 
         // Record in Audit Trail log
-        ActivityLog::record(
-            'UPDATE',
-            "Updated reservation [{$reservation->ref_code}] status: '{$oldStatus}' -> '{$newStatus}'",
-            'USR-002',
-            'J. Derramas',
-            'Reservations'
-        );
+        $operatorCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? 'USR-002';
+        $operatorName = session('student_user.name') ?? session('admin_user.name') ?? 'J. Derramas';
+
+        if ($newStatus === 'Claimed') {
+            // Detailed physical release log entry with item breakdown & timestamps
+            $itemListSummary = [];
+            if (is_array($reservation->items)) {
+                foreach ($reservation->items as $it) {
+                    $qty = $it['quantity'] ?? 1;
+                    $itemName = $it['name'] ?? $it['productId'] ?? 'Item';
+                    $size = isset($it['size']) && !empty($it['size']) ? " ({$it['size']})" : '';
+                    $itemListSummary[] = "{$qty}x {$itemName}{$size}";
+                }
+            }
+            $itemsText = !empty($itemListSummary) ? implode(', ', $itemListSummary) : 'Merchandise Items';
+            $purchasedDateStr = $reservation->created_at ? $reservation->created_at->format('M d, Y h:i A') : 'N/A';
+            $claimedDateStr = $reservation->claimed_at ? $reservation->claimed_at->format('M d, Y h:i A') : now()->format('M d, Y h:i A');
+
+            ActivityLog::record(
+                'CLAIM',
+                "CLAIMED/RELEASED [{$reservation->ref_code}] to {$reservation->student_name} ({$reservation->student_id}). Purchased: {$purchasedDateStr} | Claimed: {$claimedDateStr} | Items: {$itemsText} | Total: ₱" . number_format($reservation->total_amount, 2) . " | Released By: {$reservation->claimed_by}",
+                $operatorCode,
+                $operatorName,
+                'Releases & Claiming'
+            );
+        } else {
+            ActivityLog::record(
+                'UPDATE',
+                "Updated reservation [{$reservation->ref_code}] status: '{$oldStatus}' -> '{$newStatus}'",
+                $operatorCode,
+                $operatorName,
+                'Reservations'
+            );
+        }
 
         return response()->json([
             'success' => true,
@@ -878,6 +925,163 @@ class MerchController extends Controller
             'USR-001',
             'E. Moreno',
             'Reports'
+        );
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * API: Retrieve official Claimed orders and physical pickup release logs.
+     * Filterable by search term (ref_code, student_name, student_id, contact).
+     */
+    public function getClaimedLogs(Request $request)
+    {
+        $query = Reservation::where('status', 'Claimed');
+
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function ($q) use ($s) {
+                $q->where('ref_code', 'LIKE', "%{$s}%")
+                  ->orWhere('student_name', 'LIKE', "%{$s}%")
+                  ->orWhere('student_id', 'LIKE', "%{$s}%")
+                  ->orWhere('contact', 'LIKE', "%{$s}%");
+            });
+        }
+
+        $claimed = $query->orderBy('claimed_at', 'desc')
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'count'   => $claimed->count(),
+            'logs'    => $claimed->map(function ($r) {
+                $itemStrings = [];
+                if (is_array($r->items)) {
+                    foreach ($r->items as $it) {
+                        $qty = $it['quantity'] ?? 1;
+                        $name = $it['name'] ?? $it['productId'] ?? 'Item';
+                        $size = isset($it['size']) && !empty($it['size']) ? " ({$it['size']})" : '';
+                        $itemStrings[] = "{$qty}x {$name}{$size}";
+                    }
+                }
+
+                return [
+                    'id'                => $r->id,
+                    'ref_code'          => $r->ref_code,
+                    'student_name'      => $r->student_name,
+                    'student_id'        => $r->student_id,
+                    'department'        => $r->department,
+                    'year_level'        => $r->year_level,
+                    'contact'           => $r->contact,
+                    'items'             => $r->items,
+                    'items_summary'     => implode(', ', $itemStrings),
+                    'total_amount'      => $r->total_amount,
+                    'payment_method'    => $r->payment_method,
+                    'payment_status'    => $r->payment_status,
+                    'payment_reference' => $r->payment_reference,
+                    'purchased_at'      => $r->created_at ? $r->created_at->format('Y-m-d H:i:s') : null,
+                    'purchased_display' => $r->created_at ? $r->created_at->format('M d, Y h:i A') : 'N/A',
+                    'claimed_at'        => $r->claimed_at ? $r->claimed_at->format('Y-m-d H:i:s') : ($r->updated_at ? $r->updated_at->format('Y-m-d H:i:s') : null),
+                    'claimed_display'   => $r->claimed_at ? $r->claimed_at->format('M d, Y h:i A') : ($r->updated_at ? $r->updated_at->format('M d, Y h:i A') : 'N/A'),
+                    'claimed_by'        => $r->claimed_by ?? 'J. Derramas (ICS Officer)',
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * REPORTS: Export Official Claimed Releases & Pickup Logsheet (CSV)
+     * Provides an unalterable digital audit ledger to resolve disputes against physical sign-off sheets or manual spreadsheets.
+     */
+    public function exportClaimedLedgerCsv()
+    {
+        $claimed = Reservation::where('status', 'Claimed')
+            ->orderBy('claimed_at', 'desc')
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        $filename = 'ICS_Claimed_Releases_Logsheet_' . date('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $callback = function () use ($claimed) {
+            $handle = fopen('php://output', 'w');
+            // Write UTF-8 BOM so Microsoft Excel correctly displays Philippine Peso (₱) and accents
+            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // CSV Header Row
+            fputcsv($handle, [
+                'Claim Reference Code',
+                'Student Buyer Name',
+                'Student ID Number',
+                'Department / Program',
+                'Year Level',
+                'Contact Number',
+                'Date & Time Purchased (Ordered)',
+                'Date & Time Claimed (Released)',
+                'Items & Sizes Breakdown',
+                'Total Amount (PHP)',
+                'Payment Method',
+                'Payment Status',
+                'Payment Reference Code',
+                'Released By (Officer / Admin)'
+            ]);
+
+            foreach ($claimed as $r) {
+                // Format item breakdown string
+                $itemStrings = [];
+                if (is_array($r->items)) {
+                    foreach ($r->items as $it) {
+                        $qty = $it['quantity'] ?? 1;
+                        $name = $it['name'] ?? $it['productId'] ?? 'Item';
+                        $size = isset($it['size']) && !empty($it['size']) ? " [Size: {$it['size']}]" : '';
+                        $price = isset($it['price']) ? " @ PHP " . number_format($it['price'], 2) : '';
+                        $itemStrings[] = "{$qty}x {$name}{$size}{$price}";
+                    }
+                }
+                $itemsBreakdown = !empty($itemStrings) ? implode('; ', $itemStrings) : 'N/A';
+
+                $purchasedAt = $r->created_at ? $r->created_at->format('Y-m-d h:i:s A') : 'N/A';
+                $claimedAt = $r->claimed_at ? $r->claimed_at->format('Y-m-d h:i:s A') : ($r->updated_at ? $r->updated_at->format('Y-m-d h:i:s A') : 'N/A');
+                $releasedBy = $r->claimed_by ?? 'J. Derramas (ICS Officer)';
+
+                fputcsv($handle, [
+                    $r->ref_code,
+                    $r->student_name,
+                    $r->student_id,
+                    $r->department ?? 'ICS',
+                    $r->year_level ?? 'N/A',
+                    $r->contact ?? 'N/A',
+                    $purchasedAt,
+                    $claimedAt,
+                    $itemsBreakdown,
+                    number_format($r->total_amount, 2, '.', ''),
+                    $r->payment_method ?? 'Cash on Pickup',
+                    $r->payment_status ?? 'Paid',
+                    $r->payment_reference ?? 'N/A',
+                    $releasedBy
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        $adminCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? 'USR-001';
+        $adminName = session('student_user.name') ?? session('admin_user.name') ?? 'Admin Officer';
+
+        ActivityLog::record(
+            'READ',
+            'Downloaded Official Claimed Releases & Pickup Logsheet (CSV)',
+            $adminCode,
+            $adminName,
+            'Reports & Releases'
         );
 
         return response()->stream($callback, 200, $headers);
@@ -1433,30 +1637,37 @@ class MerchController extends Controller
         }
 
         $activityLogs = [];
+        $claimedReservations = [];
         if ($scope === 'admin') {
             $activityLogs = ActivityLog::orderBy('created_at', 'desc')->take(200)->get();
+            $claimedReservations = Reservation::where('status', 'Claimed')
+                ->orderBy('claimed_at', 'desc')
+                ->orderBy('updated_at', 'desc')
+                ->take(50)
+                ->get();
         }
 
         return response()->json([
-            'success'             => true,
-            'timestamp'           => now()->toIso8601String(),
-            'products'            => $products,
-            'reservations'        => $reservations,
-            'tracked_reservation' => $trackedReservation,
-            'support_tickets'     => $supportTickets,
-            'active_ticket'       => $activeTicket,
-            'open_tickets_count'  => $openTicketsCount,
-            'activity_logs'       => $activityLogs,
-            'metrics'             => [
-                'total_products'  => $products->count(),
-                'total_stock'     => $totalStockUnits,
-                'total_sold'      => $totalSoldUnits,
-                'total_reserved'  => $totalReservedUnits,
-                'total_revenue'   => $totalRevenue,
-                'pending_count'   => $pendingCount,
-                'ready_count'     => $readyCount,
-                'claimed_count'   => $claimedCount,
-                'category_stats'  => $categoryStats,
+            'success'              => true,
+            'timestamp'            => now()->toIso8601String(),
+            'products'             => $products,
+            'reservations'         => $reservations,
+            'claimed_reservations' => $claimedReservations,
+            'tracked_reservation'  => $trackedReservation,
+            'support_tickets'      => $supportTickets,
+            'active_ticket'        => $activeTicket,
+            'open_tickets_count'   => $openTicketsCount,
+            'activity_logs'        => $activityLogs,
+            'metrics'              => [
+                'total_products'   => $products->count(),
+                'total_stock'      => $totalStockUnits,
+                'total_sold'       => $totalSoldUnits,
+                'total_reserved'   => $totalReservedUnits,
+                'total_revenue'    => $totalRevenue,
+                'pending_count'    => $pendingCount,
+                'ready_count'      => $readyCount,
+                'claimed_count'    => $claimedCount,
+                'category_stats'   => $categoryStats,
             ]
         ]);
     }

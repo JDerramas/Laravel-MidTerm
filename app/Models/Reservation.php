@@ -19,6 +19,8 @@ class Reservation extends Model
         'items',          // JSON list of reserved items (size, qty, price)
         'total_amount',   // Total order payment amount
         'status',         // Reservation status: Pending, Ready for Pickup, Claimed, Cancelled
+        'claimed_at',     // Date and time order was physically claimed / released
+        'claimed_by',     // Admin / releasing officer who marked as claimed
         'payment_method', // Cash on Pickup, GCash Online, Alipay Online
         'payment_status', // Unpaid, Pending Verification, Verified
         'payment_reference', // Online payment transaction reference number
@@ -30,6 +32,7 @@ class Reservation extends Model
     protected $casts = [
         'items' => 'array',
         'total_amount' => 'float',
+        'claimed_at' => 'datetime',
     ];
 
     public function supportTickets()

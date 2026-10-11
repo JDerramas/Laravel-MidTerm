@@ -806,8 +806,14 @@
                       @endif
                     </div>
 
-                    <div class="text-[11px] text-slate-400 font-mono">
-                      Reserved on: {{ $r->created_at->format('M d, Y h:i A') }}
+                    <div class="text-[11px] text-slate-400 font-mono text-left sm:text-right">
+                      <div>Purchased: {{ $r->created_at ? $r->created_at->format('M d, Y h:i A') : 'N/A' }}</div>
+                      @if($r->status === 'Claimed')
+                      <div class="text-emerald-400 font-semibold flex items-center sm:justify-end gap-1">
+                        <svg class="w-3 h-3 text-emerald-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Claimed: {{ $r->claimed_at ? $r->claimed_at->format('M d, Y h:i A') : ($r->updated_at ? $r->updated_at->format('M d, Y h:i A') : 'Recorded') }}</span>
+                      </div>
+                      @endif
                     </div>
                   </div>
 
@@ -1046,6 +1052,149 @@
 
             </div>
 
+            <!-- ======================================================== -->
+            <!-- CARD 2: OFFICIAL CLAIMED RELEASES & PICKUP LOGSHEET -->
+            <!-- Permanent digital audit ledger to resolve paper/spreadsheet issues -->
+            <!-- ======================================================== -->
+            <div class="bg-slate-900/90 rounded-3xl border border-slate-800 p-6 shadow-xl space-y-4 mt-6">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                <div>
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+                      <span>Official Claimed Orders &amp; Release Ledger</span>
+                    </h3>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">
+                      Claimed Only (Audit-Ready)
+                    </span>
+                    <span id="claimed-log-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">
+                      {{ count($claimedReservations ?? []) }} Confirmed Releases
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-400 mt-1">
+                    Official digital audit ledger of physical merchandise releases. Tracks buyer student identity, order date/time, and physical pickup date/time when marked as claimed. Use this to instantly verify or export sign-offs whenever there are discrepancies in paper sign-off sheets or manual spreadsheets.
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                  <a href="{{ route('reports.export_claimed') }}" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-2 shadow-lg shadow-emerald-950/50 cursor-pointer">
+                    <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Download Claimed CSV Logsheet</span>
+                  </a>
+                  <button type="button" onclick="window.print()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                    Print Logsheet
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Search / Filter Bar -->
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                <div class="relative flex-1">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  </span>
+                  <input
+                    type="text"
+                    id="claimed-ledger-search"
+                    oninput="icsApp.filterClaimedLedger(this.value)"
+                    placeholder="Search by student buyer name, ID number, claim reference code..."
+                    class="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+                </div>
+
+                <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+                  <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Auto-updated on Claim status</span>
+                </div>
+              </div>
+
+              <!-- Claimed Orders Table -->
+              <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
+                <table class="w-full text-left text-xs">
+                  <thead class="text-slate-400 bg-slate-950 uppercase text-[10px] font-mono border-b border-slate-800">
+                    <tr>
+                      <th class="py-3 px-3">Claim Ref</th>
+                      <th class="py-3 px-3">Student Buyer</th>
+                      <th class="py-3 px-3">Student ID</th>
+                      <th class="py-3 px-3">Program / Year</th>
+                      <th class="py-3 px-3">Date Purchased</th>
+                      <th class="py-3 px-3">Date &amp; Time Claimed</th>
+                      <th class="py-3 px-3">Items &amp; Sizes</th>
+                      <th class="py-3 px-3 text-right">Total Amount</th>
+                      <th class="py-3 px-3">Payment</th>
+                      <th class="py-3 px-3">Released By</th>
+                    </tr>
+                  </thead>
+                  <tbody id="claimed-ledger-tbody" class="divide-y divide-slate-800 text-slate-300">
+                    @forelse($claimedReservations ?? [] as $cOrder)
+                    <tr class="hover:bg-slate-800/40 transition claimed-ledger-row"
+                        data-ref="{{ $cOrder->ref_code }}"
+                        data-name="{{ strtolower($cOrder->student_name) }}"
+                        data-stuid="{{ strtolower($cOrder->student_id) }}">
+                      <td class="py-3 px-3 font-mono font-bold text-ics-gold">
+                        {{ $cOrder->ref_code }}
+                      </td>
+                      <td class="py-3 px-3 font-bold text-white whitespace-nowrap">
+                        {{ $cOrder->student_name }}
+                      </td>
+                      <td class="py-3 px-3 font-mono text-slate-300 whitespace-nowrap">
+                        {{ $cOrder->student_id }}
+                      </td>
+                      <td class="py-3 px-3 text-slate-400 text-[11px] whitespace-nowrap">
+                        {{ $cOrder->department }} ({{ $cOrder->year_level }})
+                      </td>
+                      <td class="py-3 px-3 font-mono text-slate-400 text-[11px] whitespace-nowrap">
+                        {{ $cOrder->created_at ? $cOrder->created_at->format('M d, Y h:i A') : 'N/A' }}
+                      </td>
+                      <td class="py-3 px-3 font-mono text-emerald-400 font-semibold text-[11px] whitespace-nowrap">
+                        {{ $cOrder->claimed_at ? $cOrder->claimed_at->format('M d, Y h:i A') : ($cOrder->updated_at ? $cOrder->updated_at->format('M d, Y h:i A') : 'N/A') }}
+                      </td>
+                      <td class="py-3 px-3">
+                        <div class="flex flex-wrap gap-1 max-w-xs">
+                          @if(is_array($cOrder->items))
+                            @foreach($cOrder->items as $ci)
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-200 border border-slate-700">
+                              <strong>{{ $ci['quantity'] ?? 1 }}x</strong>
+                              <span>{{ $ci['name'] ?? $ci['productId'] ?? 'Item' }}</span>
+                              @if(isset($ci['size']) && !empty($ci['size']))
+                              <span class="text-ics-gold font-bold">({{ $ci['size'] }})</span>
+                              @endif
+                            </span>
+                            @endforeach
+                          @else
+                            <span class="text-slate-500">N/A</span>
+                          @endif
+                        </div>
+                      </td>
+                      <td class="py-3 px-3 text-right font-mono font-bold text-white whitespace-nowrap">
+                        ₱{{ number_format($cOrder->total_amount, 2) }}
+                      </td>
+                      <td class="py-3 px-3 whitespace-nowrap">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                          {{ $cOrder->payment_status ?? 'Paid' }}
+                        </span>
+                        <div class="text-[9px] text-slate-400 font-mono mt-0.5">
+                          {{ $cOrder->payment_method ?? 'Cash on Pickup' }}
+                        </div>
+                      </td>
+                      <td class="py-3 px-3 text-slate-300 text-[11px] font-mono whitespace-nowrap">
+                        {{ $cOrder->claimed_by ?? 'J. Derramas (ICS Officer)' }}
+                      </td>
+                    </tr>
+                    @empty
+                    <tr id="claimed-ledger-empty-row">
+                      <td colspan="10" class="py-12 text-center text-slate-500 font-sans">
+                        <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p class="font-bold text-xs text-slate-400">No Claimed Releases Recorded Yet</p>
+                        <p class="text-[11px] text-slate-600 mt-0.5">When student orders are marked as "Claimed", their pickup timestamp and buyer details will automatically log here.</p>
+                      </td>
+                    </tr>
+                    @endforelse
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </section>
 
           <!-- ======================================================== -->
@@ -1166,6 +1315,7 @@
 
                   <select id="act-log-filter-action" onchange="icsApp.filterActivityLogs(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white">
                     <option value="all">All Actions</option>
+                    <option value="CLAIM">CLAIM (Releases)</option>
                     <option value="CREATE">CREATE</option>
                     <option value="READ">READ</option>
                     <option value="UPDATE">UPDATE</option>
@@ -1194,7 +1344,8 @@
                       <td class="py-3 px-3 font-mono text-ics-gold font-bold">{{ $log->user_code }}</td>
                       <td class="py-3 px-3">
                         <span class="px-2.5 py-1 rounded text-[10px] font-bold font-mono
-                          @if($log->action === 'CREATE') bg-emerald-950 text-emerald-300 border border-emerald-800
+                          @if($log->action === 'CLAIM') bg-emerald-950 text-emerald-300 border border-emerald-700 font-extrabold shadow-sm
+                          @elseif($log->action === 'CREATE') bg-emerald-950 text-emerald-300 border border-emerald-800
                           @elseif($log->action === 'UPDATE') bg-amber-950 text-amber-300 border border-amber-800
                           @elseif($log->action === 'DELETE') bg-rose-950 text-rose-300 border border-rose-800
                           @elseif($log->action === 'LOGIN') bg-purple-950 text-purple-300 border border-purple-800
@@ -1806,6 +1957,9 @@
         const rawRes = @json($reservations);
         this.reservations = Array.isArray(rawRes) ? rawRes : Object.values(rawRes || {});
 
+        const rawClaimed = @json($claimedReservations ?? []);
+        this.claimedReservations = Array.isArray(rawClaimed) ? rawClaimed : Object.values(rawClaimed || {});
+
         const rawLogs = @json($activityLogs);
         this.activityLogs = Array.isArray(rawLogs) ? rawLogs : Object.values(rawLogs || {});
 
@@ -1939,6 +2093,15 @@
             // 1. Synchronize in-memory collections
             if (data.products) this.catalog = data.products;
             if (data.reservations) this.reservations = data.reservations;
+            if (data.claimed_reservations) {
+              this.claimedReservations = data.claimed_reservations;
+              if (this.adminTab === 'reports') {
+                const searchVal = document.getElementById('claimed-ledger-search')?.value;
+                if (!searchVal) {
+                  this.renderClaimedLedgerTable();
+                }
+              }
+            }
             if (data.support_tickets) this.supportTickets = data.support_tickets;
 
             // 2. Real-time Dashboard KPI updates
@@ -3920,7 +4083,8 @@
 
             const act = (log.action || '').toUpperCase();
             let badgeClass = 'bg-blue-950 text-blue-300 border border-blue-800';
-            if (act === 'CREATE') badgeClass = 'bg-emerald-950 text-emerald-300 border border-emerald-800';
+            if (act === 'CLAIM') badgeClass = 'bg-emerald-950 text-emerald-300 border border-emerald-700 font-extrabold shadow-sm';
+            else if (act === 'CREATE') badgeClass = 'bg-emerald-950 text-emerald-300 border border-emerald-800';
             else if (act === 'UPDATE') badgeClass = 'bg-amber-950 text-amber-300 border border-amber-800';
             else if (act === 'DELETE') badgeClass = 'bg-rose-950 text-rose-300 border border-rose-800';
             else if (act === 'LOGIN') badgeClass = 'bg-purple-950 text-purple-300 border border-purple-800';
@@ -4010,6 +4174,99 @@
         this.actLogsFilterAction = action;
         this.actLogsCurrentPage = 1;
         this.renderActivityLogsTable();
+      }
+
+      filterClaimedLedger(query) {
+        const q = (query || '').toLowerCase().trim();
+        const rows = document.querySelectorAll('.claimed-ledger-row');
+        let visibleCount = 0;
+        rows.forEach(row => {
+          const ref = (row.getAttribute('data-ref') || '').toLowerCase();
+          const name = (row.getAttribute('data-name') || '').toLowerCase();
+          const stuid = (row.getAttribute('data-stuid') || '').toLowerCase();
+          const text = row.innerText.toLowerCase();
+
+          if (!q || ref.includes(q) || name.includes(q) || stuid.includes(q) || text.includes(q)) {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        const badge = document.getElementById('claimed-log-count-badge');
+        if (badge) {
+          badge.textContent = `${visibleCount} Confirmed Releases`;
+        }
+      }
+
+      renderClaimedLedgerTable(records) {
+        const tbody = document.getElementById('claimed-ledger-tbody');
+        if (!tbody) return;
+
+        const list = records || this.claimedReservations || [];
+        const badge = document.getElementById('claimed-log-count-badge');
+        if (badge) badge.textContent = `${list.length} Confirmed Releases`;
+
+        if (list.length === 0) {
+          tbody.innerHTML = `
+            <tr id="claimed-ledger-empty-row">
+              <td colspan="10" class="py-12 text-center text-slate-500 font-sans">
+                <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="font-bold text-xs text-slate-400">No Claimed Releases Recorded Yet</p>
+                <p class="text-[11px] text-slate-600 mt-0.5">When student orders are marked as "Claimed", their pickup timestamp and buyer details will automatically log here.</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = list.map(c => {
+          let itemsHtml = '';
+          if (Array.isArray(c.items)) {
+            itemsHtml = c.items.map(it => {
+              const qty = it.quantity || 1;
+              const name = it.productName || it.name || it.productId || 'Item';
+              const size = it.size ? `<span class="text-ics-gold font-bold">(${it.size})</span>` : '';
+              return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-200 border border-slate-700"><strong>${qty}x</strong> <span>${name}</span> ${size}</span>`;
+            }).join('');
+          } else {
+            itemsHtml = '<span class="text-slate-500">N/A</span>';
+          }
+
+          const createdDate = c.created_at ? new Date(c.created_at).toLocaleString([], {
+            month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          }) : 'N/A';
+
+          const claimedDate = c.claimed_at ? new Date(c.claimed_at).toLocaleString([], {
+            month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          }) : (c.updated_at ? new Date(c.updated_at).toLocaleString([], {
+            month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          }) : 'N/A');
+
+          const officer = c.claimed_by || 'J. Derramas (ICS Officer)';
+
+          return `
+            <tr class="hover:bg-slate-800/40 transition claimed-ledger-row"
+                data-ref="${(c.ref_code || '').toLowerCase()}"
+                data-name="${(c.student_name || '').toLowerCase()}"
+                data-stuid="${(c.student_id || '').toLowerCase()}">
+              <td class="py-3 px-3 font-mono font-bold text-ics-gold">${c.ref_code || ''}</td>
+              <td class="py-3 px-3 font-bold text-white whitespace-nowrap">${c.student_name || ''}</td>
+              <td class="py-3 px-3 font-mono text-slate-300 whitespace-nowrap">${c.student_id || ''}</td>
+              <td class="py-3 px-3 text-slate-400 text-[11px] whitespace-nowrap">${c.department || 'ICS'} (${c.year_level || 'N/A'})</td>
+              <td class="py-3 px-3 font-mono text-slate-400 text-[11px] whitespace-nowrap">${createdDate}</td>
+              <td class="py-3 px-3 font-mono text-emerald-400 font-semibold text-[11px] whitespace-nowrap">${claimedDate}</td>
+              <td class="py-3 px-3"><div class="flex flex-wrap gap-1 max-w-xs">${itemsHtml}</div></td>
+              <td class="py-3 px-3 text-right font-mono font-bold text-white whitespace-nowrap">₱${Number(c.total_amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td class="py-3 px-3 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">${c.payment_status || 'Paid'}</span>
+                <div class="text-[9px] text-slate-400 font-mono mt-0.5">${c.payment_method || 'Cash on Pickup'}</div>
+              </td>
+              <td class="py-3 px-3 text-slate-300 text-[11px] font-mono whitespace-nowrap">${officer}</td>
+            </tr>
+          `;
+        }).join('');
       }
 
       async clearActivityLogs() {

@@ -48,8 +48,10 @@ Route::post('/api/users', [MerchController::class, 'storeUser'])->name('api.user
 Route::put('/api/users/{id}', [MerchController::class, 'updateUser'])->name('api.users.update');
 Route::delete('/api/users/{id}', [MerchController::class, 'deleteUser'])->name('api.users.delete');
 
-// Reports Export
+// Reports Export & Claimed Releases Logsheet
 Route::get('/reports/export-csv', [MerchController::class, 'exportReportCsv'])->name('reports.export');
+Route::get('/reports/export-claimed-csv', [MerchController::class, 'exportClaimedLedgerCsv'])->name('reports.export_claimed');
+Route::get('/api/reports/claimed-logs', [MerchController::class, 'getClaimedLogs'])->name('api.reports.claimed_logs');
 
 // Support Helpdesk & Chat API
 Route::get('/api/support/tickets', [MerchController::class, 'getSupportTickets'])->name('api.support.tickets');
