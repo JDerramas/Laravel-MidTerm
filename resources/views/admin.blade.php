@@ -107,15 +107,17 @@
       scrollbar-width: none;
     }
 
-    /* Mobile View: Strictly hide desktop sidebar navigation so only bottom icon nav bar is used */
-    #admin-desktop-sidebar {
-      display: none !important;
-      visibility: hidden !important;
-      height: 0 !important;
-      overflow: hidden !important;
-      pointer-events: none !important;
+    /* Mobile View: Strictly hide desktop sidebar navigation on small phone screens (< 768px) */
+    @media screen and (max-width: 767px) {
+      #admin-desktop-sidebar {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+      }
     }
-    @media screen and (min-width: 1024px) {
+    @media screen and (min-width: 768px) {
       #admin-desktop-sidebar {
         display: block !important;
         visibility: visible !important;
@@ -124,6 +126,7 @@
         pointer-events: auto !important;
       }
     }
+
 
     /* Print Slip Styles */
     @media print {
@@ -158,42 +161,43 @@
   <!-- TOP APP BAR & HEADER (ICS ADMIN CONSOLE) -->
   <!-- ======================================================== -->
   <header class="sticky top-0 z-40 bg-ics-dark/95 backdrop-blur-md border-b border-ics-900/80 shadow-2xl">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-18 py-2">
+    <div class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
+      <div class="flex items-center justify-between h-18 py-2.5 gap-4">
 
         <!-- ICS Brand Identity & Emblem -->
-        <a href="{{ route('admin') }}" class="flex items-center gap-2.5 sm:gap-3.5 group">
+        <a href="{{ route('admin') }}" class="flex items-center gap-2.5 sm:gap-3.5 group flex-shrink-0">
           <div class="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-2xl p-0.5 bg-gradient-to-br from-amber-500 via-ics-700 to-ics-900 shadow-lg group-hover:scale-105 transition-transform duration-300">
             <img src="{{ asset('images/ics-logo.png') }}"
               alt="ICS Integrated Computer Society"
               class="w-full h-full object-contain rounded-xl bg-ics-950 p-0.5">
           </div>
           <div>
-            <div class="flex items-center gap-1.5 sm:gap-2">
-              <h1 class="text-sm sm:text-lg font-black tracking-tight leading-none text-white font-display uppercase flex items-center gap-1 sm:gap-1.5">
+            <div class="flex items-center gap-2 sm:gap-2.5">
+              <h1 class="text-base sm:text-xl font-black tracking-tight leading-none text-white font-display uppercase flex items-center gap-1.5">
                 <span>ICS</span>
                 <span class="text-ics-gold font-normal">|</span>
                 <span class="bg-gradient-to-r from-red-400 via-ics-gold to-yellow-300 bg-clip-text text-transparent">Admin Console</span>
               </h1>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-800">
-                Staff & Logistics
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-mono font-bold bg-amber-950/90 text-amber-300 border border-amber-800 shadow-sm">
+                Staff &amp; Logistics
               </span>
             </div>
-            <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
+            <p class="text-xs text-slate-300 font-medium flex items-center gap-2 mt-1">
               <span class="text-ics-gold font-semibold tracking-wider">Executive Management</span>
-              <span>Apparel & Merch System</span>
+              <span class="text-slate-500">•</span>
+              <span>Apparel &amp; Merch System</span>
             </p>
           </div>
         </a>
 
         <!-- Portal Link Switcher & Controls -->
-        <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-2.5 sm:gap-3.5 flex-shrink-0">
 
           <!-- Activity Notifications Bell Button -->
           <button
             type="button"
             onclick="icsApp.setAdminTab('actlogs')"
-            class="relative p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 hover:border-cyan-500 transition shadow flex items-center justify-center group"
+            class="relative p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700 hover:border-cyan-500 transition shadow flex items-center justify-center group flex-shrink-0"
             title="Activity Audit Logs & Live Notifications">
             <svg class="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -207,15 +211,15 @@
           <!-- Switch to Student Store Button -->
           <a
             href="{{ route('home') }}"
-            class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700 hover:border-ics-600 transition flex items-center gap-1.5 shadow">
-            <svg class="w-3.5 h-3.5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="whitespace-nowrap flex-shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-900/90 hover:bg-slate-800 text-slate-100 hover:text-white border border-slate-700 hover:border-ics-600 transition flex items-center gap-2 shadow-sm">
+            <svg class="w-4 h-4 text-ics-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            <span>🛒 Go to Student Store</span>
+            <span class="font-bold tracking-wide">Go to Student Store</span>
           </a>
 
           <!-- Admin Account Pill (ICS Black & Red Design) -->
-          <div class="flex items-center gap-2.5 p-1 px-3 py-1 rounded-2xl bg-slate-900 border border-ics-900/80 shadow">
+          <div class="whitespace-nowrap flex-shrink-0 flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl bg-slate-900 border border-ics-900/80 shadow">
             @if(!empty($studentUser['avatar']))
               <img src="{{ $studentUser['avatar'] }}" alt="Profile" class="w-8 h-8 rounded-xl object-cover border border-ics-600 shadow flex-shrink-0">
             @else
@@ -224,10 +228,10 @@
               </div>
             @endif
             <div class="hidden sm:block text-left">
-              <p class="text-xs font-bold text-white leading-tight truncate max-w-[130px]" title="{{ $adminUser->name ?? $studentUser['name'] ?? 'Administrator' }}">
+              <p class="text-xs font-bold text-white leading-tight truncate max-w-[140px]" title="{{ $adminUser->name ?? $studentUser['name'] ?? 'Administrator' }}">
                 {{ $adminUser->name ?? $studentUser['name'] ?? 'Administrator' }}
               </p>
-              <p class="text-[10px] text-ics-gold font-mono leading-tight truncate max-w-[130px]" title="{{ $adminUser->role ?? 'Admin' }}">
+              <p class="text-[10px] text-ics-gold font-mono leading-tight truncate max-w-[140px]" title="{{ $adminUser->role ?? 'Admin' }}">
                 {{ $adminUser->role ?? 'Admin' }}
               </p>
             </div>
@@ -237,12 +241,12 @@
           <button
             type="button"
             onclick="icsApp.adminLogout()"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-950/70 hover:bg-rose-900 text-rose-200 border border-rose-800/80 hover:border-rose-600 transition flex items-center gap-1.5 shadow"
+            class="whitespace-nowrap flex-shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800/80 hover:border-rose-600 transition flex items-center gap-1.5 shadow"
             title="Sign out of Admin Console">
-            <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-rose-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
             </svg>
-            <span class="hidden sm:inline">Sign Out</span>
+            <span class="hidden sm:inline font-bold">Sign Out</span>
           </button>
 
         </div>
@@ -251,25 +255,26 @@
     </div>
   </header>
 
-  <main id="admin-view-container" class="flex-1 pb-28 lg:pb-16 transition-opacity duration-300">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+  <main id="admin-view-container" class="flex-1 pb-28 md:pb-16 transition-opacity duration-300">
+    <div class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 mt-6">
 
 
       <!-- Admin Layout Grid: Sidebar Navigation + Main Panel -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
 
         <!-- ======================================================== -->
         <!-- SIDEBAR NAVIGATION (Matching Whiteboard wireframe) -->
         <!-- Dashboard | INFO MGMT | REPORTS | USER MGMT | ACT LOGS -->
         <!-- ======================================================== -->
-        <aside id="admin-desktop-sidebar" class="hidden lg:block lg:col-span-3 bg-slate-900/90 rounded-3xl border border-slate-800 p-4 shadow-2xl sticky top-24">
+        <aside id="admin-desktop-sidebar" class="hidden md:block md:col-span-4 lg:col-span-3 xl:col-span-2 2xl:col-span-2 bg-slate-900/95 rounded-3xl border border-slate-800/90 p-4 shadow-2xl sticky top-24">
           <div class="p-3 mb-3 bg-gradient-to-br from-ics-900/90 to-slate-950 rounded-2xl border border-ics-800/80">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-ics-800 border border-ics-600 flex items-center justify-center p-1 flex-shrink-0">
+              <div class="w-10 h-10 rounded-xl bg-ics-800 border border-ics-600 flex items-center justify-center p-1 flex-shrink-0 shadow-md">
                 <img src="{{ asset('images/ics-logo.png') }}" alt="ICS" class="w-full h-full object-contain">
               </div>
               <div class="overflow-hidden">
                 <h4 class="text-xs font-black uppercase text-white tracking-wide">ICS Admin Console</h4>
+                <p class="text-[10px] text-ics-gold font-mono font-semibold">Staff &amp; Logistics</p>
               </div>
             </div>
           </div>
@@ -281,56 +286,56 @@
             <button
               id="admin-tab-btn-dashboard"
               onclick="icsApp.setAdminTab('dashboard')"
-              class="admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between bg-ics-800 text-white shadow-md">
+              class="admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between bg-ics-800 text-white shadow-md border border-ics-600/70">
               <div class="flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-ics-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                 </svg>
                 <span>Dashboard (Read)</span>
               </div>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-ics-950 font-mono text-ics-300">Sales/Stock</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-ics-950 font-mono text-ics-300 font-bold">Sales/Stock</span>
             </button>
 
             <!-- 2. Information Management (CRUD + Image Upload/Edit) -->
             <button
               id="admin-tab-btn-infomgmt"
               onclick="icsApp.setAdminTab('infomgmt')"
-              class="admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between text-slate-400 hover:text-white hover:bg-slate-800/80">
+              class="admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent">
               <div class="flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
                 <span>INFO MGMT (CRUD)</span>
               </div>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 font-mono text-slate-300">{{ $totalProducts }} items</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 font-mono text-slate-300 font-bold">{{ $totalProducts }} items</span>
             </button>
 
             <!-- 3. Reservation Queue Logistics -->
             <button
               id="admin-tab-btn-reservations"
               onclick="icsApp.setAdminTab('reservations')"
-              class="admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between text-slate-400 hover:text-white hover:bg-slate-800/80">
+              class="admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent">
               <div class="flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
                 <span>Reservation Queue</span>
               </div>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-900/60 font-mono text-amber-300">{{ $pendingReservationsCount }} pending</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-950/80 border border-amber-800 font-mono text-amber-300 font-bold">{{ $pendingReservationsCount }} pending</span>
             </button>
 
             <!-- Dedicated Claimed Releases / Items Tab -->
             <button
               id="admin-tab-btn-claimed"
               onclick="icsApp.setAdminTab('claimed')"
-              class="admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between text-slate-400 hover:text-white hover:bg-slate-800/80">
+              class="admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent">
               <div class="flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>Claimed Items (Releases)</span>
               </div>
-              <span id="admin-nav-claimed-badge" class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800 font-mono text-emerald-300 font-bold">
+              <span id="admin-nav-claimed-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800 font-mono text-cyan-300 font-bold">
                 {{ count($claimedReservations ?? []) }} Claimed
               </span>
             </button>
@@ -339,113 +344,146 @@
             <button
               id="admin-tab-btn-reports"
               onclick="icsApp.setAdminTab('reports')"
-              class="admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between text-slate-400 hover:text-white hover:bg-slate-800/80">
+              class="admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent">
               <div class="flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span>REPORTS (Read)</span>
               </div>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 font-mono text-slate-300">Master CSV</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 font-mono text-slate-300 font-bold">Master CSV</span>
             </button>
 
             <!-- 5. User Management (CRUD) -->
             <button
               id="admin-tab-btn-usermgmt"
               onclick="icsApp.setAdminTab('usermgmt')"
-              class="admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between text-slate-400 hover:text-white hover:bg-slate-800/80">
+              class="admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent">
               <div class="flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
                 <span>USER MGMT (CRUD)</span>
               </div>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-800 font-mono text-slate-300">{{ $users->count() }}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 font-mono text-slate-300 font-bold">{{ $users->count() }}</span>
             </button>
 
             <!-- 6. Activity Logs (Audit Trail) -->
             <button
               id="admin-tab-btn-actlogs"
               onclick="icsApp.setAdminTab('actlogs')"
-              class="admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between text-slate-400 hover:text-white hover:bg-slate-800/80">
+              class="admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent">
               <div class="flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>ACT LOGS (Audit Trail)</span>
               </div>
-              <span id="admin-nav-actlogs-badge" class="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 font-mono text-cyan-300">{{ count($activityLogs) }}</span>
+              <span id="admin-nav-actlogs-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 font-mono text-cyan-300 font-bold">{{ count($activityLogs) }}</span>
             </button>
 
             <!-- 7. Support Tickets & Chat Helpdesk -->
             <button
               id="admin-tab-btn-support"
               onclick="icsApp.setAdminTab('support')"
-              class="admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between text-slate-400 hover:text-white hover:bg-slate-800/80">
+              class="admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent">
               <div class="flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
                 <span>SUPPORT CHAT</span>
               </div>
-              <span id="admin-nav-ticket-badge" class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-950 border border-emerald-700/60 font-mono text-emerald-300 font-bold">
+              <span id="admin-nav-ticket-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-700/60 font-mono text-emerald-300 font-bold">
                 {{ $openTicketsCount ?? 0 }} Open
               </span>
             </button>
 
           </nav>
 
-
         </aside>
 
         <!-- ======================================================== -->
         <!-- MAIN ADMIN CONTENT AREA -->
         <!-- ======================================================== -->
-        <div class="col-span-12 lg:col-span-9 space-y-6 w-full">
+        <div class="col-span-12 md:col-span-8 lg:col-span-9 xl:col-span-10 2xl:col-span-10 space-y-6 w-full">
 
           <!-- ======================================================== -->
           <!-- MODULE 1: DASHBOARD (Sales vs Stock Analytics) -->
           <!-- ======================================================== -->
           <section id="admin-sec-dashboard" class="admin-tab-section space-y-6">
 
-            <!-- Top Metric KPI Cards -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <!-- Top Metric KPI Cards (Modern Executive Dashboard Design) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
 
-              <!-- Total Products -->
-              <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 shadow">
+              <!-- 1. Total Catalog Items -->
+              <div class="relative overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950 rounded-3xl border border-slate-800/90 hover:border-indigo-500/50 p-5 sm:p-6 shadow-xl transition-all duration-300 group">
                 <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-slate-400 uppercase">Total Catalog Items</span>
+                  <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Total Catalog Items</span>
+                  <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                  </div>
                 </div>
-                <p id="kpi-total-products" class="text-2xl font-black text-white font-display mt-1">{{ $totalProducts }}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Active merchandise models</p>
+                <p id="kpi-total-products" class="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-display tracking-tight mt-3">{{ $totalProducts }}</p>
+                <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-800/60">
+                  <span class="inline-block w-2 h-2 rounded-full bg-indigo-400"></span>
+                  <span class="text-xs text-slate-300 font-medium">Active merchandise models</span>
+                </div>
               </div>
 
-              <!-- Available Stock -->
-              <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 shadow">
+              <!-- 2. On-Hand Stock -->
+              <div class="relative overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950 rounded-3xl border border-slate-800/90 hover:border-emerald-500/50 p-5 sm:p-6 shadow-xl transition-all duration-300 group">
                 <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-slate-400 uppercase">On-Hand Stock</span>
+                  <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">On-Hand Stock</span>
+                  <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                    </svg>
+                  </div>
                 </div>
-                <p id="kpi-total-stock" class="text-2xl font-black text-emerald-400 font-display mt-1">{{ $totalStockUnits }}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Units ready for issue</p>
+                <p id="kpi-total-stock" class="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-400 font-display tracking-tight mt-3">{{ number_format($totalStockUnits) }}</p>
+                <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-800/60">
+                  <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span class="text-xs text-slate-300 font-medium">Units ready for immediate issue</span>
+                </div>
               </div>
 
-              <!-- Claimed / Sold -->
-              <div onclick="icsApp.setAdminTab('claimed')" class="bg-slate-900/90 hover:bg-slate-800/90 rounded-2xl border border-slate-800 hover:border-emerald-600/60 p-4 shadow transition cursor-pointer group" title="Click to view all claimed items and release records">
+              <!-- 3. Units Claimed / Sold -->
+              <div onclick="icsApp.setAdminTab('claimed')" class="relative overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950 rounded-3xl border border-slate-800/90 hover:border-cyan-500/50 p-5 sm:p-6 shadow-xl transition-all duration-300 cursor-pointer group" title="Click to view all claimed items and release records">
                 <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-slate-400 group-hover:text-emerald-300 uppercase transition">Units Claimed / Sold</span>
-                  <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono">View Ledger &rarr;</span>
+                  <span class="text-xs font-bold text-slate-300 group-hover:text-cyan-300 uppercase tracking-wider transition">Units Claimed / Sold</span>
+                  <div class="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
                 </div>
-                <p id="kpi-total-sold" class="text-2xl font-black text-blue-400 font-display mt-1">{{ $totalSoldUnits }}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Revenue: <span id="kpi-total-revenue" class="font-mono text-emerald-400 font-bold">₱{{ number_format($totalRevenue, 2) }}</span></p>
+                <div class="flex items-baseline justify-between mt-3">
+                  <p id="kpi-total-sold" class="text-3xl sm:text-4xl lg:text-5xl font-black text-cyan-400 font-display tracking-tight">{{ number_format($totalSoldUnits) }}</p>
+                  <span class="text-xs px-2.5 py-1 rounded-xl bg-cyan-950/80 text-cyan-300 border border-cyan-800 font-mono font-bold group-hover:bg-cyan-900 transition">View Ledger &rarr;</span>
+                </div>
+                <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/60 text-xs">
+                  <span class="text-slate-300 font-medium">Total Revenue:</span>
+                  <span id="kpi-total-revenue" class="font-mono text-emerald-400 font-black bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-800/60">₱{{ number_format($totalRevenue, 2) }}</span>
+                </div>
               </div>
 
-              <!-- Active Reservations -->
-              <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 shadow">
+              <!-- 4. Active Reservations -->
+              <div onclick="icsApp.setAdminTab('reservations')" class="relative overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950 rounded-3xl border border-slate-800/90 hover:border-amber-500/50 p-5 sm:p-6 shadow-xl transition-all duration-300 cursor-pointer group" title="Click to view student reservation queue">
                 <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-slate-400 uppercase">Active Reservations</span>
+                  <span class="text-xs font-bold text-slate-300 group-hover:text-amber-300 uppercase tracking-wider transition">Active Reservations</span>
+                  <div class="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
                 </div>
-                <p id="kpi-total-reserved" class="text-2xl font-black text-ics-gold font-display mt-1">{{ $totalReservedUnits }}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5"><span id="kpi-pending-count">{{ $pendingReservationsCount }}</span> pending, <span id="kpi-ready-count">{{ $readyReservationsCount }}</span> ready</p>
+                <p id="kpi-total-reserved" class="text-3xl sm:text-4xl lg:text-5xl font-black text-amber-400 font-display tracking-tight mt-3">{{ $totalReservedUnits }}</p>
+                <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-800/60 text-xs">
+                  <span class="px-2 py-0.5 rounded-lg bg-amber-950/80 text-amber-300 border border-amber-800 font-mono font-bold"><span id="kpi-pending-count">{{ $pendingReservationsCount }}</span> Pending</span>
+                  <span class="px-2 py-0.5 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-800 font-mono font-bold"><span id="kpi-ready-count">{{ $readyReservationsCount }}</span> Ready</span>
+                </div>
               </div>
 
             </div>
@@ -454,44 +492,44 @@
             <!-- VISUAL CHARTS (DONUT / CIRCLE CHART & BAR CHART) -->
             <!-- Interactive with Tooltips, Percentages, and Real-Time Sync -->
             <!-- ======================================================== -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">
 
               <!-- Donut Chart: Inventory Distribution (Circle Chart) -->
-              <div class="bg-slate-900/90 rounded-3xl border border-slate-800 p-5 shadow-xl flex flex-col justify-between">
-                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+              <div class="bg-slate-900/95 rounded-3xl border border-slate-800/90 p-6 shadow-xl flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3.5 mb-3 border-b border-slate-800">
                   <div>
-                    <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      <span>Stock & Sales Distribution</span>
-                      <span class="px-2 py-0.5 rounded text-[9px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800">Circle Chart</span>
+                    <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2.5">
+                      <span>Stock &amp; Sales Distribution</span>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">Circle Chart</span>
                     </h4>
                   </div>
                 </div>
 
-                <div class="relative w-full h-72 sm:h-80 min-h-[290px]" id="donut-chart-container">
+                <div class="relative w-full h-80 sm:h-96 min-h-[320px]" id="donut-chart-container">
                   <canvas id="inventoryDonutChart" class="w-full h-full block"></canvas>
                   <div id="inventoryDonutSvgFallback" class="w-full h-full hidden flex items-center justify-center"></div>
                 </div>
 
                 @php $totRatio = max(1, $totalStockUnits + $totalSoldUnits + $totalReservedUnits); @endphp
-                <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-800/80 text-center font-mono text-xs">
-                  <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
-                    <span class="text-[10px] text-emerald-400 block font-bold">On-Hand</span>
-                    <span id="chart-total-stock" class="text-white font-bold">{{ number_format($totalStockUnits) }}</span>
-                    <span id="chart-pct-stock" class="text-[9px] text-emerald-400/90 block mt-0.5 font-sans font-semibold">
+                <div class="grid grid-cols-3 gap-3 mt-4 pt-3.5 border-t border-slate-800/80 text-center font-mono">
+                  <div class="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                    <span class="text-xs text-emerald-400 block font-bold">On-Hand</span>
+                    <span id="chart-total-stock" class="text-white text-base font-bold">{{ number_format($totalStockUnits) }}</span>
+                    <span id="chart-pct-stock" class="text-[11px] text-emerald-300 block mt-0.5 font-sans font-semibold">
                       {{ round(($totalStockUnits / $totRatio) * 100, 1) }}%
                     </span>
                   </div>
-                  <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
-                    <span class="text-[10px] text-blue-400 block font-bold">Claimed (Sold)</span>
-                    <span id="chart-total-sold" class="text-white font-bold">{{ number_format($totalSoldUnits) }}</span>
-                    <span id="chart-pct-sold" class="text-[9px] text-blue-400/90 block mt-0.5 font-sans font-semibold">
+                  <div class="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                    <span class="text-xs text-cyan-400 block font-bold">Claimed (Sold)</span>
+                    <span id="chart-total-sold" class="text-white text-base font-bold">{{ number_format($totalSoldUnits) }}</span>
+                    <span id="chart-pct-sold" class="text-[11px] text-cyan-300 block mt-0.5 font-sans font-semibold">
                       {{ round(($totalSoldUnits / $totRatio) * 100, 1) }}%
                     </span>
                   </div>
-                  <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
-                    <span class="text-[10px] text-amber-400 block font-bold">Reserved</span>
-                    <span id="chart-total-reserved" class="text-white font-bold">{{ number_format($totalReservedUnits) }}</span>
-                    <span id="chart-pct-reserved" class="text-[9px] text-amber-400/90 block mt-0.5 font-sans font-semibold">
+                  <div class="p-2.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                    <span class="text-xs text-amber-400 block font-bold">Reserved</span>
+                    <span id="chart-total-reserved" class="text-white text-base font-bold">{{ number_format($totalReservedUnits) }}</span>
+                    <span id="chart-pct-reserved" class="text-[11px] text-amber-300 block mt-0.5 font-sans font-semibold">
                       {{ round(($totalReservedUnits / $totRatio) * 100, 1) }}%
                     </span>
                   </div>
@@ -499,24 +537,27 @@
               </div>
 
               <!-- Bar Chart: Category Performance (Available vs Sold) -->
-              <div class="bg-slate-900/90 rounded-3xl border border-slate-800 p-5 shadow-xl flex flex-col justify-between">
-                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+              <div class="bg-slate-900/95 rounded-3xl border border-slate-800/90 p-6 shadow-xl flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3.5 mb-3 border-b border-slate-800">
                   <div>
-                    <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2.5">
                       <span>Category Sales vs Stock</span>
-                      <span class="px-2 py-0.5 rounded text-[9px] font-mono bg-blue-950 text-blue-300 border border-blue-800">Bar Chart</span>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-blue-950 text-blue-300 border border-blue-800 font-bold">Bar Chart</span>
                     </h4>
                   </div>
                 </div>
 
-                <div class="relative w-full h-72 sm:h-80 min-h-[290px]" id="bar-chart-container">
+                <div class="relative w-full h-80 sm:h-96 min-h-[320px]" id="bar-chart-container">
                   <canvas id="categoryBarChart" class="w-full h-full block"></canvas>
                   <div id="categoryBarSvgFallback" class="w-full h-full hidden"></div>
                 </div>
 
-                <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-800/80 text-[10px] text-slate-400">
-                  <span>General, PE, Dept, Accessories</span>
-                  <span class="font-mono text-emerald-400">Real-Time Inventory Synced</span>
+                <div class="flex items-center justify-between mt-4 pt-3.5 border-t border-slate-800/80 text-xs text-slate-300">
+                  <span class="font-medium">General, PE, Dept, Accessories</span>
+                  <span class="font-mono text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Real-Time Synced
+                  </span>
                 </div>
               </div>
 
@@ -629,22 +670,24 @@
                 </button>
               </div>
 
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead class="text-slate-400 bg-slate-950 uppercase text-[10px] font-mono border-b border-slate-800">
+              <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
+                <table class="w-full text-left text-xs sm:text-sm">
+                  <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
-                      <th class="py-2.5 px-3">USER CODE</th>
-                      <th class="py-2.5 px-3">ACTION</th>
-                      <th class="py-2.5 px-3">ACTIVITY</th>
-                      <th class="py-2.5 px-3">DATE / TIMESTAMP</th>
+                      <th class="py-3.5 px-4">USER CODE</th>
+                      <th class="py-3.5 px-4">ACTION</th>
+                      <th class="py-3.5 px-4">ACTIVITY</th>
+                      <th class="py-3.5 px-4">DATE / TIMESTAMP</th>
                     </tr>
                   </thead>
                   <tbody id="dashboard-recent-activity-tbody" class="divide-y divide-slate-800 text-slate-300">
                     @foreach($activityLogs->take(5) as $log)
-                    <tr class="hover:bg-slate-800/40">
-                      <td class="py-2 px-3 font-mono text-ics-gold font-bold">{{ $log->user_code }}</td>
-                      <td class="py-2 px-3">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono
+                    <tr class="hover:bg-slate-800/40 transition">
+                      <td class="py-3.5 px-4 font-mono text-cyan-300 font-bold whitespace-nowrap">
+                        <span class="bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block">{{ $log->user_code }}</span>
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold font-mono
                           @if($log->action === 'CREATE') bg-emerald-950 text-emerald-300 border border-emerald-800
                           @elseif($log->action === 'UPDATE') bg-amber-950 text-amber-300 border border-amber-800
                           @elseif($log->action === 'DELETE') bg-rose-950 text-rose-300 border border-rose-800
@@ -654,8 +697,8 @@
                           {{ $log->action }}
                         </span>
                       </td>
-                      <td class="py-2 px-3">{{ $log->activity }}</td>
-                      <td class="py-2 px-3 font-mono text-slate-400 text-[11px]">{{ $log->created_at->format('m/d/Y, h:i A') }}</td>
+                      <td class="py-3.5 px-4 text-slate-200 font-medium">{{ $log->activity }}</td>
+                      <td class="py-3.5 px-4 font-mono text-slate-300 text-xs whitespace-nowrap">{{ $log->created_at->format('m/d/Y, h:i A') }}</td>
                     </tr>
                     @endforeach
                   </tbody>
@@ -694,50 +737,52 @@
               </div>
 
               <!-- Product Table -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead class="text-slate-400 bg-slate-950 uppercase text-[10px] font-mono border-b border-slate-800">
+              <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
+                <table class="w-full text-left text-xs sm:text-sm">
+                  <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
-                      <th class="py-3 px-3">Item / Photo</th>
-                      <th class="py-3 px-3">Item Code</th>
-                      <th class="py-3 px-3">Category</th>
-                      <th class="py-3 px-3">Price (PHP)</th>
-                      <th class="py-3 px-3">Stock Units</th>
-                      <th class="py-3 px-3">Status</th>
-                      <th class="py-3 px-3 text-right">Actions</th>
+                      <th class="py-3.5 px-4">Item / Photo</th>
+                      <th class="py-3.5 px-4">Item Code</th>
+                      <th class="py-3.5 px-4">Category</th>
+                      <th class="py-3.5 px-4">Price (PHP)</th>
+                      <th class="py-3.5 px-4">Stock Units</th>
+                      <th class="py-3.5 px-4">Status</th>
+                      <th class="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-800 text-slate-300">
                     @foreach($products as $p)
                     <tr class="hover:bg-slate-800/50 transition">
-                      <td class="py-3 px-3">
-                        <div class="flex items-center gap-3">
-                          <img src="{{ asset($p->image_path) }}" alt="{{ $p->name }}" class="w-12 h-12 rounded-xl object-cover border border-slate-700 shadow flex-shrink-0">
+                      <td class="py-3.5 px-4">
+                        <div class="flex items-center gap-3.5">
+                          <img src="{{ asset($p->image_path) }}" alt="{{ $p->name }}" class="w-14 h-14 rounded-2xl object-cover border border-slate-700 shadow-md flex-shrink-0">
                           <div>
-                            <p class="font-bold text-white text-xs">{{ $p->name }}</p>
-                            <p class="text-[10px] text-slate-400">{{ $p->gender }} / {{ $p->dept }}</p>
+                            <p class="font-bold text-white text-sm">{{ $p->name }}</p>
+                            <p class="text-xs text-slate-300 mt-0.5">{{ $p->gender }} / {{ $p->dept }}</p>
                           </div>
                         </div>
                       </td>
-                      <td class="py-3 px-3 font-mono text-ics-gold font-bold">{{ $p->item_code }}</td>
-                      <td class="py-3 px-3 uppercase text-[10px] font-semibold text-slate-300">{{ $p->category }}</td>
-                      <td class="py-3 px-3 font-mono font-bold text-white">₱{{ number_format($p->price, 2) }}</td>
-                      <td class="py-3 px-3 font-mono font-bold text-emerald-400">{{ $p->current_stock }}</td>
-                      <td class="py-3 px-3">
-                        @if($p->current_stock <= 0)
-                          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-800">Out of Stock</span>
-                          @elseif($p->current_stock < 20)
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">Low Stock</span>
-                            @else
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">In Stock</span>
-                            @endif
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block">{{ $p->item_code }}</span>
                       </td>
-                      <td class="py-3 px-3 text-right">
+                      <td class="py-3.5 px-4 uppercase text-xs font-semibold text-slate-300 whitespace-nowrap">{{ $p->category }}</td>
+                      <td class="py-3.5 px-4 font-mono font-black text-emerald-400 text-sm whitespace-nowrap">₱{{ number_format($p->price, 2) }}</td>
+                      <td class="py-3.5 px-4 font-mono font-black text-white text-sm whitespace-nowrap">{{ $p->current_stock }}</td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        @if($p->current_stock <= 0)
+                          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-950 text-rose-300 border border-rose-800">Out of Stock</span>
+                          @elseif($p->current_stock < 20)
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800">Low Stock</span>
+                          @else
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">In Stock</span>
+                          @endif
+                      </td>
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap">
                         <div class="flex items-center justify-end gap-2">
                           <!-- Edit Product (Details + Picture) -->
                           <button
                             onclick="icsApp.openEditProductModal({{ json_encode($p) }})"
-                            class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition flex items-center gap-1 border border-slate-700"
+                            class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 shadow"
                             title="Edit Product & Picture">
                             <svg class="w-3.5 h-3.5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -834,42 +879,45 @@
                     </div>
                   </div>
 
-                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-4 pt-3 border-t border-slate-800/60">
                     <div>
-                      <p class="text-[10px] text-slate-400 uppercase font-semibold">Student Info</p>
-                      <p class="text-xs font-bold text-white">{{ $r->student_name }}</p>
-                      <p class="text-[11px] text-slate-300 font-mono">{{ $r->student_id }} / {{ $r->year_level }}</p>
-                      <p class="text-[11px] text-slate-400">{{ $r->department }}</p>
-                      <p class="text-[11px] text-slate-400 font-mono">Contact: {{ $r->contact }}</p>
+                      <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Student Buyer</p>
+                      <p class="text-sm font-black text-white mt-1">{{ $r->student_name }}</p>
+                      <div class="mt-1">
+                        <span class="font-mono text-xs font-bold text-cyan-300 bg-cyan-950/60 px-2 py-0.5 rounded-md border border-cyan-800/60 inline-block">{{ $r->student_id }}</span>
+                        <span class="text-xs text-slate-300 ml-1">({{ $r->year_level }})</span>
+                      </div>
+                      <p class="text-xs text-slate-300 mt-1">{{ $r->department }}</p>
+                      <p class="text-xs text-slate-400 font-mono mt-0.5">Contact: {{ $r->contact }}</p>
                     </div>
 
                     <div>
-                      <p class="text-[10px] text-slate-400 uppercase font-semibold">Pickup Schedule</p>
-                      <p class="text-xs font-bold text-ics-gold">{{ $r->pickup_date }}</p>
-                      <p class="text-[11px] text-slate-300">{{ $r->pickup_slot }}</p>
-                      <p class="text-[11px] text-slate-400 mt-1 italic">{{ $r->notes ?: 'No additional notes' }}</p>
+                      <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Pickup Schedule</p>
+                      <p class="text-sm font-bold text-ics-gold mt-1">{{ $r->pickup_date }}</p>
+                      <p class="text-xs text-slate-200 mt-0.5">{{ $r->pickup_slot }}</p>
+                      <p class="text-xs text-slate-400 mt-1 italic">{{ $r->notes ?: 'No additional notes' }}</p>
                     </div>
 
                     <div>
-                      <p class="text-[10px] text-slate-400 uppercase font-semibold">Payment & Receipt</p>
+                      <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Payment &amp; Receipt</p>
                       <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                         @if(($r->payment_method ?? 'Cash on Pickup') === 'GCash Online')
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-950 text-blue-300 border border-blue-800 flex items-center gap-1">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-950 text-blue-300 border border-blue-800 flex items-center gap-1">
                           GCash Online
                         </span>
                         @else
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1">
                           Pay at School
                         </span>
                         @endif
 
-                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 {{ ($r->payment_status ?? 'Unpaid') === 'Verified' ? 'text-emerald-400' : 'text-amber-400' }}">
+                        <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 {{ ($r->payment_status ?? 'Unpaid') === 'Verified' ? 'text-emerald-400' : 'text-amber-400' }}">
                           {{ $r->payment_status ?? 'Unpaid' }}
                         </span>
                       </div>
 
                       @if(!empty($r->payment_reference))
-                      <p class="text-[10px] text-slate-400 font-mono mt-1">
+                      <p class="text-xs text-slate-300 font-mono mt-1">
                         Ref: <span class="text-white font-semibold">{{ $r->payment_reference }}</span>
                       </p>
                       @endif
@@ -879,7 +927,7 @@
                         <button
                           type="button"
                           onclick="icsApp.openReceiptViewModal({{ json_encode($r) }})"
-                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-blue-200 border border-blue-700 shadow transition cursor-pointer">
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-blue-200 border border-blue-700 shadow transition cursor-pointer">
                           <svg class="w-3.5 h-3.5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -892,12 +940,12 @@
 
                     <div class="text-left md:text-right flex flex-col justify-between">
                       <div>
-                        <p class="text-[10px] text-slate-400 uppercase font-semibold">Grand Total</p>
-                        <p class="text-lg font-black text-white font-mono">₱{{ number_format($r->total_amount, 2) }}</p>
+                        <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Grand Total</p>
+                        <p class="text-2xl font-black text-emerald-400 font-mono mt-1">₱{{ number_format($r->total_amount, 2) }}</p>
                       </div>
 
                       <!-- Action Buttons -->
-                      <div class="reservation-actions-container flex items-center md:justify-end gap-2 mt-2">
+                      <div class="reservation-actions-container flex items-center md:justify-end gap-2 mt-3">
                         @if($r->activeTicket)
                         <!-- LOCKED: Cannot Mark Ready or Mark Claimed while ticket is pending -->
                         <button
@@ -1046,36 +1094,37 @@
                   }
                 }
               @endphp
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
-                  <span class="block text-[10px] uppercase font-bold text-slate-500">Total Claimed Orders</span>
-                  <span id="kpi-claimed-tab-orders" class="block text-xl font-extrabold font-mono text-white mt-0.5">{{ count($tabClaimed) }}</span>
-                  <span class="block text-[10px] text-slate-500">Official Releases</span>
+              <!-- Quick Stats Bar -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 shadow-md">
+                  <span class="block text-xs uppercase font-bold text-slate-300 tracking-wider">Total Claimed Orders</span>
+                  <span id="kpi-claimed-tab-orders" class="block text-2xl sm:text-3xl font-black font-mono text-white mt-1.5">{{ count($tabClaimed) }}</span>
+                  <span class="block text-xs text-slate-400 mt-0.5">Official Releases</span>
                 </div>
-                <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
-                  <span class="block text-[10px] uppercase font-bold text-slate-500">Units Distributed</span>
-                  <span id="kpi-claimed-tab-units" class="block text-xl font-extrabold font-mono text-blue-400 mt-0.5">{{ $tabUnits }}</span>
-                  <span class="block text-[10px] text-slate-500">Uniforms &amp; Merch</span>
+                <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 shadow-md">
+                  <span class="block text-xs uppercase font-bold text-slate-300 tracking-wider">Units Distributed</span>
+                  <span id="kpi-claimed-tab-units" class="block text-2xl sm:text-3xl font-black font-mono text-cyan-400 mt-1.5">{{ $tabUnits }}</span>
+                  <span class="block text-xs text-slate-400 mt-0.5">Uniforms &amp; Merch</span>
                 </div>
-                <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
-                  <span class="block text-[10px] uppercase font-bold text-slate-500">Total Revenue Collected</span>
-                  <span id="kpi-claimed-tab-rev" class="block text-xl font-extrabold font-mono text-emerald-400 mt-0.5">₱{{ number_format($tabRevenue, 2) }}</span>
-                  <span class="block text-[10px] text-emerald-500/80 font-medium">100% Remitted</span>
+                <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 shadow-md">
+                  <span class="block text-xs uppercase font-bold text-slate-300 tracking-wider">Total Revenue Collected</span>
+                  <span id="kpi-claimed-tab-rev" class="block text-2xl sm:text-3xl font-black font-mono text-emerald-400 mt-1.5">₱{{ number_format($tabRevenue, 2) }}</span>
+                  <span class="block text-xs text-emerald-400/90 font-medium mt-0.5">100% Remitted</span>
                 </div>
-                <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
-                  <span class="block text-[10px] uppercase font-bold text-slate-500">Export Formats</span>
-                  <div class="flex items-center gap-1.5 mt-1 font-mono">
-                    <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-bold">CSV</span>
-                    <span class="px-2 py-0.5 rounded bg-red-950 text-red-300 border border-red-800 text-[10px] font-bold">PDF</span>
+                <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 shadow-md">
+                  <span class="block text-xs uppercase font-bold text-slate-300 tracking-wider">Export Formats</span>
+                  <div class="flex items-center gap-2 mt-2 font-mono">
+                    <span class="px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-300 border border-emerald-800 text-xs font-bold">CSV</span>
+                    <span class="px-2.5 py-1 rounded-lg bg-red-950 text-red-300 border border-red-800 text-xs font-bold">PDF</span>
                   </div>
-                  <span class="block text-[10px] text-slate-500 mt-1">Ready for Audit</span>
+                  <span class="block text-xs text-slate-400 mt-1">Ready for Audit</span>
                 </div>
               </div>
 
               <!-- Quick Search / Filter Bar -->
-              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800">
                 <div class="relative flex-1">
-                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                   </span>
                   <input
@@ -1083,10 +1132,10 @@
                     id="claimed-tab-search"
                     oninput="icsApp.filterClaimedLedger(this.value)"
                     placeholder="Search by student number, student buyer name, item, reference code..."
-                    class="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+                    class="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-900 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition">
                 </div>
 
-                <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+                <div class="flex items-center gap-2 text-xs text-slate-300 font-mono">
                   <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>Instant Database Sync</span>
                 </div>
@@ -1094,19 +1143,19 @@
 
               <!-- Claimed Orders Table -->
               <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
-                <table class="w-full text-left text-xs">
-                  <thead class="text-slate-400 bg-slate-950 uppercase text-[10px] font-mono border-b border-slate-800">
+                <table class="w-full text-left text-xs sm:text-sm">
+                  <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
-                      <th class="py-3 px-3 text-yellow-400 font-bold">Student Number</th>
-                      <th class="py-3 px-3">Student Name</th>
-                      <th class="py-3 px-3">Item na Binili (Name &amp; Size)</th>
-                      <th class="py-3 px-3 text-right">Price (PHP)</th>
-                      <th class="py-3 px-3">Date &amp; Time Ordered</th>
-                      <th class="py-3 px-3 text-emerald-400 font-bold">Date &amp; Time Claimed</th>
-                      <th class="py-3 px-3">Claim Ref</th>
-                      <th class="py-3 px-3">Program / Year</th>
-                      <th class="py-3 px-3">Payment</th>
-                      <th class="py-3 px-3">Released By</th>
+                      <th class="py-3.5 px-4 text-cyan-300 font-bold">Student Number</th>
+                      <th class="py-3.5 px-4">Student Name</th>
+                      <th class="py-3.5 px-4">Item na Binili (Name &amp; Size)</th>
+                      <th class="py-3.5 px-4 text-right">Price (PHP)</th>
+                      <th class="py-3.5 px-4">Date &amp; Time Ordered</th>
+                      <th class="py-3.5 px-4 text-emerald-400 font-bold">Date &amp; Time Claimed</th>
+                      <th class="py-3.5 px-4">Claim Ref</th>
+                      <th class="py-3.5 px-4">Program / Year</th>
+                      <th class="py-3.5 px-4">Payment</th>
+                      <th class="py-3.5 px-4">Released By</th>
                     </tr>
                   </thead>
                   <tbody id="claimed-tab-ledger-tbody" class="divide-y divide-slate-800 text-slate-300">
@@ -1117,21 +1166,21 @@
                         data-stuid="{{ strtolower($cOrder->student_id) }}">
                       
                       <!-- 1. Student Number -->
-                      <td class="py-3 px-3 font-mono font-bold text-rose-400 whitespace-nowrap bg-rose-950/20 border-r border-slate-800/60">
-                        {{ $cOrder->student_id }}
+                      <td class="py-3.5 px-4 font-mono font-bold whitespace-nowrap bg-cyan-950/20 border-r border-slate-800/60">
+                        <span class="text-cyan-300 bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block">{{ $cOrder->student_id }}</span>
                       </td>
 
                       <!-- 2. Student Name -->
-                      <td class="py-3 px-3 font-bold text-white whitespace-nowrap">
+                      <td class="py-3.5 px-4 font-bold text-white whitespace-nowrap text-xs sm:text-sm">
                         {{ $cOrder->student_name }}
                       </td>
 
                       <!-- 3. Item na Binili (Name & Size) -->
-                      <td class="py-3 px-3">
-                        <div class="flex flex-wrap gap-1 max-w-xs">
+                      <td class="py-3.5 px-4">
+                        <div class="flex flex-wrap gap-1.5 max-w-sm">
                           @if(is_array($cOrder->items))
                             @foreach($cOrder->items as $ci)
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-800 text-[11px] text-slate-200 border border-slate-700">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 text-xs text-slate-200 border border-slate-700">
                               <strong class="text-white">{{ $ci['quantity'] ?? 1 }}x</strong>
                               <span>{{ $ci['name'] ?? $ci['productName'] ?? $ci['productId'] ?? 'Item' }}</span>
                               @if(isset($ci['size']) && !empty($ci['size']))
@@ -1140,57 +1189,57 @@
                             </span>
                             @endforeach
                           @else
-                            <span class="text-slate-500">N/A</span>
+                            <span class="text-slate-400">N/A</span>
                           @endif
                         </div>
                       </td>
 
                       <!-- 4. Price (PHP) -->
-                      <td class="py-3 px-3 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">
+                      <td class="py-3.5 px-4 text-right font-mono font-black text-emerald-400 text-xs sm:text-sm whitespace-nowrap">
                         ₱{{ number_format($cOrder->total_amount, 2) }}
                       </td>
 
                       <!-- 5. Date & Time Ordered -->
-                      <td class="py-3 px-3 font-mono text-slate-400 text-[11px] whitespace-nowrap">
+                      <td class="py-3.5 px-4 font-mono text-slate-300 text-xs whitespace-nowrap">
                         {{ $cOrder->created_at ? $cOrder->created_at->format('M d, Y h:i A') : 'N/A' }}
                       </td>
 
                       <!-- 6. Date & Time Claimed -->
-                      <td class="py-3 px-3 font-mono text-emerald-400 font-bold text-[11px] whitespace-nowrap bg-emerald-950/20 border-l border-slate-800/60">
-                        {{ $cOrder->claimed_at ? $cOrder->claimed_at->format('M d, Y h:i A') : ($cOrder->updated_at ? $cOrder->updated_at->format('M d, Y h:i A') : 'N/A') }}
+                      <td class="py-3.5 px-4 font-mono text-emerald-300 font-bold text-xs whitespace-nowrap bg-emerald-950/30 border-l border-slate-800/60">
+                        <span class="bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-800/60 inline-block">{{ $cOrder->claimed_at ? $cOrder->claimed_at->format('M d, Y h:i A') : ($cOrder->updated_at ? $cOrder->updated_at->format('M d, Y h:i A') : 'N/A') }}</span>
                       </td>
 
                       <!-- 7. Claim Ref -->
-                      <td class="py-3 px-3 font-mono font-bold text-ics-gold whitespace-nowrap">
+                      <td class="py-3.5 px-4 font-mono font-bold text-ics-gold whitespace-nowrap text-xs sm:text-sm">
                         {{ $cOrder->ref_code }}
                       </td>
 
                       <!-- 8. Program / Year -->
-                      <td class="py-3 px-3 text-slate-400 text-[11px] whitespace-nowrap">
+                      <td class="py-3.5 px-4 text-slate-300 text-xs whitespace-nowrap">
                         {{ $cOrder->department }} ({{ $cOrder->year_level }})
                       </td>
 
                       <!-- 9. Payment -->
-                      <td class="py-3 px-3 whitespace-nowrap">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
                           {{ $cOrder->payment_status ?? 'Paid' }}
                         </span>
-                        <div class="text-[9px] text-slate-400 font-mono mt-0.5">
+                        <div class="text-[10px] text-slate-400 font-mono mt-1">
                           {{ $cOrder->payment_method ?? 'Cash on Pickup' }}
                         </div>
                       </td>
 
                       <!-- 10. Released By -->
-                      <td class="py-3 px-3 text-slate-300 text-[11px] font-mono whitespace-nowrap">
+                      <td class="py-3.5 px-4 text-slate-300 text-xs font-mono whitespace-nowrap">
                         {{ $cOrder->claimed_by ?? 'J. Derramas (ICS Officer)' }}
                       </td>
                     </tr>
                     @empty
                     <tr id="claimed-tab-empty-row">
-                      <td colspan="10" class="py-12 text-center text-slate-500 font-sans">
-                        <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="font-bold text-xs text-slate-400">No Claimed Releases Recorded Yet</p>
-                        <p class="text-[11px] text-slate-600 mt-0.5">When student orders are marked as "Claimed", their pickup timestamp and buyer details will automatically log here.</p>
+                      <td colspan="10" class="py-12 text-center text-slate-400 font-sans">
+                        <svg class="w-10 h-10 mx-auto text-slate-500 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p class="font-bold text-sm text-slate-300">No Claimed Releases Recorded Yet</p>
+                        <p class="text-xs text-slate-400 mt-1">When student orders are marked as "Claimed", their pickup timestamp and buyer details will automatically log here.</p>
                       </td>
                     </tr>
                     @endforelse
@@ -1232,36 +1281,38 @@
               </div>
 
               <!-- Report Table -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead class="text-slate-400 bg-slate-950 uppercase text-[10px] font-mono border-b border-slate-800">
+              <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
+                <table class="w-full text-left text-xs sm:text-sm">
+                  <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
-                      <th class="py-3 px-3">Item Code</th>
-                      <th class="py-3 px-3">Product Name</th>
-                      <th class="py-3 px-3">Category</th>
-                      <th class="py-3 px-3">Price</th>
-                      <th class="py-3 px-3 text-center">Initial Stock</th>
-                      <th class="py-3 px-3 text-center">Claimed (Sold)</th>
-                      <th class="py-3 px-3 text-center">Reserved</th>
-                      <th class="py-3 px-3 text-center">On-Hand Stock</th>
-                      <th class="py-3 px-3 text-right">Revenue (PHP)</th>
-                      <th class="py-3 px-3">Stock Health</th>
+                      <th class="py-3.5 px-4">Item Code</th>
+                      <th class="py-3.5 px-4">Product Name</th>
+                      <th class="py-3.5 px-4">Category</th>
+                      <th class="py-3.5 px-4">Price</th>
+                      <th class="py-3.5 px-4 text-center">Initial Stock</th>
+                      <th class="py-3.5 px-4 text-center">Claimed (Sold)</th>
+                      <th class="py-3.5 px-4 text-center">Reserved</th>
+                      <th class="py-3.5 px-4 text-center">On-Hand Stock</th>
+                      <th class="py-3.5 px-4 text-right">Revenue (PHP)</th>
+                      <th class="py-3.5 px-4">Stock Health</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-800 text-slate-300">
                     @foreach($salesVsStock as $rItem)
-                    <tr class="hover:bg-slate-800/40">
-                      <td class="py-3 px-3 font-mono text-ics-gold font-bold">{{ $rItem['item_code'] }}</td>
-                      <td class="py-3 px-3 font-bold text-white">{{ $rItem['name'] }}</td>
-                      <td class="py-3 px-3 uppercase text-[10px] text-slate-400">{{ $rItem['category'] }}</td>
-                      <td class="py-3 px-3 font-mono">₱{{ number_format($rItem['price'], 2) }}</td>
-                      <td class="py-3 px-3 text-center font-mono font-bold">{{ $rItem['initial_stock'] }}</td>
-                      <td class="py-3 px-3 text-center font-mono font-bold text-blue-400">{{ $rItem['units_sold'] }}</td>
-                      <td class="py-3 px-3 text-center font-mono font-bold text-amber-400">{{ $rItem['units_reserved'] }}</td>
-                      <td class="py-3 px-3 text-center font-mono font-bold text-emerald-400">{{ $rItem['current_stock'] }}</td>
-                      <td class="py-3 px-3 text-right font-mono font-bold text-white">₱{{ number_format($rItem['revenue'], 2) }}</td>
-                      <td class="py-3 px-3">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold
+                    <tr class="hover:bg-slate-800/40 transition">
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block">{{ $rItem['item_code'] }}</span>
+                      </td>
+                      <td class="py-3.5 px-4 font-bold text-white text-xs sm:text-sm">{{ $rItem['name'] }}</td>
+                      <td class="py-3.5 px-4 uppercase text-xs text-slate-300 whitespace-nowrap">{{ $rItem['category'] }}</td>
+                      <td class="py-3.5 px-4 font-mono text-slate-200 font-semibold whitespace-nowrap">₱{{ number_format($rItem['price'], 2) }}</td>
+                      <td class="py-3.5 px-4 text-center font-mono font-bold text-white">{{ $rItem['initial_stock'] }}</td>
+                      <td class="py-3.5 px-4 text-center font-mono font-bold text-cyan-400">{{ $rItem['units_sold'] }}</td>
+                      <td class="py-3.5 px-4 text-center font-mono font-bold text-amber-400">{{ $rItem['units_reserved'] }}</td>
+                      <td class="py-3.5 px-4 text-center font-mono font-bold text-emerald-400">{{ $rItem['current_stock'] }}</td>
+                      <td class="py-3.5 px-4 text-right font-mono font-black text-white whitespace-nowrap">₱{{ number_format($rItem['revenue'], 2) }}</td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold
                           @if($rItem['status'] === 'Out of Stock') bg-rose-950 text-rose-300 border border-rose-800
                           @elseif($rItem['status'] === 'Low Stock') bg-amber-950 text-amber-300 border border-amber-800
                           @else bg-emerald-950 text-emerald-300 border border-emerald-800 @endif">
@@ -1273,13 +1324,13 @@
                   </tbody>
                   <tfoot class="bg-slate-950 text-white font-bold border-t-2 border-slate-800">
                     <tr>
-                      <td colspan="4" class="py-3 px-3 text-right uppercase font-mono text-slate-400">TOTALS:</td>
-                      <td class="py-3 px-3 text-center font-mono">{{ $totalInitialStock ?? array_sum(array_column($salesVsStock, 'initial_stock')) }}</td>
-                      <td class="py-3 px-3 text-center font-mono text-blue-400">{{ $totalSoldUnits }}</td>
-                      <td class="py-3 px-3 text-center font-mono text-amber-400">{{ $totalReservedUnits }}</td>
-                      <td class="py-3 px-3 text-center font-mono text-emerald-400">{{ $totalStockUnits }}</td>
-                      <td class="py-3 px-3 text-right font-mono text-emerald-300">₱{{ number_format($totalRevenue, 2) }}</td>
-                      <td class="py-3 px-3 text-[10px] text-slate-400">100% Audited</td>
+                      <td colspan="4" class="py-3.5 px-4 text-right uppercase font-mono text-slate-300">TOTALS:</td>
+                      <td class="py-3.5 px-4 text-center font-mono">{{ $totalInitialStock ?? array_sum(array_column($salesVsStock, 'initial_stock')) }}</td>
+                      <td class="py-3.5 px-4 text-center font-mono text-cyan-400 font-black">{{ $totalSoldUnits }}</td>
+                      <td class="py-3.5 px-4 text-center font-mono text-amber-400 font-black">{{ $totalReservedUnits }}</td>
+                      <td class="py-3.5 px-4 text-center font-mono text-emerald-400 font-black">{{ $totalStockUnits }}</td>
+                      <td class="py-3.5 px-4 text-right font-mono text-emerald-300 font-black text-sm sm:text-base">₱{{ number_format($totalRevenue, 2) }}</td>
+                      <td class="py-3.5 px-4 text-xs text-slate-300 font-mono">100% Audited</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -1467,46 +1518,49 @@
               </div>
 
               <!-- User Table -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead class="text-slate-400 bg-slate-950 uppercase text-[10px] font-mono border-b border-slate-800">
+              <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
+                <table class="w-full text-left text-xs sm:text-sm">
+                  <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
-                      <th class="py-3 px-3">User Code / Student ID</th>
-                      <th class="py-3 px-3">Name</th>
-                      <th class="py-3 px-3">Email Address</th>
-                      <th class="py-3 px-3">Role</th>
-                      <th class="py-3 px-3">Department</th>
-                      <th class="py-3 px-3">Status</th>
-                      <th class="py-3 px-3 text-right">Actions</th>
+                      <th class="py-3.5 px-4">User Code / Student ID</th>
+                      <th class="py-3.5 px-4">Name</th>
+                      <th class="py-3.5 px-4">Email Address</th>
+                      <th class="py-3.5 px-4">Role</th>
+                      <th class="py-3.5 px-4">Department</th>
+                      <th class="py-3.5 px-4">Status</th>
+                      <th class="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-800 text-slate-300">
                     @foreach($users as $u)
-                    <tr class="hover:bg-slate-800/40">
-                      <td class="py-3 px-3 font-mono text-ics-gold font-bold">{{ $u->user_code }}</td>
-                      <td class="py-3 px-3 font-bold text-white">{{ $u->name }}</td>
-                      <td class="py-3 px-3 font-mono text-slate-300">{{ $u->email }}</td>
-                      <td class="py-3 px-3">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-200 border border-slate-700">
+                    <tr class="hover:bg-slate-800/40 transition">
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block">{{ $u->user_code }}</span>
+                      </td>
+                      <td class="py-3.5 px-4 font-bold text-white text-xs sm:text-sm whitespace-nowrap">{{ $u->name }}</td>
+                      <td class="py-3.5 px-4 font-mono text-xs text-slate-300 whitespace-nowrap">{{ $u->email }}</td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-200 border border-slate-700">
                           {{ $u->role }}
                         </span>
                       </td>
-                      <td class="py-3 px-3 text-slate-400">{{ $u->department }}</td>
-                      <td class="py-3 px-3">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      <td class="py-3.5 px-4 text-xs text-slate-300 whitespace-nowrap">{{ $u->department }}</td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
                           {{ $u->status }}
                         </span>
                       </td>
-                      <td class="py-3 px-3 text-right">
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap">
                         <div class="flex items-center justify-end gap-2">
                           <button
                             onclick="icsApp.openEditUserModal({{ json_encode($u) }})"
-                            class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">
+                            class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition border border-slate-700 shadow">
                             Edit
                           </button>
                           <button
                             onclick="icsApp.deleteUser('{{ $u->id }}', '{{ $u->name }}')"
-                            class="p-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300">
+                            class="p-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 transition border border-rose-800"
+                            title="Delete User">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -1569,22 +1623,22 @@
 
               <!-- Activity Log Table -->
               <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead class="text-slate-400 bg-slate-950 uppercase text-[10px] font-mono border-b border-slate-800">
+                <table class="w-full text-left text-xs sm:text-sm">
+                  <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
-                      <th class="py-3 px-3">USER CODE</th>
-                      <th class="py-3 px-3">ACTION</th>
-                      <th class="py-3 px-3">ACTIVITY</th>
-                      <th class="py-3 px-3">MODULE</th>
-                      <th class="py-3 px-3">DATE / TIMESTAMP</th>
+                      <th class="py-3.5 px-4">USER CODE</th>
+                      <th class="py-3.5 px-4">ACTION</th>
+                      <th class="py-3.5 px-4">ACTIVITY</th>
+                      <th class="py-3.5 px-4">MODULE</th>
+                      <th class="py-3.5 px-4">DATE / TIMESTAMP</th>
                     </tr>
                   </thead>
-                  <tbody id="activity-logs-tbody" class="divide-y divide-slate-800 text-slate-300">
+                  <tbody id="activity-logs-tbody" class="divide-y divide-slate-800 text-slate-200">
                     @foreach($activityLogs as $log)
                     <tr class="hover:bg-slate-800/40" data-action="{{ $log->action }}">
-                      <td class="py-3 px-3 font-mono text-ics-gold font-bold">{{ $log->user_code }}</td>
-                      <td class="py-3 px-3">
-                        <span class="px-2.5 py-1 rounded text-[10px] font-bold font-mono
+                      <td class="py-3.5 px-4 font-mono text-ics-gold font-bold text-xs sm:text-sm">{{ $log->user_code }}</td>
+                      <td class="py-3.5 px-4">
+                        <span class="px-2.5 py-1 rounded text-xs font-bold font-mono
                           @if($log->action === 'CLAIM') bg-emerald-950 text-emerald-300 border border-emerald-700 font-extrabold shadow-sm
                           @elseif($log->action === 'CREATE') bg-emerald-950 text-emerald-300 border border-emerald-800
                           @elseif($log->action === 'UPDATE') bg-amber-950 text-amber-300 border border-amber-800
@@ -1595,9 +1649,9 @@
                           {{ $log->action }}
                         </span>
                       </td>
-                      <td class="py-3 px-3 text-slate-200">{{ $log->activity }}</td>
-                      <td class="py-3 px-3 text-[10px] text-slate-400 font-mono">{{ $log->module }}</td>
-                      <td class="py-3 px-3 font-mono text-slate-400 text-[11px]">{{ $log->created_at->format('m/d/Y, h:i A') }}</td>
+                      <td class="py-3.5 px-4 text-slate-200 text-xs sm:text-sm">{{ $log->activity }}</td>
+                      <td class="py-3.5 px-4 text-xs text-slate-300 font-mono">{{ $log->module }}</td>
+                      <td class="py-3.5 px-4 font-mono text-slate-300 text-xs sm:text-sm">{{ $log->created_at->format('m/d/Y, h:i A') }}</td>
                     </tr>
                     @endforeach
                   </tbody>
@@ -1803,8 +1857,8 @@
     </div>
   </main>
 
-  <!-- Admin Fixed Mobile Bottom Icon Navigation Bar (Instant 1-Tap Access) -->
-  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.8)] px-2 py-1.5 flex items-center justify-between gap-1 safe-area-pb">
+  <!-- Admin Fixed Mobile Bottom Icon Navigation Bar (Only for phones < 768px) -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.8)] px-2 py-1.5 flex items-center justify-between gap-1 safe-area-pb">
     <!-- Dashboard -->
     <button
       onclick="icsApp.setAdminTab('dashboard')"
@@ -2868,9 +2922,9 @@
           }
           if (btn) {
             if (t === tabName) {
-              btn.className = 'admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between bg-ics-800 text-white shadow-md';
+              btn.className = 'admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between bg-ics-800 text-white shadow-md border border-ics-600/70';
             } else {
-              btn.className = 'admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between text-slate-400 hover:text-white hover:bg-slate-800/80';
+              btn.className = 'admin-nav-btn w-full text-left px-3.5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-between text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent';
             }
           }
 
@@ -4353,15 +4407,15 @@
             }) : 'Recently';
 
             tr.innerHTML = `
-              <td class="py-3 px-3 font-mono text-ics-gold font-bold">${log.user_code || '251505'}</td>
-              <td class="py-3 px-3">
-                <span class="px-2.5 py-1 rounded text-[10px] font-bold font-mono ${badgeClass}">
+              <td class="py-3.5 px-4 font-mono text-ics-gold font-bold text-xs sm:text-sm">${log.user_code || '251505'}</td>
+              <td class="py-3.5 px-4">
+                <span class="px-2.5 py-1 rounded text-xs font-bold font-mono ${badgeClass}">
                   ${act}
                 </span>
               </td>
-              <td class="py-3 px-3 text-slate-200">${log.activity || ''}</td>
-              <td class="py-3 px-3 text-[10px] text-slate-400 font-mono">${log.module || 'General'}</td>
-              <td class="py-3 px-3 font-mono text-slate-400 text-[11px]">${createdDate}</td>
+              <td class="py-3.5 px-4 text-slate-200 text-xs sm:text-sm">${log.activity || ''}</td>
+              <td class="py-3.5 px-4 text-xs text-slate-300 font-mono">${log.module || 'General'}</td>
+              <td class="py-3.5 px-4 font-mono text-slate-300 text-xs sm:text-sm">${createdDate}</td>
             `;
             tbody.appendChild(tr);
           });

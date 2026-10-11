@@ -137,11 +137,11 @@
   <!-- TOP APP BAR & HEADER (ICS BRANDING & PROFILE) -->
   <!-- ======================================================== -->
   <header class="sticky top-0 z-40 bg-ics-dark/95 backdrop-blur-md border-b border-ics-900/80 shadow-2xl">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
       <div class="flex items-center justify-between h-18 py-2">
 
         <!-- ICS Brand Identity & Emblem (Clean Responsive, No Midterm label) -->
-        <div class="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group" onclick="icsApp.switchPortalView('student')">
+        <div class="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group flex-shrink-0" onclick="icsApp.switchPortalView('student')">
           <div class="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-2xl p-0.5 bg-gradient-to-br from-ics-gold via-ics-700 to-ics-900 shadow-lg group-hover:scale-105 transition-transform duration-300">
             <img src="{{ asset('images/ics-logo.png') }}"
               alt="ICS Integrated Computer Society"
@@ -169,7 +169,7 @@
           <!-- Desktop Size Guide Trigger -->
           <button
             onclick="icsApp.openSizeGuideModal()"
-            class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-ics-900/60 border border-slate-800 transition">
+            class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-ics-900/60 border border-slate-800 transition whitespace-nowrap flex-shrink-0">
             <svg class="w-4 h-4 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
             </svg>
@@ -180,7 +180,7 @@
           <button
             id="nav-cart-btn"
             onclick="icsApp.openCartDrawer()"
-            class="relative px-2.5 sm:px-3.5 py-1.5 bg-gradient-to-r from-ics-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 active:scale-95 text-ics-dark rounded-xl text-xs font-black shadow-lg transition flex items-center gap-1.5 sm:gap-2">
+            class="relative px-2.5 sm:px-3.5 py-1.5 bg-gradient-to-r from-ics-gold to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 active:scale-95 text-ics-dark rounded-xl text-xs font-black shadow-lg transition flex items-center gap-1.5 sm:gap-2 whitespace-nowrap flex-shrink-0">
             <svg class="w-4 h-4 text-ics-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
@@ -284,7 +284,7 @@
               <a
                 href="{{ route('oauth.login') }}"
                 id="header-student-login-btn"
-                class="flex px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-ics-700 via-ics-crimson to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white border border-ics-600/70 shadow-md transition items-center gap-2 active:scale-95 group"
+                class="flex px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-ics-700 via-ics-crimson to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white border border-ics-600/70 shadow-md transition items-center gap-2 active:scale-95 group whitespace-nowrap flex-shrink-0"
                 title="Sign in with your verified OnePass campus account">
                 <span class="w-2 h-2 rounded-full bg-ics-gold animate-pulse"></span>
                 <svg class="w-3.5 h-3.5 text-white group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,7 +296,7 @@
                 href="https://onepass-gdbe.onrender.com/onepass/login"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-ics-gold hover:text-amber-300 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition flex items-center gap-1 shadow-sm"
+                class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-ics-gold hover:text-amber-300 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition flex items-center gap-1 shadow-sm whitespace-nowrap flex-shrink-0"
                 title="Don't have an account yet? Register on OnePass">
                 <span>Register</span>
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,7 +517,7 @@
   <main id="student-view-container" class="flex-1 pb-16 transition-opacity duration-300">
 
     @if(session('success'))
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+    <div class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-4">
       <div class="p-4 rounded-2xl bg-emerald-950/90 border border-emerald-600/80 text-emerald-200 text-xs flex items-center justify-between shadow-2xl">
         <div class="flex items-center gap-2.5">
           <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -531,7 +531,7 @@
     @endif
 
     @if(session('error'))
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+    <div class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-4">
       <div class="p-4 rounded-2xl bg-rose-950/90 border border-rose-600/80 text-rose-200 text-xs flex items-center justify-between gap-3 shadow-2xl">
         <div class="flex items-center gap-2.5">
           <svg class="w-5 h-5 text-rose-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -545,7 +545,7 @@
     @endif
 
     @if(session('info'))
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+    <div class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-4">
       <div class="p-4 rounded-2xl bg-slate-900 border border-slate-700 text-slate-200 text-xs flex items-center justify-between shadow-2xl">
         <div class="flex items-center gap-2.5">
           <svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -564,7 +564,7 @@
       <div class="absolute -right-20 -bottom-20 w-96 h-96 rounded-full bg-ics-700/20 blur-3xl pointer-events-none"></div>
       <div class="absolute -left-20 -top-20 w-96 h-96 rounded-full bg-ics-gold/10 blur-3xl pointer-events-none"></div>
 
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 relative z-10">
         <div class="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
           <div class="flex items-center gap-3.5 sm:gap-5 text-left w-full md:w-auto">
             <div class="w-14 h-14 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl p-1 bg-gradient-to-br from-ics-gold via-ics-600 to-ics-900 shadow-2xl flex-shrink-0">
@@ -615,7 +615,7 @@
     <!-- ======================================================== -->
     <!-- SHOPEE-STYLE ORDER & RESERVATION TRACKER -->
     <!-- ======================================================== -->
-    <section id="tracker-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 {{ $hasActiveOrders ? '' : 'hidden' }}">
+    <section id="tracker-section" class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 mt-6 {{ $hasActiveOrders ? '' : 'hidden' }}">
       <div class="bg-gradient-to-br from-slate-900/95 via-ics-dark/90 to-slate-900/95 rounded-3xl border border-slate-800/90 shadow-2xl p-5 sm:p-7 relative overflow-hidden">
 
         <!-- Subtle background glow -->
@@ -812,7 +812,7 @@
     </section>
 
     <!-- Toolbar: Search & Category Filter Buttons -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+    <section class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 mt-6">
       <div class="bg-slate-900/90 rounded-3xl border border-slate-800/90 shadow-xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
 
         <!-- Category & Department Filters (Horizontal Scroll on Mobile, Flex-Wrap on Desktop) -->
@@ -877,9 +877,9 @@
       </div>
     </section>
 
-    <!-- Product Grid Section (Compact 2-Column Grid on Mobile, 4-Col on Desktop) -->
-    <section class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mt-5 sm:mt-8">
-      <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6">
+    <!-- Product Grid Section (Compact 2-Column Grid on Mobile, Up to 6-Col on Widescreen) -->
+    <section class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 mt-5 sm:mt-8">
+      <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-6">
         <!-- Rendered reactively via JS with initial SSR fallback -->
         @foreach($products as $product)
         <div class="product-card group bg-slate-900/90 rounded-2xl sm:rounded-3xl border border-slate-800/90 overflow-hidden shadow-md hover:shadow-2xl hover:border-ics-700/70 transition-all duration-300 flex flex-col cursor-pointer active:scale-[0.99]"

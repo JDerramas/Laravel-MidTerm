@@ -55,7 +55,7 @@
   <!-- ======================================================== -->
   <!-- ACTION BAR (SCREEN ONLY - HIDDEN IN PRINT / PDF OUTPUT) -->
   <!-- ======================================================== -->
-  <header class="no-print max-w-7xl mx-auto mb-6 bg-slate-900 text-white rounded-2xl p-4 shadow-xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+  <header class="no-print w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto mb-6 bg-slate-900 text-white rounded-2xl p-4 shadow-xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-red-700 border border-red-500 flex items-center justify-center p-1.5 shadow">
         <img src="{{ asset('images/ics-logo.png') }}" alt="ICS" class="w-full h-full object-contain">
@@ -90,7 +90,7 @@
   <!-- ======================================================== -->
   <!-- PRINTABLE DOCUMENT SHEET CONTAINER -->
   <!-- ======================================================== -->
-  <main class="max-w-7xl mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xl print-shadow-none print:border-none print:p-0">
+  <main class="w-full max-w-[1780px] 2xl:max-w-[1920px] mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 shadow-xl print-shadow-none print:border-none print:p-0">
 
     <!-- INSTITUTIONAL ACADEMIC HEADER -->
     <div class="border-b-2 border-slate-900 pb-5 mb-6">
