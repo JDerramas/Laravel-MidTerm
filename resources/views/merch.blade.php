@@ -1998,16 +1998,26 @@
       <!-- Tab View 2: Active Conversation Screen -->
       <div id="student-support-view-chat" class="hidden mt-4 space-y-3">
 
-        <!-- Ticket Header Banner -->
-        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
-          <div>
-            <div class="flex items-center gap-2">
-              <span id="student-active-ticket-code" class="font-mono font-bold text-ics-gold">TCK-2026-0001</span>
-              <span id="student-active-ticket-reason" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-950 text-rose-300 border border-rose-800">Cancel Reservation</span>
+        <!-- Ticket Header Banner with Instant Back Navigation -->
+        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <button 
+              type="button" 
+              onclick="icsApp.switchStudentSupportTab('history')" 
+              class="px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold flex items-center gap-1.5 transition border border-slate-700 shadow-sm cursor-pointer flex-shrink-0"
+              title="Back to my tickets history">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <span>Back</span>
+            </button>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span id="student-active-ticket-code" class="font-mono font-bold text-ics-gold">TCK-2026-0001</span>
+                <span id="student-active-ticket-reason" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-950 text-rose-300 border border-rose-800">Cancel Reservation</span>
+              </div>
+              <p id="student-active-ticket-subject" class="font-semibold text-white mt-0.5 truncate text-[11px]">Request to cancel uniform reservation</p>
             </div>
-            <p id="student-active-ticket-subject" class="font-semibold text-white mt-0.5">Request to cancel uniform reservation</p>
           </div>
-          <div class="text-right">
+          <div class="text-right flex-shrink-0">
             <span id="student-active-ticket-status" class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800">
               In Progress
             </span>
@@ -3539,7 +3549,7 @@
                       hasNew = true;
                     }
                   });
-                  if (hasNew) {
+                  if (hasNew && !this._userIsScrolledUpStudentChat) {
                     container.scrollTo({
                       top: container.scrollHeight,
                       behavior: 'smooth'
@@ -3849,11 +3859,11 @@
           this.renderStudentTicketsHistory();
         } else if (tab === 'chat') {
           if (this.activeStudentTicketId) {
-            this.openStudentTicketChat(this.activeStudentTicketId);
+            this.openStudentTicketChat(this.activeStudentTicketId, false);
           } else {
             const myLatest = (this.supportTickets || []).find(t => t.student_id === this.currentUser.student_id);
             if (myLatest) {
-              this.openStudentTicketChat(myLatest.id);
+              this.openStudentTicketChat(myLatest.id, false);
             } else {
               this.switchStudentSupportTab('new');
               this.showToast('No existing conversations. Please open a support ticket first.', 'info');
@@ -4070,10 +4080,12 @@
                 });
 
                 if (hasNew) {
-                  container.scrollTo({
-                    top: container.scrollHeight,
-                    behavior: 'smooth'
-                  });
+                  if (!this._userIsScrolledUpStudentChat) {
+                    container.scrollTo({
+                      top: container.scrollHeight,
+                      behavior: 'smooth'
+                    });
+                  }
                 }
               }
             }
@@ -4085,11 +4097,13 @@
         }, 1200);
       }
 
-      async openStudentTicketChat(ticketId) {
+      async openStudentTicketChat(ticketId, switchTab = true) {
         this.activeStudentTicketId = ticketId;
         const ticket = (this.supportTickets || []).find(t => t.id === ticketId);
 
-        this.switchStudentSupportTab('chat');
+        if (switchTab) {
+          this.switchStudentSupportTab('chat');
+        }
 
         if (ticket) {
           const codeEl = document.getElementById('student-active-ticket-code');
@@ -4102,8 +4116,21 @@
         }
 
         const container = document.getElementById('student-chat-messages-container');
-        if (ticket && ticket.messages && ticket.messages.length > 0) {
-          this.renderStudentChatMessages(ticket.messages, ticket);
+        if (container && !container._hasScrollListener) {
+          container._hasScrollListener = true;
+          container.addEventListener('scroll', () => {
+            const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+            this._userIsScrolledUpStudentChat = distanceFromBottom > 60;
+          });
+        }
+        this._userIsScrolledUpStudentChat = false;
+
+        this._studentChatCache = this._studentChatCache || {};
+        const cached = this._studentChatCache[ticketId] || (ticket && ticket.messages);
+
+        if (cached && cached.length > 0) {
+          // Instant 0ms render from memory cache like Messenger
+          this.renderStudentChatMessages(cached, ticket, true);
         } else if (container) {
           container.innerHTML = `
             <div class="text-center py-6 text-slate-500 text-xs flex items-center justify-center gap-2">
@@ -4118,20 +4145,23 @@
           const res = await fetch(`{{ url('api/support-tickets') }}/${ticketId}/messages?student_id=${encodeURIComponent(stuId)}`);
           const data = await res.json();
           if (data.success) {
-            this.renderStudentChatMessages(data.messages || [], data.ticket || ticket);
+            const msgs = data.messages || [];
+            this._studentChatCache[ticketId] = msgs;
+            if (ticket) ticket.messages = msgs;
+            this.renderStudentChatMessages(msgs, data.ticket || ticket, !cached);
             this.startStudentChatPoller();
           } else {
-            if (container) container.innerHTML = `<p class="text-rose-400 text-xs text-center py-4">${data.message || 'Error loading messages'}</p>`;
+            if (container && !cached) container.innerHTML = `<p class="text-rose-400 text-xs text-center py-4">${data.message || 'Error loading messages'}</p>`;
           }
         } catch (e) {
           console.error(e);
-          if (container && (!ticket || !ticket.messages || ticket.messages.length === 0)) {
+          if (container && (!cached || cached.length === 0)) {
             container.innerHTML = `<p class="text-slate-400 text-xs text-center py-4">Unable to load messages right now.</p>`;
           }
         }
       }
 
-      renderStudentChatMessages(messagesOrTicket, ticket) {
+      renderStudentChatMessages(messagesOrTicket, ticket, forceScrollBottom = false) {
         const container = document.getElementById('student-chat-messages-container');
         if (!container) return;
 
@@ -4166,7 +4196,10 @@
           container.appendChild(div);
         });
 
-        container.scrollTop = container.scrollHeight;
+        // Smart Messenger-style scroll: only auto-scroll if forceScrollBottom is true or user is not reading older messages
+        if (forceScrollBottom || !this._userIsScrolledUpStudentChat) {
+          container.scrollTop = container.scrollHeight;
+        }
 
         if (actualTicket && actualTicket.status) {
           this.updateStudentTicketStatusUi(actualTicket.status);
@@ -4182,6 +4215,9 @@
           this.showToast('No active support ticket selected.', 'warning');
           return;
         }
+
+        // Student sent a new message: always auto-scroll to bottom
+        this._userIsScrolledUpStudentChat = false;
 
         // Instant Optimistic UI (0ms delay): append student bubble immediately without waiting
         input.value = '';
@@ -4238,6 +4274,9 @@
               if (ticket) {
                 if (!ticket.messages) ticket.messages = [];
                 ticket.messages.push(returnedMsg);
+              }
+              if (this._studentChatCache && this._studentChatCache[this.activeStudentTicketId]) {
+                this._studentChatCache[this.activeStudentTicketId].push(returnedMsg);
               }
             }
           } else {

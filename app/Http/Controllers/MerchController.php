@@ -982,7 +982,7 @@ class MerchController extends Controller
     {
         $isPolling = $request->filled('after_id');
         $ticket = $isPolling
-            ? SupportTicket::select('id', 'student_id', 'status', 'subject', 'category')->findOrFail($id)
+            ? SupportTicket::select('id', 'student_id', 'status', 'subject', 'reason')->findOrFail($id)
             : SupportTicket::with('reservation')->findOrFail($id);
 
         // Privacy check

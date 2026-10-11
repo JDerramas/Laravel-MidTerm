@@ -4468,8 +4468,21 @@
 
         // Fetch Messages
         const msgContainer = document.getElementById('admin-chat-messages-container');
-        if (ticket.messages && ticket.messages.length > 0) {
-          this.renderAdminChatMessages(ticket.messages, ticket);
+        if (msgContainer && !msgContainer._hasScrollListener) {
+          msgContainer._hasScrollListener = true;
+          msgContainer.addEventListener('scroll', () => {
+            const distanceFromBottom = msgContainer.scrollHeight - msgContainer.scrollTop - msgContainer.clientHeight;
+            this._userIsScrolledUpAdminChat = distanceFromBottom > 60;
+          });
+        }
+        this._userIsScrolledUpAdminChat = false;
+
+        this._adminChatCache = this._adminChatCache || {};
+        const cached = this._adminChatCache[ticketId] || (ticket && ticket.messages);
+
+        if (cached && cached.length > 0) {
+          // Instant 0ms cache rendering like Messenger
+          this.renderAdminChatMessages(cached, ticket, true);
         } else if (msgContainer) {
           msgContainer.innerHTML = `
             <div class="text-center py-6 text-slate-500 text-xs flex items-center justify-center gap-2">
@@ -4483,7 +4496,10 @@
           const res = await fetch(`{{ url('api/support-tickets') }}/${ticketId}/messages`);
           const data = await res.json();
           if (data.success) {
-            this.renderAdminChatMessages(data.messages || [], ticket);
+            const msgs = data.messages || [];
+            this._adminChatCache[ticketId] = msgs;
+            if (ticket) ticket.messages = msgs;
+            this.renderAdminChatMessages(msgs, ticket, !cached);
             this.startAdminChatPoller();
           }
         } catch (e) {
@@ -4594,7 +4610,9 @@
                 });
 
                 if (hasNew) {
-                  container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                  if (!this._userIsScrolledUpAdminChat) {
+                    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                  }
                 }
               }
             }
@@ -4606,7 +4624,7 @@
         }, 1200);
       }
 
-      renderAdminChatMessages(messagesOrTicket, ticket) {
+      renderAdminChatMessages(messagesOrTicket, ticket, forceScrollBottom = false) {
         const container = document.getElementById('admin-chat-messages-container');
         if (!container) return;
 
@@ -4641,7 +4659,9 @@
           container.appendChild(div);
         });
 
-        container.scrollTop = container.scrollHeight;
+        if (forceScrollBottom || !this._userIsScrolledUpAdminChat) {
+          container.scrollTop = container.scrollHeight;
+        }
       }
 
       applyAdminCannedReply(text) {
@@ -4659,6 +4679,9 @@
         const input = document.getElementById('admin-chat-input');
         const text = input ? input.value.trim() : '';
         if (!text) return;
+
+        // Admin sent a message: reset scroll lock so they see the message
+        this._userIsScrolledUpAdminChat = false;
 
         // Instant Optimistic UI (0ms delay): append admin bubble immediately like Messenger
         input.value = '';
@@ -4715,6 +4738,9 @@
               if (ticket) {
                 if (!ticket.messages) ticket.messages = [];
                 ticket.messages.push(returnedMsg);
+              }
+              if (this._adminChatCache && this._adminChatCache[this.activeAdminTicketId]) {
+                this._adminChatCache[this.activeAdminTicketId].push(returnedMsg);
               }
             }
           } else {
