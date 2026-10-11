@@ -1033,21 +1033,20 @@ class MerchController extends Controller
             // Write UTF-8 BOM so Microsoft Excel correctly displays Philippine Peso (₱) and accents
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-            // CSV Header Row
+            // CSV Header Row (Highlighting Student Number, Name, Items, Price, and Date/Time)
             fputcsv($handle, [
-                'Claim Reference Code',
+                'Student Number (Student ID)',
                 'Student Buyer Name',
-                'Student ID Number',
+                'Items Purchased (Name & Sizes)',
+                'Total Price (PHP)',
+                'Date & Time Purchased (Ordered)',
+                'Date & Time Claimed (Released)',
+                'Claim Reference Code',
                 'Department / Program',
                 'Year Level',
                 'Contact Number',
-                'Date & Time Purchased (Ordered)',
-                'Date & Time Claimed (Released)',
-                'Items & Sizes Breakdown',
-                'Total Amount (PHP)',
                 'Payment Method',
                 'Payment Status',
-                'Payment Reference Code',
                 'Released By (Officer / Admin)'
             ]);
 
@@ -1057,7 +1056,7 @@ class MerchController extends Controller
                 if (is_array($r->items)) {
                     foreach ($r->items as $it) {
                         $qty = $it['quantity'] ?? 1;
-                        $name = $it['name'] ?? $it['productId'] ?? 'Item';
+                        $name = $it['name'] ?? $it['productName'] ?? $it['productId'] ?? 'Item';
                         $size = isset($it['size']) && !empty($it['size']) ? " [Size: {$it['size']}]" : '';
                         $price = isset($it['price']) ? " @ PHP " . number_format($it['price'], 2) : '';
                         $itemStrings[] = "{$qty}x {$name}{$size}{$price}";
@@ -1070,19 +1069,18 @@ class MerchController extends Controller
                 $releasedBy = $r->claimed_by ?? 'J. Derramas (ICS Officer)';
 
                 fputcsv($handle, [
-                    $r->ref_code,
-                    $r->student_name,
                     $r->student_id,
+                    $r->student_name,
+                    $itemsBreakdown,
+                    number_format($r->total_amount, 2, '.', ''),
+                    $purchasedAt,
+                    $claimedAt,
+                    $r->ref_code,
                     $r->department ?? 'ICS',
                     $r->year_level ?? 'N/A',
                     $r->contact ?? 'N/A',
-                    $purchasedAt,
-                    $claimedAt,
-                    $itemsBreakdown,
-                    number_format($r->total_amount, 2, '.', ''),
                     $r->payment_method ?? 'Cash on Pickup',
                     $r->payment_status ?? 'Paid',
-                    $r->payment_reference ?? 'N/A',
                     $releasedBy
                 ]);
             }
@@ -1102,6 +1100,41 @@ class MerchController extends Controller
         );
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * REPORTS: Export Official Claimed Releases & Distribution Ledger as Printable PDF Document
+     * Formatted with institutional header, student numbers, item breakdown, prices, dual timestamps, and certifying signatures.
+     */
+    public function exportClaimedPdf(Request $request)
+    {
+        $claimed = Reservation::where('status', 'Claimed')
+            ->orderBy('claimed_at', 'desc')
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        $operatorName = session('student_user.name') ?? session('admin_user.name') ?? 'J. Derramas';
+        $operatorCode = session('student_user.student_id') ?? session('admin_user.user_code') ?? '251505';
+
+        ActivityLog::record(
+            'READ',
+            'Generated and viewed Official Claimed Releases PDF & Distribution Report',
+            $operatorCode,
+            $operatorName,
+            'Reports & Releases'
+        );
+
+        $totalRevenue = $claimed->sum('total_amount');
+        $totalItems = 0;
+        foreach ($claimed as $r) {
+            if (is_array($r->items)) {
+                foreach ($r->items as $it) {
+                    $totalItems += intval($it['quantity'] ?? 1);
+                }
+            }
+        }
+
+        return view('reports.claimed_pdf', compact('claimed', 'operatorName', 'operatorCode', 'totalRevenue', 'totalItems'));
     }
 
     // =========================================================================

@@ -51,6 +51,7 @@ Route::delete('/api/users/{id}', [MerchController::class, 'deleteUser'])->name('
 // Reports Export & Claimed Releases Logsheet
 Route::get('/reports/export-csv', [MerchController::class, 'exportReportCsv'])->name('reports.export');
 Route::get('/reports/export-claimed-csv', [MerchController::class, 'exportClaimedLedgerCsv'])->name('reports.export_claimed');
+Route::get('/reports/export-claimed-pdf', [MerchController::class, 'exportClaimedPdf'])->name('reports.export_claimed_pdf');
 Route::get('/api/reports/claimed-logs', [MerchController::class, 'getClaimedLogs'])->name('api.reports.claimed_logs');
 
 // Support Helpdesk & Chat API

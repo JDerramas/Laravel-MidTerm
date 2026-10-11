@@ -319,6 +319,22 @@
               <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-900/60 font-mono text-amber-300">{{ $pendingReservationsCount }} pending</span>
             </button>
 
+            <!-- Dedicated Claimed Releases / Items Tab -->
+            <button
+              id="admin-tab-btn-claimed"
+              onclick="icsApp.setAdminTab('claimed')"
+              class="admin-nav-btn w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-between text-slate-400 hover:text-white hover:bg-slate-800/80">
+              <div class="flex items-center gap-2.5">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Claimed Items (Releases)</span>
+              </div>
+              <span id="admin-nav-claimed-badge" class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800 font-mono text-emerald-300 font-bold">
+                {{ count($claimedReservations ?? []) }} Claimed
+              </span>
+            </button>
+
             <!-- 4. Reports (Sales vs Stock) -->
             <button
               id="admin-tab-btn-reports"
@@ -414,9 +430,10 @@
               </div>
 
               <!-- Claimed / Sold -->
-              <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 shadow">
+              <div onclick="icsApp.setAdminTab('claimed')" class="bg-slate-900/90 hover:bg-slate-800/90 rounded-2xl border border-slate-800 hover:border-emerald-600/60 p-4 shadow transition cursor-pointer group" title="Click to view all claimed items and release records">
                 <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-slate-400 uppercase">Units Claimed / Sold</span>
+                  <span class="text-[11px] font-bold text-slate-400 group-hover:text-emerald-300 uppercase transition">Units Claimed / Sold</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono">View Ledger &rarr;</span>
                 </div>
                 <p id="kpi-total-sold" class="text-2xl font-black text-blue-400 font-display mt-1">{{ $totalSoldUnits }}</p>
                 <p class="text-[10px] text-slate-400 mt-0.5">Revenue: <span id="kpi-total-revenue" class="font-mono text-emerald-400 font-bold">₱{{ number_format($totalRevenue, 2) }}</span></p>
@@ -967,6 +984,224 @@
           </section>
 
           <!-- ======================================================== -->
+          <!-- MODULE: CLAIMED ITEMS & OFFICIAL RELEASE LEDGER -->
+          <!-- Dedicated feature displaying all claimed items with CSV & PDF downloads -->
+          <!-- ======================================================== -->
+          <section id="admin-sec-claimed" class="admin-tab-section hidden space-y-6">
+
+            <div class="bg-slate-900/90 rounded-3xl border border-slate-800 p-6 shadow-xl space-y-5">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                <div>
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
+                      <span>Claimed Items &amp; Release Ledger</span>
+                    </h3>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">
+                      Verified Pickups
+                    </span>
+                    <span id="claimed-tab-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">
+                      {{ count($claimedReservations ?? []) }} Claimed Orders
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-400 mt-1">
+                    Official digital release records for all physically claimed student merchandise. Complete with Student Number, Student Name, Items Purchased, Prices, and pickup timestamps.
+                  </p>
+                </div>
+
+                <!-- Export & Download Action Buttons -->
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <!-- Download CSV -->
+                  <a href="{{ route('reports.export_claimed') }}" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-2 shadow-lg shadow-emerald-950/50 cursor-pointer">
+                    <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Download CSV</span>
+                  </a>
+
+                  <!-- Download / View PDF -->
+                  <a href="{{ route('reports.export_claimed_pdf') }}" target="_blank" class="px-4 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white transition flex items-center gap-2 shadow-lg shadow-red-950/50 cursor-pointer">
+                    <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span>Download PDF / Print</span>
+                  </a>
+
+                  <button type="button" onclick="window.print()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                    Print Logsheet
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Stats Bar -->
+              @php
+                $tabClaimed = $claimedReservations ?? [];
+                $tabRevenue = 0;
+                $tabUnits = 0;
+                foreach($tabClaimed as $tcr) {
+                  $tabRevenue += floatval($tcr->total_amount ?? 0);
+                  if (is_array($tcr->items)) {
+                    foreach($tcr->items as $titem) {
+                      $tabUnits += intval($titem['quantity'] ?? 1);
+                    }
+                  }
+                }
+              @endphp
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                  <span class="block text-[10px] uppercase font-bold text-slate-500">Total Claimed Orders</span>
+                  <span id="kpi-claimed-tab-orders" class="block text-xl font-extrabold font-mono text-white mt-0.5">{{ count($tabClaimed) }}</span>
+                  <span class="block text-[10px] text-slate-500">Official Releases</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                  <span class="block text-[10px] uppercase font-bold text-slate-500">Units Distributed</span>
+                  <span id="kpi-claimed-tab-units" class="block text-xl font-extrabold font-mono text-blue-400 mt-0.5">{{ $tabUnits }}</span>
+                  <span class="block text-[10px] text-slate-500">Uniforms &amp; Merch</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                  <span class="block text-[10px] uppercase font-bold text-slate-500">Total Revenue Collected</span>
+                  <span id="kpi-claimed-tab-rev" class="block text-xl font-extrabold font-mono text-emerald-400 mt-0.5">₱{{ number_format($tabRevenue, 2) }}</span>
+                  <span class="block text-[10px] text-emerald-500/80 font-medium">100% Remitted</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800">
+                  <span class="block text-[10px] uppercase font-bold text-slate-500">Export Formats</span>
+                  <div class="flex items-center gap-1.5 mt-1 font-mono">
+                    <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-bold">CSV</span>
+                    <span class="px-2 py-0.5 rounded bg-red-950 text-red-300 border border-red-800 text-[10px] font-bold">PDF</span>
+                  </div>
+                  <span class="block text-[10px] text-slate-500 mt-1">Ready for Audit</span>
+                </div>
+              </div>
+
+              <!-- Quick Search / Filter Bar -->
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                <div class="relative flex-1">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  </span>
+                  <input
+                    type="text"
+                    id="claimed-tab-search"
+                    oninput="icsApp.filterClaimedLedger(this.value)"
+                    placeholder="Search by student number, student buyer name, item, reference code..."
+                    class="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+                </div>
+
+                <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+                  <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Instant Database Sync</span>
+                </div>
+              </div>
+
+              <!-- Claimed Orders Table -->
+              <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
+                <table class="w-full text-left text-xs">
+                  <thead class="text-slate-400 bg-slate-950 uppercase text-[10px] font-mono border-b border-slate-800">
+                    <tr>
+                      <th class="py-3 px-3 text-yellow-400 font-bold">Student Number</th>
+                      <th class="py-3 px-3">Student Name</th>
+                      <th class="py-3 px-3">Item na Binili (Name &amp; Size)</th>
+                      <th class="py-3 px-3 text-right">Price (PHP)</th>
+                      <th class="py-3 px-3">Date &amp; Time Ordered</th>
+                      <th class="py-3 px-3 text-emerald-400 font-bold">Date &amp; Time Claimed</th>
+                      <th class="py-3 px-3">Claim Ref</th>
+                      <th class="py-3 px-3">Program / Year</th>
+                      <th class="py-3 px-3">Payment</th>
+                      <th class="py-3 px-3">Released By</th>
+                    </tr>
+                  </thead>
+                  <tbody id="claimed-tab-ledger-tbody" class="divide-y divide-slate-800 text-slate-300">
+                    @forelse($claimedReservations ?? [] as $cOrder)
+                    <tr class="hover:bg-slate-800/40 transition claimed-ledger-row"
+                        data-ref="{{ $cOrder->ref_code }}"
+                        data-name="{{ strtolower($cOrder->student_name) }}"
+                        data-stuid="{{ strtolower($cOrder->student_id) }}">
+                      
+                      <!-- 1. Student Number -->
+                      <td class="py-3 px-3 font-mono font-bold text-rose-400 whitespace-nowrap bg-rose-950/20 border-r border-slate-800/60">
+                        {{ $cOrder->student_id }}
+                      </td>
+
+                      <!-- 2. Student Name -->
+                      <td class="py-3 px-3 font-bold text-white whitespace-nowrap">
+                        {{ $cOrder->student_name }}
+                      </td>
+
+                      <!-- 3. Item na Binili (Name & Size) -->
+                      <td class="py-3 px-3">
+                        <div class="flex flex-wrap gap-1 max-w-xs">
+                          @if(is_array($cOrder->items))
+                            @foreach($cOrder->items as $ci)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-800 text-[11px] text-slate-200 border border-slate-700">
+                              <strong class="text-white">{{ $ci['quantity'] ?? 1 }}x</strong>
+                              <span>{{ $ci['name'] ?? $ci['productName'] ?? $ci['productId'] ?? 'Item' }}</span>
+                              @if(isset($ci['size']) && !empty($ci['size']))
+                              <span class="text-ics-gold font-bold">({{ $ci['size'] }})</span>
+                              @endif
+                            </span>
+                            @endforeach
+                          @else
+                            <span class="text-slate-500">N/A</span>
+                          @endif
+                        </div>
+                      </td>
+
+                      <!-- 4. Price (PHP) -->
+                      <td class="py-3 px-3 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">
+                        ₱{{ number_format($cOrder->total_amount, 2) }}
+                      </td>
+
+                      <!-- 5. Date & Time Ordered -->
+                      <td class="py-3 px-3 font-mono text-slate-400 text-[11px] whitespace-nowrap">
+                        {{ $cOrder->created_at ? $cOrder->created_at->format('M d, Y h:i A') : 'N/A' }}
+                      </td>
+
+                      <!-- 6. Date & Time Claimed -->
+                      <td class="py-3 px-3 font-mono text-emerald-400 font-bold text-[11px] whitespace-nowrap bg-emerald-950/20 border-l border-slate-800/60">
+                        {{ $cOrder->claimed_at ? $cOrder->claimed_at->format('M d, Y h:i A') : ($cOrder->updated_at ? $cOrder->updated_at->format('M d, Y h:i A') : 'N/A') }}
+                      </td>
+
+                      <!-- 7. Claim Ref -->
+                      <td class="py-3 px-3 font-mono font-bold text-ics-gold whitespace-nowrap">
+                        {{ $cOrder->ref_code }}
+                      </td>
+
+                      <!-- 8. Program / Year -->
+                      <td class="py-3 px-3 text-slate-400 text-[11px] whitespace-nowrap">
+                        {{ $cOrder->department }} ({{ $cOrder->year_level }})
+                      </td>
+
+                      <!-- 9. Payment -->
+                      <td class="py-3 px-3 whitespace-nowrap">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                          {{ $cOrder->payment_status ?? 'Paid' }}
+                        </span>
+                        <div class="text-[9px] text-slate-400 font-mono mt-0.5">
+                          {{ $cOrder->payment_method ?? 'Cash on Pickup' }}
+                        </div>
+                      </td>
+
+                      <!-- 10. Released By -->
+                      <td class="py-3 px-3 text-slate-300 text-[11px] font-mono whitespace-nowrap">
+                        {{ $cOrder->claimed_by ?? 'J. Derramas (ICS Officer)' }}
+                      </td>
+                    </tr>
+                    @empty
+                    <tr id="claimed-tab-empty-row">
+                      <td colspan="10" class="py-12 text-center text-slate-500 font-sans">
+                        <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p class="font-bold text-xs text-slate-400">No Claimed Releases Recorded Yet</p>
+                        <p class="text-[11px] text-slate-600 mt-0.5">When student orders are marked as "Claimed", their pickup timestamp and buyer details will automatically log here.</p>
+                      </td>
+                    </tr>
+                    @endforelse
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </section>
+
+          <!-- ======================================================== -->
           <!-- MODULE 4: REPORTS (Sales vs Stock Comprehensive) -->
           <!-- ======================================================== -->
           <section id="admin-sec-reports" class="admin-tab-section hidden space-y-6">
@@ -1081,6 +1316,12 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <span>Download Claimed CSV Logsheet</span>
+                  </a>
+                  <a href="{{ route('reports.export_claimed_pdf') }}" target="_blank" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-700 hover:bg-rose-600 text-white transition flex items-center gap-2 shadow-lg shadow-rose-950/50 cursor-pointer">
+                    <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span>Download PDF Report</span>
                   </a>
                   <button type="button" onclick="window.print()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
                     Print Logsheet
@@ -1597,6 +1838,16 @@
       @endif
     </button>
 
+    <!-- Claimed Items -->
+    <button
+      onclick="icsApp.setAdminTab('claimed')"
+      id="admin-bottom-tab-claimed"
+      class="admin-bottom-tab flex-1 py-1.5 px-0.5 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-white transition cursor-pointer relative"
+      title="Claimed Items">
+      <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="text-[9px] font-bold mt-0.5 leading-none">Claimed</span>
+    </button>
+
     <!-- Reports -->
     <button
       onclick="icsApp.setAdminTab('reports')"
@@ -2037,7 +2288,7 @@
         try {
           const hashTab = (window.location.hash || '').replace('#', '').trim();
           const localTab = localStorage.getItem('ics_admin_active_tab');
-          const validTabs = ['dashboard', 'infomgmt', 'reservations', 'reports', 'usermgmt', 'actlogs', 'support', 'helpdesk'];
+          const validTabs = ['dashboard', 'infomgmt', 'reservations', 'claimed', 'reports', 'usermgmt', 'actlogs', 'support', 'helpdesk'];
           if (validTabs.includes(hashTab)) {
             initialTab = hashTab === 'helpdesk' ? 'support' : hashTab;
           } else if (validTabs.includes(localTab)) {
@@ -2590,7 +2841,7 @@
       // Admin Tab Navigation (Whiteboard wireframe tabs + Mobile quick tabs)
       setAdminTab(tabName, updateHash = true) {
         if (tabName === 'helpdesk') tabName = 'support';
-        const validTabs = ['dashboard', 'infomgmt', 'reservations', 'reports', 'usermgmt', 'actlogs', 'support'];
+        const validTabs = ['dashboard', 'infomgmt', 'reservations', 'claimed', 'reports', 'usermgmt', 'actlogs', 'support'];
         if (!validTabs.includes(tabName)) tabName = 'dashboard';
 
         this.adminTab = tabName;
@@ -2606,7 +2857,7 @@
           } catch (e) {}
         }
 
-        const tabs = ['dashboard', 'infomgmt', 'reservations', 'reports', 'usermgmt', 'actlogs', 'support'];
+        const tabs = ['dashboard', 'infomgmt', 'reservations', 'claimed', 'reports', 'usermgmt', 'actlogs', 'support'];
 
         tabs.forEach(t => {
           const sec = document.getElementById(`admin-sec-${t}`);
@@ -2666,6 +2917,8 @@
           if (this.activeAdminTicketId) {
             this.selectAdminTicket(this.activeAdminTicketId);
           }
+        } else if (tabName === 'claimed') {
+          this.renderClaimedLedgerTable();
         } else if (tabName === 'actlogs') {
           this.renderActivityLogsTable();
         }
@@ -4182,6 +4435,11 @@
 
       filterClaimedLedger(query) {
         const q = (query || '').toLowerCase().trim();
+        const searchInputTab = document.getElementById('claimed-tab-search');
+        const searchInputReports = document.getElementById('claimed-ledger-search');
+        if (searchInputTab && searchInputTab.value !== query) searchInputTab.value = query;
+        if (searchInputReports && searchInputReports.value !== query) searchInputReports.value = query;
+
         const rows = document.querySelectorAll('.claimed-ledger-row');
         let visibleCount = 0;
         rows.forEach(row => {
@@ -4198,23 +4456,55 @@
           }
         });
 
-        const badge = document.getElementById('claimed-log-count-badge');
-        if (badge) {
-          badge.textContent = `${visibleCount} Confirmed Releases`;
-        }
+        // Visible count divided by 2 if both tables exist, or counted per table
+        const tabRows = document.querySelectorAll('#claimed-tab-ledger-tbody .claimed-ledger-row');
+        let tabVisible = 0;
+        tabRows.forEach(r => { if (r.style.display !== 'none') tabVisible++; });
+
+        const badgeTab = document.getElementById('claimed-tab-count-badge');
+        if (badgeTab) badgeTab.textContent = `${tabVisible} Claimed Orders`;
+
+        const badgeReports = document.getElementById('claimed-log-count-badge');
+        if (badgeReports) badgeReports.textContent = `${tabVisible} Confirmed Releases`;
       }
 
       renderClaimedLedgerTable(records) {
-        const tbody = document.getElementById('claimed-ledger-tbody');
-        if (!tbody) return;
-
         const list = records || this.claimedReservations || [];
-        const badge = document.getElementById('claimed-log-count-badge');
-        if (badge) badge.textContent = `${list.length} Confirmed Releases`;
+        
+        // Update nav badge and KPI counters
+        const navBadge = document.getElementById('admin-nav-claimed-badge');
+        if (navBadge) navBadge.textContent = `${list.length} Claimed`;
+
+        const badgeTab = document.getElementById('claimed-tab-count-badge');
+        if (badgeTab) badgeTab.textContent = `${list.length} Claimed Orders`;
+
+        const badgeReports = document.getElementById('claimed-log-count-badge');
+        if (badgeReports) badgeReports.textContent = `${list.length} Confirmed Releases`;
+
+        let totalRev = 0;
+        let totalUnits = 0;
+        list.forEach(c => {
+          totalRev += parseFloat(c.total_amount || 0);
+          if (Array.isArray(c.items)) {
+            c.items.forEach(it => {
+              totalUnits += parseInt(it.quantity || 1);
+            });
+          }
+        });
+
+        const kpiOrders = document.getElementById('kpi-claimed-tab-orders');
+        if (kpiOrders) kpiOrders.textContent = list.length;
+        const kpiUnits = document.getElementById('kpi-claimed-tab-units');
+        if (kpiUnits) kpiUnits.textContent = totalUnits;
+        const kpiRev = document.getElementById('kpi-claimed-tab-rev');
+        if (kpiRev) kpiRev.textContent = '₱' + totalRev.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const tbodyTab = document.getElementById('claimed-tab-ledger-tbody');
+        const tbodyReports = document.getElementById('claimed-ledger-tbody');
 
         if (list.length === 0) {
-          tbody.innerHTML = `
-            <tr id="claimed-ledger-empty-row">
+          const emptyHtml = `
+            <tr>
               <td colspan="10" class="py-12 text-center text-slate-500 font-sans">
                 <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <p class="font-bold text-xs text-slate-400">No Claimed Releases Recorded Yet</p>
@@ -4222,55 +4512,110 @@
               </td>
             </tr>
           `;
+          if (tbodyTab) tbodyTab.innerHTML = emptyHtml;
+          if (tbodyReports) tbodyReports.innerHTML = emptyHtml;
           return;
         }
 
-        tbody.innerHTML = list.map(c => {
-          let itemsHtml = '';
-          if (Array.isArray(c.items)) {
-            itemsHtml = c.items.map(it => {
-              const qty = it.quantity || 1;
-              const name = it.productName || it.name || it.productId || 'Item';
-              const size = it.size ? `<span class="text-ics-gold font-bold">(${it.size})</span>` : '';
-              return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-200 border border-slate-700"><strong>${qty}x</strong> <span>${name}</span> ${size}</span>`;
-            }).join('');
-          } else {
-            itemsHtml = '<span class="text-slate-500">N/A</span>';
-          }
+        // 1. Render Dedicated Claimed Tab Table (Columns: Student Number, Name, Items, Price, Date Ordered, Date Claimed, Ref, Dept, Payment, Officer)
+        if (tbodyTab) {
+          tbodyTab.innerHTML = list.map(c => {
+            let itemsHtml = '';
+            if (Array.isArray(c.items)) {
+              itemsHtml = c.items.map(it => {
+                const qty = it.quantity || 1;
+                const name = it.productName || it.name || it.productId || 'Item';
+                const size = it.size ? `<span class="text-ics-gold font-bold">(${it.size})</span>` : '';
+                return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-800 text-[11px] text-slate-200 border border-slate-700"><strong class="text-white">${qty}x</strong> <span>${name}</span> ${size}</span>`;
+              }).join('');
+            } else {
+              itemsHtml = '<span class="text-slate-500">N/A</span>';
+            }
 
-          const createdDate = c.created_at ? new Date(c.created_at).toLocaleString([], {
-            month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-          }) : 'N/A';
+            const createdDate = c.created_at ? new Date(c.created_at).toLocaleString([], {
+              month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : 'N/A';
 
-          const claimedDate = c.claimed_at ? new Date(c.claimed_at).toLocaleString([], {
-            month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-          }) : (c.updated_at ? new Date(c.updated_at).toLocaleString([], {
-            month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-          }) : 'N/A');
+            const claimedDate = c.claimed_at ? new Date(c.claimed_at).toLocaleString([], {
+              month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : (c.updated_at ? new Date(c.updated_at).toLocaleString([], {
+              month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : 'N/A');
 
-          const officer = c.claimed_by || 'J. Derramas (ICS Officer)';
+            const officer = c.claimed_by || 'J. Derramas (ICS Officer)';
 
-          return `
-            <tr class="hover:bg-slate-800/40 transition claimed-ledger-row"
-                data-ref="${(c.ref_code || '').toLowerCase()}"
-                data-name="${(c.student_name || '').toLowerCase()}"
-                data-stuid="${(c.student_id || '').toLowerCase()}">
-              <td class="py-3 px-3 font-mono font-bold text-ics-gold">${c.ref_code || ''}</td>
-              <td class="py-3 px-3 font-bold text-white whitespace-nowrap">${c.student_name || ''}</td>
-              <td class="py-3 px-3 font-mono text-slate-300 whitespace-nowrap">${c.student_id || ''}</td>
-              <td class="py-3 px-3 text-slate-400 text-[11px] whitespace-nowrap">${c.department || 'ICS'} (${c.year_level || 'N/A'})</td>
-              <td class="py-3 px-3 font-mono text-slate-400 text-[11px] whitespace-nowrap">${createdDate}</td>
-              <td class="py-3 px-3 font-mono text-emerald-400 font-semibold text-[11px] whitespace-nowrap">${claimedDate}</td>
-              <td class="py-3 px-3"><div class="flex flex-wrap gap-1 max-w-xs">${itemsHtml}</div></td>
-              <td class="py-3 px-3 text-right font-mono font-bold text-white whitespace-nowrap">₱${Number(c.total_amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-              <td class="py-3 px-3 whitespace-nowrap">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">${c.payment_status || 'Paid'}</span>
-                <div class="text-[9px] text-slate-400 font-mono mt-0.5">${c.payment_method || 'Cash on Pickup'}</div>
-              </td>
-              <td class="py-3 px-3 text-slate-300 text-[11px] font-mono whitespace-nowrap">${officer}</td>
-            </tr>
-          `;
-        }).join('');
+            return `
+              <tr class="hover:bg-slate-800/40 transition claimed-ledger-row"
+                  data-ref="${(c.ref_code || '').toLowerCase()}"
+                  data-name="${(c.student_name || '').toLowerCase()}"
+                  data-stuid="${(c.student_id || '').toLowerCase()}">
+                <td class="py-3 px-3 font-mono font-bold text-rose-400 whitespace-nowrap bg-rose-950/20 border-r border-slate-800/60">${c.student_id || ''}</td>
+                <td class="py-3 px-3 font-bold text-white whitespace-nowrap">${c.student_name || ''}</td>
+                <td class="py-3 px-3"><div class="flex flex-wrap gap-1 max-w-xs">${itemsHtml}</div></td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">₱${Number(c.total_amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="py-3 px-3 font-mono text-slate-400 text-[11px] whitespace-nowrap">${createdDate}</td>
+                <td class="py-3 px-3 font-mono text-emerald-400 font-bold text-[11px] whitespace-nowrap bg-emerald-950/20 border-l border-slate-800/60">${claimedDate}</td>
+                <td class="py-3 px-3 font-mono font-bold text-ics-gold whitespace-nowrap">${c.ref_code || ''}</td>
+                <td class="py-3 px-3 text-slate-400 text-[11px] whitespace-nowrap">${c.department || 'ICS'} (${c.year_level || 'N/A'})</td>
+                <td class="py-3 px-3 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">${c.payment_status || 'Paid'}</span>
+                  <div class="text-[9px] text-slate-400 font-mono mt-0.5">${c.payment_method || 'Cash on Pickup'}</div>
+                </td>
+                <td class="py-3 px-3 text-slate-300 text-[11px] font-mono whitespace-nowrap">${officer}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        // 2. Render Reports Card 2 Table
+        if (tbodyReports) {
+          tbodyReports.innerHTML = list.map(c => {
+            let itemsHtml = '';
+            if (Array.isArray(c.items)) {
+              itemsHtml = c.items.map(it => {
+                const qty = it.quantity || 1;
+                const name = it.productName || it.name || it.productId || 'Item';
+                const size = it.size ? `<span class="text-ics-gold font-bold">(${it.size})</span>` : '';
+                return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-200 border border-slate-700"><strong>${qty}x</strong> <span>${name}</span> ${size}</span>`;
+              }).join('');
+            } else {
+              itemsHtml = '<span class="text-slate-500">N/A</span>';
+            }
+
+            const createdDate = c.created_at ? new Date(c.created_at).toLocaleString([], {
+              month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : 'N/A';
+
+            const claimedDate = c.claimed_at ? new Date(c.claimed_at).toLocaleString([], {
+              month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : (c.updated_at ? new Date(c.updated_at).toLocaleString([], {
+              month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : 'N/A');
+
+            const officer = c.claimed_by || 'J. Derramas (ICS Officer)';
+
+            return `
+              <tr class="hover:bg-slate-800/40 transition claimed-ledger-row"
+                  data-ref="${(c.ref_code || '').toLowerCase()}"
+                  data-name="${(c.student_name || '').toLowerCase()}"
+                  data-stuid="${(c.student_id || '').toLowerCase()}">
+                <td class="py-3 px-3 font-mono font-bold text-ics-gold">${c.ref_code || ''}</td>
+                <td class="py-3 px-3 font-bold text-white whitespace-nowrap">${c.student_name || ''}</td>
+                <td class="py-3 px-3 font-mono text-slate-300 whitespace-nowrap">${c.student_id || ''}</td>
+                <td class="py-3 px-3 text-slate-400 text-[11px] whitespace-nowrap">${c.department || 'ICS'} (${c.year_level || 'N/A'})</td>
+                <td class="py-3 px-3 font-mono text-slate-400 text-[11px] whitespace-nowrap">${createdDate}</td>
+                <td class="py-3 px-3 font-mono text-emerald-400 font-semibold text-[11px] whitespace-nowrap">${claimedDate}</td>
+                <td class="py-3 px-3"><div class="flex flex-wrap gap-1 max-w-xs">${itemsHtml}</div></td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-white whitespace-nowrap">₱${Number(c.total_amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="py-3 px-3 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">${c.payment_status || 'Paid'}</span>
+                  <div class="text-[9px] text-slate-400 font-mono mt-0.5">${c.payment_method || 'Cash on Pickup'}</div>
+                </td>
+                <td class="py-3 px-3 text-slate-300 text-[11px] font-mono whitespace-nowrap">${officer}</td>
+              </tr>
+            `;
+          }).join('');
+        }
       }
 
       async clearActivityLogs() {
