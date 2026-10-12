@@ -1997,13 +1997,6 @@
           <svg class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <div>
-            <div class="flex items-center gap-2 mb-0.5">
-              <span class="font-bold text-cyan-300">Support Ticket Guidelines:</span>
-              <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-900/80 text-blue-200 border border-blue-700">Max 5 tickets / day</span>
-            </div>
-            Limit ng <strong>5 tickets bawat araw</strong> lamang ang pinapayagan bawat student. Iwasan ang pag-spam upang mapanatiling aktibo ang iyong account at maiwasan ang snooze/ban.
-          </div>
         </div>
 
         <!-- Submit Button -->
