@@ -58,6 +58,30 @@ class Student extends Model
     }
 
     /**
+     * Get resolved avatar with fallback to matching student accounts
+     */
+    public function getResolvedAvatarAttribute(): ?string
+    {
+        if (!empty($this->avatar)) {
+            return $this->avatar;
+        }
+
+        try {
+            $other = self::where(function ($q) {
+                if ($this->student_id) $q->where('student_id', $this->student_id);
+                if ($this->email) $q->orWhere('email', $this->email);
+                if ($this->name) $q->orWhere('name', $this->name);
+            })->whereNotNull('avatar')->where('avatar', '!=', '')->first();
+
+            if ($other && !empty($other->avatar)) {
+                return $other->avatar;
+            }
+        } catch (\Throwable $e) {}
+
+        return null;
+    }
+
+    /**
      * Return formatted profile array suitable for session('student_user')
      */
     public function toProfileArray(): array
@@ -72,7 +96,7 @@ class Student extends Model
             'section'      => $this->section,
             'year_level'   => $this->year_level,
             'contact'      => $this->contact ?? 'N/A',
-            'avatar'       => $this->avatar,
+            'avatar'       => $this->resolved_avatar,
             'status'       => $this->status,
             'initials'     => $this->initials,
             'verified_at'  => now()->toDateTimeString(),

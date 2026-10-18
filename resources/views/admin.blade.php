@@ -136,18 +136,18 @@
     }
 
 
-    /* Print Slip Styles */
+    /* Print Styles (Prevents blank page and isolates claim slip only when modal is active) */
     @media print {
-      body * {
+      body.slip-modal-open * {
         visibility: hidden !important;
       }
 
-      #printable-claim-slip,
-      #printable-claim-slip * {
+      body.slip-modal-open #printable-claim-slip,
+      body.slip-modal-open #printable-claim-slip * {
         visibility: visible !important;
       }
 
-      #printable-claim-slip {
+      body.slip-modal-open #printable-claim-slip {
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
@@ -156,7 +156,15 @@
         color: black !important;
       }
 
-      .no-print {
+      body:not(.slip-modal-open) {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+
+      .no-print,
+      header,
+      nav,
+      #sidebar-container {
         display: none !important;
       }
     }
@@ -846,8 +854,9 @@
 
                 <!-- Add New Product Button -->
                 <button
+                  type="button"
                   onclick="icsApp.openAddProductModal()"
-                  class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg border border-ics-600">
+                  class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg border border-ics-600 cursor-pointer">
                   <svg class="w-4 h-4 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
@@ -871,25 +880,31 @@
                   </thead>
                   <tbody class="divide-y divide-slate-800 text-slate-300">
                     @foreach($products as $p)
-                    <tr class="hover:bg-slate-800/50 transition">
+                    <tr class="hover:bg-slate-800/50 transition {{ $p->current_stock <= 0 ? 'opacity-75 bg-rose-950/10' : '' }}">
                       <td class="py-3.5 px-4">
                         <div class="flex items-center gap-3.5">
-                          <img src="{{ asset($p->image_path) }}" alt="{{ $p->name }}" class="w-14 h-14 rounded-2xl object-cover border border-slate-700 shadow-md flex-shrink-0">
+                          <img src="{{ asset($p->image_path) }}" alt="{{ $p->name }}" class="w-14 h-14 rounded-2xl object-cover border border-slate-700 shadow-md flex-shrink-0 {{ $p->current_stock <= 0 ? 'grayscale contrast-75' : '' }}">
                           <div>
-                            <p class="font-bold text-white text-sm">{{ $p->name }}</p>
-                            <p class="text-xs text-slate-300 mt-0.5">{{ $p->gender }} / {{ $p->dept }}</p>
+                            <p class="font-bold text-white text-sm {{ $p->current_stock <= 0 ? 'line-through decoration-rose-500 decoration-2 text-rose-300/80' : '' }}">{{ $p->name }}</p>
+                            <p class="text-xs text-slate-300 mt-0.5 {{ $p->current_stock <= 0 ? 'line-through decoration-rose-500/60' : '' }}">{{ $p->gender }} / {{ $p->dept }}</p>
                           </div>
                         </div>
                       </td>
                       <td class="py-3.5 px-4 whitespace-nowrap">
-                        <span class="font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block">{{ $p->item_code }}</span>
+                        <span class="font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block {{ $p->current_stock <= 0 ? 'line-through decoration-rose-500 text-rose-400' : '' }}">{{ $p->item_code }}</span>
                       </td>
-                      <td class="py-3.5 px-4 uppercase text-xs font-semibold text-slate-300 whitespace-nowrap">{{ $p->category }}</td>
-                      <td class="py-3.5 px-4 font-mono font-black text-emerald-400 text-sm whitespace-nowrap">₱{{ number_format($p->price, 2) }}</td>
-                      <td class="py-3.5 px-4 font-mono font-black text-white text-sm whitespace-nowrap">{{ $p->current_stock }}</td>
+                      <td class="py-3.5 px-4 uppercase text-xs font-semibold text-slate-300 whitespace-nowrap {{ $p->current_stock <= 0 ? 'line-through decoration-rose-500/60' : '' }}">{{ $p->category }}</td>
+                      <td class="py-3.5 px-4 font-mono font-black text-emerald-400 text-sm whitespace-nowrap {{ $p->current_stock <= 0 ? 'line-through decoration-rose-500/80 text-slate-400' : '' }}">₱{{ number_format($p->price, 2) }}</td>
+                      <td class="py-3.5 px-4 font-mono font-black text-white text-sm whitespace-nowrap">
+                        @if($p->current_stock <= 0)
+                          <span class="line-through decoration-rose-500 decoration-2 text-rose-400 font-bold">0</span>
+                        @else
+                          {{ $p->current_stock }}
+                        @endif
+                      </td>
                       <td class="py-3.5 px-4 whitespace-nowrap">
                         @if($p->current_stock <= 0)
-                          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-950 text-rose-300 border border-rose-800">Out of Stock</span>
+                          <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-950 text-rose-300 border border-rose-800 line-through decoration-rose-400">Out of Stock</span>
                           @elseif($p->current_stock < 20)
                             <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800">Low Stock</span>
                           @else
@@ -900,8 +915,9 @@
                         <div class="flex items-center justify-end gap-2">
                           <!-- Edit Product (Details + Picture) -->
                           <button
-                            onclick="icsApp.openEditProductModal({{ json_encode($p) }})"
-                            class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 shadow"
+                            type="button"
+                            onclick="icsApp.openEditProductModal('{{ $p->id }}')"
+                            class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 shadow cursor-pointer"
                             title="Edit Product & Picture">
                             <svg class="w-3.5 h-3.5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -910,8 +926,9 @@
                           </button>
                           <!-- Delete Product -->
                           <button
+                            type="button"
                             onclick="icsApp.deleteProduct('{{ $p->id }}', '{{ $p->name }}')"
-                            class="p-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 transition border border-rose-800"
+                            class="p-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 transition border border-rose-800 cursor-pointer"
                             title="Delete Product">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -939,15 +956,41 @@
                 <div>
                   <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
                     <span>Student Reservation Queue</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-950 text-amber-300 border border-amber-800">{{ $reservations->count() }} Total</span>
+                    <span id="reservations-total-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-950 text-amber-300 border border-amber-800">{{ $reservations->count() }} Total</span>
                   </h3>
                   <p class="text-xs text-slate-400">
                     Review incoming student reservations, approve readiness for pickup, and mark items as claimed.
                   </p>
                 </div>
 
-                <!-- Status Filter -->
-                <div class="flex items-center gap-2">
+                <!-- Multi-select Actions & Status Filter -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                    <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white select-none">
+                      <input
+                        type="checkbox"
+                        id="reservations-select-all"
+                        onchange="icsApp.toggleAllReservationCheckboxes(this.checked)"
+                        class="w-4 h-4 rounded text-rose-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer"
+                      />
+                      <span class="text-xs font-semibold">Select All</span>
+                    </label>
+                    <span id="reservations-selected-badge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-950 text-rose-300 border border-rose-800">
+                      0 Selected
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    id="reservations-bulk-delete-btn"
+                    onclick="icsApp.deleteSelectedReservations()"
+                    class="hidden px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-rose-950/50 cursor-pointer animate-in fade-in">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span>Delete Selected</span>
+                  </button>
+
                   <select id="reservation-filter-status" onchange="icsApp.filterReservations(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white">
                     <option value="all">All Statuses</option>
                     <option value="Pending">Pending Only</option>
@@ -961,9 +1004,27 @@
               <!-- Reservation Cards List -->
               <div id="reservations-list" class="space-y-4">
                 @foreach($reservations as $r)
-                <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition" data-status="{{ $r->status }}" data-ref="{{ $r->ref_code }}">
+                @php
+                  $isFinishedOrder = ($r->status === 'Claimed' || $r->status === 'Cancelled');
+                @endphp
+                <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition reservation-queue-card {{ $isFinishedOrder ? 'cursor-pointer hover:border-slate-600' : '' }}"
+                  data-id="{{ $r->id }}"
+                  data-status="{{ $r->status }}"
+                  data-ref="{{ $r->ref_code }}"
+                  @if($isFinishedOrder) onclick="icsApp.toggleReservationRowSelect(event, '{{ $r->id }}')" @endif>
                   <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
                     <div class="reservation-header-badges flex items-center gap-2.5 flex-wrap">
+                      @if($isFinishedOrder)
+                      <label class="inline-flex items-center cursor-pointer mr-0.5" onclick="event.stopPropagation()">
+                        <input
+                          type="checkbox"
+                          value="{{ $r->id }}"
+                          onchange="icsApp.onReservationCheckboxChange()"
+                          class="reservation-row-checkbox w-4 h-4 rounded text-rose-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer"
+                          title="Select finished order for bulk delete"
+                        />
+                      </label>
+                      @endif
                       <span class="font-mono font-bold text-sm text-ics-gold">{{ $r->ref_code }}</span>
                       <span class="reservation-status-badge px-2 py-0.5 rounded-full text-[10px] font-bold
                         @if($r->status === 'Pending') bg-amber-950 text-amber-300 border border-amber-700
@@ -976,6 +1037,12 @@
                         {{ $r->status }}
                         @endif
                       </span>
+
+                      @if($loop->first && $r->status === 'Pending')
+                      <span class="fifo-queue-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm" title="First-In, First-Out: This is the earliest order placed, locked at top for priority processing">
+                        <span>🔒 1st in Queue (FIFO)</span>
+                      </span>
+                      @endif
 
                       @if($r->activeTicket)
                       <span class="ticket-warning-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50 animate-pulse" title="This reservation has a pending Helpdesk Support Ticket">
@@ -1043,30 +1110,25 @@
                       @endif
 
                       @if(!empty($r->receipt_image))
-                      <div class="mt-2.5 flex items-center gap-2.5">
-                        <div class="relative group cursor-pointer shrink-0" onclick="icsApp.openReceiptViewModal({{ json_encode($r) }})" title="Click to view full receipt image">
+                      @php
+                        $receiptSrc = (str_starts_with($r->receipt_image, 'data:image') || str_starts_with($r->receipt_image, 'http://') || str_starts_with($r->receipt_image, 'https://'))
+                          ? $r->receipt_image
+                          : asset(ltrim($r->receipt_image, '/'));
+                      @endphp
+                      <div class="mt-2.5 reservation-receipt-container">
+                        <div class="relative group cursor-pointer inline-block" onclick="icsApp.openReceiptViewModal('{{ $r->id }}')" title="Click to view full receipt image">
                           <img
-                            src="{{ asset($r->receipt_image) }}"
-                            alt="Receipt"
-                            class="w-14 h-14 rounded-xl object-cover border-2 border-blue-500/80 group-hover:border-cyan-400 shadow-md group-hover:scale-105 transition-all duration-200"
-                            onerror="this.onerror=null; this.src='{{ asset('images/gcash_qr.jpg') }}';"
+                            src="{{ $receiptSrc }}"
+                            alt="Payment Receipt from {{ $r->student_name }}"
+                            class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-cyan-500/80 group-hover:border-cyan-300 shadow-lg group-hover:scale-105 group-hover:shadow-cyan-500/20 transition-all duration-200"
                           />
-                          <div class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
-                            <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                          <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity pointer-events-none p-1 text-center">
+                            <svg class="w-5 h-5 text-cyan-300 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                            <span class="text-[9px] font-bold text-white leading-tight">Click to zoom</span>
                           </div>
-                        </div>
-                        <div class="min-w-0">
-                          <button
-                            type="button"
-                            onclick="icsApp.openReceiptViewModal({{ json_encode($r) }})"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-blue-200 border border-blue-700 shadow transition cursor-pointer">
-                            <svg class="w-3.5 h-3.5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            <span>Inspect Receipt</span>
-                          </button>
-                          <p class="text-[10px] text-slate-400 mt-0.5">Click photo to zoom</p>
+                          <span class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-700 shadow flex items-center gap-1">
+                            <span>🔍 Zoom</span>
+                          </span>
                         </div>
                       </div>
                       @elseif(($r->payment_method ?? '') === 'GCash Online')
@@ -1084,7 +1146,19 @@
                       </div>
 
                       <!-- Action Buttons -->
-                      <div class="reservation-actions-container flex items-center md:justify-end gap-2 mt-3">
+                      <div class="reservation-actions-container flex items-center md:justify-end gap-2 mt-3 flex-wrap">
+                        <!-- Message Student Buyer Button -->
+                        <button
+                          type="button"
+                          onclick="icsApp.openAdminMessageBuyerModal('{{ $r->id }}')"
+                          class="px-2.5 py-1 rounded-xl text-xs font-bold bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                          title="Message Student Buyer ({{ $r->student_name }})">
+                          <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                          <span>Message</span>
+                        </button>
+
                         @if($r->activeTicket)
                         <!-- LOCKED: Cannot Mark Ready or Mark Claimed while ticket is pending -->
                         <button
@@ -1100,16 +1174,18 @@
                         @else
                         @if($r->status === 'Pending')
                         <button
+                          type="button"
                           onclick="icsApp.updateReservationStatus('{{ $r->id }}', 'Ready for Pickup')"
-                          class="px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition">
+                          class="px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition cursor-pointer">
                           Mark Ready
                         </button>
                         @endif
 
                         @if($r->status === 'Ready for Pickup')
                         <button
+                          type="button"
                           onclick="icsApp.updateReservationStatus('{{ $r->id }}', 'Claimed')"
-                          class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition">
+                          class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition cursor-pointer">
                           Mark Claimed
                         </button>
                         @endif
@@ -1117,15 +1193,17 @@
 
                         @if($r->status !== 'Cancelled' && $r->status !== 'Claimed')
                         <button
+                          type="button"
                           onclick="icsApp.updateReservationStatus('{{ $r->id }}', 'Cancelled')"
-                          class="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 transition">
+                          class="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 transition cursor-pointer">
                           Cancel
                         </button>
                         @endif
 
                         <button
-                          onclick="icsApp.viewPrintClaimSlip({{ json_encode($r) }})"
-                          class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                          type="button"
+                          onclick="icsApp.viewPrintClaimSlip('{{ $r->id }}')"
+                          class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer">
                           Print Slip
                         </button>
 
@@ -1213,8 +1291,9 @@
                     <span>Download PDF / Print</span>
                   </a>
 
-                  <button type="button" onclick="window.print()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
-                    Print Logsheet
+                  <button type="button" onclick="icsApp.printClaimedLogsheet()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Print Logsheet</span>
                   </button>
                 </div>
               </div>
@@ -1260,8 +1339,8 @@
                 </div>
               </div>
 
-              <!-- Quick Search / Filter Bar -->
-              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800">
+              <!-- Quick Search, Sort & Bulk Action Bar -->
+              <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800">
                 <div class="relative flex-1">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -1274,9 +1353,44 @@
                     class="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-900 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition">
                 </div>
 
-                <div class="flex items-center gap-2 text-xs text-slate-300 font-mono">
-                  <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>Instant Database Sync</span>
+                <!-- Sort Control -->
+                <div class="flex items-center gap-2">
+                  <label for="claimed-sort-select" class="text-xs font-mono font-bold text-slate-400 whitespace-nowrap">Sort By:</label>
+                  <select
+                    id="claimed-sort-select"
+                    onchange="icsApp.onClaimedSortChange(this.value)"
+                    class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer font-sans shadow-inner">
+                    <option value="date_claimed_desc">Date Claimed (Newest First)</option>
+                    <option value="date_claimed_asc">Date Claimed (Oldest First)</option>
+                    <option value="date_ordered_desc">Date Ordered (Newest First)</option>
+                    <option value="date_ordered_asc">Date Ordered (Oldest First)</option>
+                    <option value="name_asc">Student Name (A - Z)</option>
+                    <option value="name_desc">Student Name (Z - A)</option>
+                    <option value="amount_desc">Grand Total (Highest First)</option>
+                    <option value="amount_asc">Grand Total (Lowest First)</option>
+                  </select>
+                </div>
+
+                <!-- Delete Actions -->
+                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  <button
+                    type="button"
+                    onclick="icsApp.deleteSelectedClaimed()"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                    title="Delete only the items selected via checkboxes or row clicks">
+                    <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Delete Selected</span>
+                    <span id="claimed-selected-count-badge" class="hidden px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-rose-800 text-white font-bold ml-1">0</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onclick="icsApp.deleteAllClaimed()"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-200 border border-slate-700 hover:border-rose-800 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                    title="Delete ALL claimed order records from release ledger">
+                    <svg class="w-4 h-4 text-slate-400 hover:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Delete All</span>
+                  </button>
                 </div>
               </div>
 
@@ -1285,6 +1399,9 @@
                 <table class="w-full text-left text-xs sm:text-sm">
                   <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
+                      <th class="py-3.5 px-3 text-center w-10">
+                        <input type="checkbox" id="claimed-select-all" onchange="icsApp.toggleAllClaimedCheckboxes(this.checked)" class="rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer" title="Select All Claimed Orders">
+                      </th>
                       <th class="py-3.5 px-4 text-cyan-300 font-bold">Student Number</th>
                       <th class="py-3.5 px-4">Student Name</th>
                       <th class="py-3.5 px-4">Item na Binili (Name &amp; Size)</th>
@@ -1299,11 +1416,18 @@
                   </thead>
                   <tbody id="claimed-tab-ledger-tbody" class="divide-y divide-slate-800 text-slate-300">
                     @forelse($claimedReservations ?? [] as $cOrder)
-                    <tr class="hover:bg-slate-800/40 transition claimed-ledger-row"
+                    <tr class="hover:bg-slate-800/40 transition claimed-ledger-row cursor-pointer"
+                        data-id="{{ $cOrder->id }}"
                         data-ref="{{ $cOrder->ref_code }}"
                         data-name="{{ strtolower($cOrder->student_name) }}"
-                        data-stuid="{{ strtolower($cOrder->student_id) }}">
+                        data-stuid="{{ strtolower($cOrder->student_id) }}"
+                        onclick="icsApp.toggleClaimedRowSelect(event, '{{ $cOrder->id }}')">
                       
+                      <!-- 0. Selection Checkbox -->
+                      <td class="py-3.5 px-3 text-center" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="claimed-row-checkbox rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer" value="{{ $cOrder->id }}" onchange="icsApp.onClaimedRowCheckboxChange()">
+                      </td>
+
                       <!-- 1. Student Number -->
                       <td class="py-3.5 px-4 font-mono font-bold whitespace-nowrap bg-cyan-950/20 border-r border-slate-800/60">
                         <span class="text-cyan-300 bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block">{{ $cOrder->student_id }}</span>
@@ -1375,7 +1499,7 @@
                     </tr>
                     @empty
                     <tr id="claimed-tab-empty-row">
-                      <td colspan="10" class="py-12 text-center text-slate-400 font-sans">
+                      <td colspan="11" class="py-12 text-center text-slate-400 font-sans">
                         <svg class="w-10 h-10 mx-auto text-slate-500 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <p class="font-bold text-sm text-slate-300">No Claimed Releases Recorded Yet</p>
                         <p class="text-xs text-slate-400 mt-1">When student orders are marked as "Claimed", their pickup timestamp and buyer details will automatically log here.</p>
@@ -1395,27 +1519,126 @@
           <section id="admin-sec-reports" class="admin-tab-section hidden space-y-6">
 
             <div class="bg-slate-900/90 rounded-3xl border border-slate-800 p-6 shadow-xl">
-              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-800">
                 <div>
                   <h3 class="text-lg font-black text-white font-display flex items-center gap-2">
                     <span>Reports: Sales vs Stock Master List</span>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-950 text-blue-300 border border-blue-800">Official Report</span>
                   </h3>
                   <p class="text-xs text-slate-400">
-                    Audit-ready report detailing initial stock allocations, confirmed sales (claimed), active reservations, and on-hand inventory.
+                    Audit-ready report detailing stock allocations, confirmed sales, active reservations, and student buyers.
                   </p>
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <a href="{{ route('reports.export') }}" class="px-4 py-2 rounded-xl text-xs font-bold bg-ics-700 hover:bg-ics-600 text-white transition flex items-center gap-2 shadow">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <span>Download CSV Report</span>
-                  </a>
-                  <button onclick="window.print()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
-                    Print Report
+                  <button type="button" onclick="icsApp.downloadChosenReport('pdf', true)" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Print Report</span>
                   </button>
+                </div>
+              </div>
+
+              <!-- ======================================================== -->
+              <!-- REPORT EXPORT CHOICES & CONTROLS -->
+              <!-- "pwede e download yung isa isa or pipili ako kung ano e dl ko parang choices... pwede lahat pwede rin isa" -->
+              <!-- ======================================================== -->
+              <div class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 mb-5 space-y-3">
+                <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                  <div class="flex-1">
+                    <label class="block text-xs uppercase font-extrabold text-cyan-300 tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                      <span>Download Choices (Piliin kung anong merchandise ang i-download):</span>
+                    </label>
+                    <select id="report-scope-select" onchange="icsApp.onReportScopeChange(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 font-sans shadow-inner">
+                      <option value="all">📦 All Merchandise (Master Report - Lahat ng Items)</option>
+                      <optgroup label="Single Item Reports (Isa-isang Damit / Item with Buyer Details):">
+                        @foreach($salesVsStock as $rItem)
+                        <option value="{{ $rItem['id'] }}">
+                          👕 {{ $rItem['name'] }} ({{ $rItem['item_code'] }}) &bull; {{ $rItem['units_sold'] }} sold &bull; {{ $rItem['buyer_count'] ?? count($rItem['buyers'] ?? []) }} buyers &bull; ₱{{ number_format($rItem['price'], 2) }}
+                        </option>
+                        @endforeach
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap pt-1 lg:pt-5">
+                    <!-- Download CSV Button -->
+                    <button
+                      type="button"
+                      onclick="icsApp.downloadChosenReport('csv')"
+                      class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 cursor-pointer">
+                      <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span id="btn-label-report-csv">Download CSV</span>
+                    </button>
+
+                    <!-- Download PDF Button -->
+                    <button
+                      type="button"
+                      onclick="icsApp.downloadChosenReport('pdf')"
+                      class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white transition flex items-center justify-center gap-2 shadow-lg shadow-red-950/50 cursor-pointer">
+                      <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <span id="btn-label-report-pdf">Download PDF / Print</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Multi-select Notice / Checkbox Toolbar -->
+                <div id="report-selected-banner" class="hidden bg-cyan-950/70 border border-cyan-800/80 p-3 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span class="text-cyan-200 font-bold" id="report-selected-count">0 items selected via checkboxes</span>
+                    <span class="text-slate-400 text-[11px]">(Will download report only for these checked items)</span>
+                  </div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <button type="button" onclick="icsApp.downloadChosenReport('csv')" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition text-[11px] shadow">
+                      Download Selected (CSV)
+                    </button>
+                    <button type="button" onclick="icsApp.downloadChosenReport('pdf')" class="px-3 py-1 rounded-lg bg-rose-700 hover:bg-rose-600 text-white font-bold transition text-[11px] shadow">
+                      Download Selected (PDF)
+                    </button>
+                    <button type="button" onclick="icsApp.downloadChosenReport('pdf', true)" class="px-3 py-1 rounded-lg bg-indigo-700 hover:bg-indigo-600 text-white font-bold transition text-[11px] shadow flex items-center gap-1 cursor-pointer" title="Directly open print dialog for selected items">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                      <span>Print Selected</span>
+                    </button>
+                    <button type="button" onclick="icsApp.clearReportSelection()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-[11px]">
+                      Clear Selection
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Report Search & Sort Controls -->
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/70 p-3 rounded-2xl border border-slate-800 mb-4">
+                <div class="relative flex-1">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  </span>
+                  <input
+                    type="text"
+                    id="report-search-input"
+                    oninput="icsApp.filterReportsTable(this.value)"
+                    placeholder="Search master list by item code, product name, category..."
+                    class="w-full pl-10 pr-4 py-2 rounded-xl text-xs sm:text-sm bg-slate-900 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition">
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <label for="report-sort-select" class="text-xs font-mono font-bold text-slate-400 whitespace-nowrap">Sort By:</label>
+                  <select
+                    id="report-sort-select"
+                    onchange="icsApp.onReportSortChange(this.value)"
+                    class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer font-sans shadow-inner">
+                    <option value="code_asc">Item Code (A - Z)</option>
+                    <option value="name_asc">Product Name (A - Z)</option>
+                    <option value="sold_desc">Units Sold (Highest First)</option>
+                    <option value="sold_asc">Units Sold (Lowest First)</option>
+                    <option value="stock_asc">On-Hand Stock (Lowest First)</option>
+                    <option value="stock_desc">On-Hand Stock (Highest First)</option>
+                    <option value="rev_desc">Revenue (Highest First)</option>
+                  </select>
                 </div>
               </div>
 
@@ -1424,33 +1647,62 @@
                 <table class="w-full text-left text-xs sm:text-sm">
                   <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
+                      <th class="py-3.5 px-3 text-center w-10">
+                        <input type="checkbox" id="report-select-all" onchange="icsApp.toggleAllReportCheckboxes(this.checked)" class="rounded bg-slate-950 border-slate-700 text-cyan-600 focus:ring-0 cursor-pointer" title="Select All Items">
+                      </th>
                       <th class="py-3.5 px-4">Item Code</th>
                       <th class="py-3.5 px-4">Product Name</th>
                       <th class="py-3.5 px-4">Category</th>
                       <th class="py-3.5 px-4">Price</th>
                       <th class="py-3.5 px-4 text-center">Initial Stock</th>
-                      <th class="py-3.5 px-4 text-center">Claimed (Sold)</th>
+                      <th class="py-3.5 px-4 text-center text-cyan-300">Claimed (Sold)</th>
                       <th class="py-3.5 px-4 text-center">Reserved</th>
                       <th class="py-3.5 px-4 text-center">On-Hand Stock</th>
                       <th class="py-3.5 px-4 text-right">Revenue (PHP)</th>
-                      <th class="py-3.5 px-4">Stock Health</th>
+                      <th class="py-3.5 px-4 text-center">Stock Health</th>
+                      <th class="py-3.5 px-4 text-center">Download Item</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-slate-800 text-slate-300">
+                  <tbody id="reports-table-tbody" class="divide-y divide-slate-800 text-slate-300">
                     @foreach($salesVsStock as $rItem)
-                    <tr class="hover:bg-slate-800/40 transition">
+                    <tr class="hover:bg-slate-800/40 transition cursor-pointer report-table-row"
+                        data-id="{{ $rItem['id'] }}"
+                        data-code="{{ strtolower($rItem['item_code']) }}"
+                        data-name="{{ strtolower($rItem['name']) }}"
+                        data-category="{{ strtolower($rItem['category']) }}"
+                        data-sold="{{ $rItem['units_sold'] }}"
+                        data-stock="{{ $rItem['current_stock'] }}"
+                        data-rev="{{ $rItem['revenue'] }}"
+                        onclick="icsApp.toggleReportRowSelect(event, '{{ $rItem['id'] }}')">
+                      <!-- Checkbox for custom selection -->
+                      <td class="py-3.5 px-3 text-center" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="report-row-checkbox rounded bg-slate-950 border-slate-700 text-cyan-600 focus:ring-0 cursor-pointer" value="{{ $rItem['id'] }}" onchange="icsApp.onReportRowCheckboxChange()">
+                      </td>
                       <td class="py-3.5 px-4 whitespace-nowrap">
                         <span class="font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/60 inline-block">{{ $rItem['item_code'] }}</span>
                       </td>
-                      <td class="py-3.5 px-4 font-bold text-white text-xs sm:text-sm">{{ $rItem['name'] }}</td>
+                      <td class="py-3.5 px-4 font-bold text-white text-xs sm:text-sm">
+                        <div class="flex items-center gap-2">
+                          @if(!empty($rItem['image_path']))
+                          <img src="{{ asset($rItem['image_path']) }}" alt="{{ $rItem['name'] }}" class="w-7 h-7 rounded-lg object-cover border border-slate-700 flex-shrink-0">
+                          @endif
+                          <span>{{ $rItem['name'] }}</span>
+                        </div>
+                      </td>
                       <td class="py-3.5 px-4 uppercase text-xs text-slate-300 whitespace-nowrap">{{ $rItem['category'] }}</td>
                       <td class="py-3.5 px-4 font-mono text-slate-200 font-semibold whitespace-nowrap">₱{{ number_format($rItem['price'], 2) }}</td>
                       <td class="py-3.5 px-4 text-center font-mono font-bold text-white">{{ $rItem['initial_stock'] }}</td>
-                      <td class="py-3.5 px-4 text-center font-mono font-bold text-cyan-400">{{ $rItem['units_sold'] }}</td>
+                      
+                      <!-- Claimed (Sold) with buyers count: "makikita don kung ilan bumili or ano" -->
+                      <td class="py-3.5 px-4 text-center">
+                        <span class="font-mono font-bold text-cyan-400 block text-sm">{{ $rItem['units_sold'] }}</span>
+                        <span class="font-mono text-[10px] text-cyan-300/80 block">({{ $rItem['buyer_count'] ?? count($rItem['buyers'] ?? []) }} buyers)</span>
+                      </td>
+
                       <td class="py-3.5 px-4 text-center font-mono font-bold text-amber-400">{{ $rItem['units_reserved'] }}</td>
                       <td class="py-3.5 px-4 text-center font-mono font-bold text-emerald-400">{{ $rItem['current_stock'] }}</td>
                       <td class="py-3.5 px-4 text-right font-mono font-black text-white whitespace-nowrap">₱{{ number_format($rItem['revenue'], 2) }}</td>
-                      <td class="py-3.5 px-4 whitespace-nowrap">
+                      <td class="py-3.5 px-4 whitespace-nowrap text-center">
                         <span class="px-2.5 py-1 rounded-lg text-xs font-bold
                           @if($rItem['status'] === 'Out of Stock') bg-rose-950 text-rose-300 border border-rose-800
                           @elseif($rItem['status'] === 'Low Stock') bg-amber-950 text-amber-300 border border-amber-800
@@ -1458,18 +1710,38 @@
                           {{ $rItem['status'] }}
                         </span>
                       </td>
+
+                      <!-- Per-Item Download Buttons: "pwede e download yung isa isa" -->
+                      <td class="py-3.5 px-4 whitespace-nowrap text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                          <a href="{{ route('reports.export', ['product_id' => $rItem['id']]) }}" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 transition flex items-center gap-1 shadow-sm" title="Download CSV for {{ $rItem['name'] }} with full buyer list">
+                            <svg class="w-3 h-3 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span>CSV</span>
+                          </a>
+
+                          <a href="{{ route('reports.export_pdf', ['product_id' => $rItem['id']]) }}" target="_blank" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 transition flex items-center gap-1 shadow-sm" title="View / Print PDF for {{ $rItem['name'] }} with buyer breakdown">
+                            <svg class="w-3 h-3 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <span>PDF</span>
+                          </a>
+
+                          <button type="button" onclick='icsApp.openItemBuyersModal(@json($rItem))' class="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1 cursor-pointer" title="Quick view buyers on screen">
+                            <span>👁️</span>
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                     @endforeach
                   </tbody>
                   <tfoot class="bg-slate-950 text-white font-bold border-t-2 border-slate-800">
                     <tr>
-                      <td colspan="4" class="py-3.5 px-4 text-right uppercase font-mono text-slate-300">TOTALS:</td>
+                      <td colspan="5" class="py-3.5 px-4 text-right uppercase font-mono text-slate-300">TOTALS:</td>
                       <td class="py-3.5 px-4 text-center font-mono">{{ $totalInitialStock ?? array_sum(array_column($salesVsStock, 'initial_stock')) }}</td>
                       <td class="py-3.5 px-4 text-center font-mono text-cyan-400 font-black">{{ $totalSoldUnits }}</td>
                       <td class="py-3.5 px-4 text-center font-mono text-amber-400 font-black">{{ $totalReservedUnits }}</td>
                       <td class="py-3.5 px-4 text-center font-mono text-emerald-400 font-black">{{ $totalStockUnits }}</td>
                       <td class="py-3.5 px-4 text-right font-mono text-emerald-300 font-black text-sm sm:text-base">₱{{ number_format($totalRevenue, 2) }}</td>
-                      <td class="py-3.5 px-4 text-xs text-slate-300 font-mono">100% Audited</td>
+                      <td class="py-3.5 px-4 text-xs text-slate-300 font-mono text-center">100% Audited</td>
+                      <td class="py-3.5 px-4 text-xs text-slate-400 font-mono text-center">{{ count($salesVsStock) }} Items</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -1513,8 +1785,9 @@
                     </svg>
                     <span>Download PDF Report</span>
                   </a>
-                  <button type="button" onclick="window.print()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
-                    Print Logsheet
+                  <button type="button" onclick="icsApp.printClaimedLogsheet()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Print Logsheet</span>
                   </button>
                 </div>
               </div>
@@ -1745,6 +2018,17 @@
                       </td>
                       <td class="py-3.5 px-4 text-right whitespace-nowrap">
                         <div class="flex items-center justify-end gap-1.5">
+                          @if($s->status === 'Banned' || (method_exists($s, 'isBanned') && $s->isBanned()))
+                          <!-- Unban Button: ONLY shown when student is BANNED -->
+                          <button
+                            type="button"
+                            onclick="icsApp.unbanStudent({{ $s->id }}, '{{ addslashes($s->name) }}')"
+                            class="px-3 py-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 text-xs font-bold transition border border-emerald-700 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                            title="Unban and restore to active">
+                            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Unban Student</span>
+                          </button>
+                          @else
                           <!-- Snooze / Warning Button -->
                           <button
                             type="button"
@@ -1755,7 +2039,7 @@
                             <span>Snooze</span>
                           </button>
 
-                          <!-- Ban Button -->
+                          <!-- Ban Button: Hides when banned -->
                           <button
                             type="button"
                             onclick="icsApp.banStudentModal({{ $s->id }}, '{{ addslashes($s->name) }}')"
@@ -1764,16 +2048,7 @@
                             <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                             <span>Ban</span>
                           </button>
-
-                          <!-- Unban Button -->
-                          <button
-                            type="button"
-                            onclick="icsApp.unbanStudent({{ $s->id }}, '{{ addslashes($s->name) }}')"
-                            class="px-2.5 py-1.5 rounded-xl bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 text-xs font-bold transition border border-emerald-800 flex items-center gap-1 cursor-pointer shadow-sm"
-                            title="Unban and restore to active">
-                            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span>Unban</span>
-                          </button>
+                          @endif
                         </div>
                       </td>
                     </tr>
@@ -1854,13 +2129,15 @@
                       <td class="py-3.5 px-4 text-right whitespace-nowrap">
                         <div class="flex items-center justify-end gap-2">
                           <button
-                            onclick="icsApp.openEditUserModal({{ json_encode($u) }})"
-                            class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition border border-slate-700 shadow">
+                            type="button"
+                            onclick="icsApp.openEditUserModal('{{ $u->id }}')"
+                            class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition border border-slate-700 shadow cursor-pointer">
                             Edit
                           </button>
                           <button
+                            type="button"
                             onclick="icsApp.deleteUser('{{ $u->id }}', '{{ $u->name }}')"
-                            class="p-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 transition border border-rose-800"
+                            class="p-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 transition border border-rose-800 cursor-pointer"
                             title="Delete User">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1918,6 +2195,33 @@
                     <option value="LOGIN">LOGIN</option>
                     <option value="LOGOUT">LOGOUT</option>
                   </select>
+                </div>
+              </div>
+
+              <!-- Activity Logs Real-time Keyword Search Bar -->
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/70 p-3 rounded-2xl border border-slate-800 mb-4">
+                <div class="relative flex-1">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  </span>
+                  <input
+                    type="text"
+                    id="act-log-search-input"
+                    oninput="icsApp.searchActivityLogs(this.value)"
+                    placeholder="Search logs by keyword (User Code, Action, Item, Student, Activity, Module, Date)..."
+                    class="w-full pl-10 pr-9 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-900 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition">
+                  <button
+                    type="button"
+                    id="act-log-search-clear"
+                    onclick="icsApp.clearActivityLogSearch()"
+                    class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white cursor-pointer"
+                    title="Clear search">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-slate-400 font-mono px-1">
+                  <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                  <span>Instant Keyword Filter</span>
                 </div>
               </div>
 
@@ -2361,6 +2665,120 @@
         </div>
       </form>
     </div>
+  <!-- ======================================================== -->
+  <!-- ITEM BUYERS & DISTRIBUTION AUDIT MODAL -->
+  <!-- "yung damit lng na ito makikita don kung ilan bumili or ano" -->
+  <!-- ======================================================== -->
+  <div id="admin-item-buyers-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-4xl w-full p-6 shadow-2xl relative text-left space-y-4 max-h-[90vh] flex flex-col">
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between pb-4 border-b border-slate-800 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div id="modal-buyer-item-img-container" class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <span class="text-2xl">👕</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="modal-buyer-item-code" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-800">
+                PROD-001
+              </span>
+              <span id="modal-buyer-item-category" class="text-[10px] uppercase font-bold text-slate-400 font-mono">
+                CATEGORY
+              </span>
+            </div>
+            <h3 id="modal-buyer-item-name" class="text-base sm:text-lg font-black text-white font-display mt-0.5">
+              Product Name
+            </h3>
+            <p id="modal-buyer-item-price" class="text-xs text-emerald-400 font-mono font-bold">
+              ₱0.00
+            </p>
+          </div>
+        </div>
+
+        <button type="button" onclick="icsApp.closeItemBuyersModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Quick Stats KPI Row: "makikita don kung ilan bumili" -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs flex-shrink-0">
+        <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-cyan-400 tracking-wider block">Ilan ang Bumili (Sold)</span>
+          <span id="modal-buyer-units-sold" class="text-xl font-black font-mono text-white mt-1 block">0 units</span>
+          <span id="modal-buyer-count-badge" class="text-[10px] text-slate-400 block mt-0.5">0 registered orders</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-amber-400 tracking-wider block">Reserved</span>
+          <span id="modal-buyer-units-reserved" class="text-xl font-black font-mono text-white mt-1 block">0 units</span>
+          <span class="text-[10px] text-slate-400 block mt-0.5">Pending release</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider block">Available Stock</span>
+          <span id="modal-buyer-stock" class="text-xl font-black font-mono text-white mt-1 block">0 units</span>
+          <span class="text-[10px] text-slate-400 block mt-0.5">Current inventory</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-purple-400 tracking-wider block">Total Revenue</span>
+          <span id="modal-buyer-revenue" class="text-xl font-black font-mono text-emerald-400 mt-1 block">₱0.00</span>
+          <span class="text-[10px] text-slate-400 block mt-0.5">Sold units total</span>
+        </div>
+      </div>
+
+      <!-- Buyers List Table -->
+      <div class="flex-1 overflow-y-auto border border-slate-800 rounded-2xl max-h-[340px]">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950 text-slate-300 uppercase font-mono font-bold text-[10px] sticky top-0 border-b border-slate-800 z-10">
+            <tr>
+              <th class="py-2.5 px-3">Student ID</th>
+              <th class="py-2.5 px-3">Student Name</th>
+              <th class="py-2.5 px-3">Program / Year</th>
+              <th class="py-2.5 px-3 text-center">Qty</th>
+              <th class="py-2.5 px-3 text-center">Size</th>
+              <th class="py-2.5 px-3 text-right">Subtotal</th>
+              <th class="py-2.5 px-3">Order Date</th>
+              <th class="py-2.5 px-3">Claim Date</th>
+              <th class="py-2.5 px-3 text-center">Status</th>
+              <th class="py-2.5 px-3 font-mono">Claim Ref</th>
+            </tr>
+          </thead>
+          <tbody id="modal-item-buyers-tbody" class="divide-y divide-slate-800/80 text-slate-200">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Action Footer with Download CSV & PDF for this item -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-800 flex-shrink-0">
+        <span class="text-xs text-slate-400 font-mono">
+          Download report for this item:
+        </span>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <a
+            id="modal-buyer-download-csv-btn"
+            href="#"
+            class="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950/50">
+            <svg class="w-3.5 h-3.5 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Download CSV (Excel)</span>
+          </a>
+          <a
+            id="modal-buyer-download-pdf-btn"
+            href="#"
+            target="_blank"
+            class="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-black bg-rose-700 hover:bg-rose-600 text-white transition flex items-center justify-center gap-1.5 shadow-lg shadow-rose-950/50">
+            <svg class="w-3.5 h-3.5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            <span>Download PDF / Print</span>
+          </a>
+          <button
+            type="button"
+            onclick="icsApp.closeItemBuyersModal()"
+            class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="product-crud-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -2590,9 +3008,9 @@
   <!-- ======================================================== -->
 
 
-  <div id="receipt-view-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative text-left">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+  <div id="receipt-view-modal" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative text-left flex flex-col max-h-[92vh]">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-xl bg-blue-950 text-blue-400 border border-blue-800 flex items-center justify-center">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2601,52 +3019,81 @@
           </div>
           <div>
             <h3 class="text-sm font-black text-white font-display">Proof of GCash Payment Receipt</h3>
-            <p class="text-[11px] text-slate-400" id="receipt-view-subtitle">Official Student Upload</p>
+            <p class="text-[11px] text-slate-400" id="receipt-view-subtitle">Official Student Upload (Zoomable)</p>
           </div>
         </div>
-        <button onclick="icsApp.closeReceiptViewModal()" class="text-slate-400 hover:text-white p-1">
+        <button type="button" onclick="icsApp.closeReceiptViewModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition" title="Close (Esc)">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <div class="mt-4 space-y-3.5">
+      <div class="mt-4 space-y-3 flex-1 overflow-y-auto pr-1">
         <!-- Quick Summary Bar -->
-        <div class="grid grid-cols-2 gap-2 text-[11px] bg-slate-950 p-3 rounded-2xl border border-slate-800">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-slate-950 p-3 rounded-2xl border border-slate-800 shrink-0">
           <div>
             <span class="text-slate-500 uppercase font-bold text-[9px] block">Reference Code</span>
             <span id="receipt-view-ref" class="font-mono font-bold text-ics-gold"></span>
           </div>
           <div>
-            <span class="text-slate-500 uppercase font-bold text-[9px] block">Student</span>
-            <span id="receipt-view-student" class="text-white font-semibold"></span>
+            <span class="text-slate-500 uppercase font-bold text-[9px] block">Student Buyer</span>
+            <span id="receipt-view-student" class="text-white font-semibold truncate block"></span>
           </div>
           <div>
             <span class="text-slate-500 uppercase font-bold text-[9px] block">Total Amount</span>
             <span id="receipt-view-amount" class="font-mono font-bold text-white"></span>
           </div>
           <div>
-            <span class="text-slate-500 uppercase font-bold text-[9px] block">GCash Reference No.</span>
-            <span id="receipt-view-gcash-ref" class="font-mono text-blue-300 font-bold"></span>
+            <span class="text-slate-500 uppercase font-bold text-[9px] block">GCash Ref No.</span>
+            <span id="receipt-view-gcash-ref" class="font-mono text-blue-300 font-bold truncate block"></span>
           </div>
         </div>
 
-        <!-- Receipt Image Frame -->
-        <div class="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden flex items-center justify-center p-2 max-h-[420px]">
-          <img id="receipt-view-img" src="" alt="Payment Receipt" class="max-h-[380px] w-auto object-contain rounded-xl shadow-lg">
+        <!-- Zoom Toolbar Controls -->
+        <div id="receipt-zoom-toolbar" class="flex items-center justify-between bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+          <span class="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+            <span>Zoom Level:</span>
+            <span id="receipt-zoom-level-text" class="font-mono text-cyan-300 font-bold">100%</span>
+          </span>
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="icsApp.zoomReceipt(-0.25)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition border border-slate-700" title="Zoom Out (-)">
+              −
+            </button>
+            <button type="button" onclick="icsApp.resetReceiptZoom()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition border border-slate-700" title="Reset Zoom">
+              Reset
+            </button>
+            <button type="button" onclick="icsApp.zoomReceipt(0.25)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition border border-slate-700" title="Zoom In (+)">
+              +
+            </button>
+            <button type="button" onclick="icsApp.rotateReceipt()" class="ml-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700 flex items-center gap-1" title="Rotate 90 deg">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Rotate</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Receipt Image Frame with Drag & Zoom -->
+        <div id="receipt-view-frame" class="relative rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden flex items-center justify-center p-2 min-h-[220px] max-h-[460px] select-none cursor-grab active:cursor-grabbing">
+          <img id="receipt-view-img" src="" alt="Payment Receipt" class="max-h-[420px] w-auto object-contain rounded-xl shadow-lg transition-transform duration-100 ease-out origin-center">
+          <div id="receipt-view-empty-notice" class="hidden py-8 px-4 text-center">
+            <svg class="w-10 h-10 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <p class="text-xs font-bold text-slate-300">Walang naka-attach na screenshot ng resibo</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">I-verify ang bayad gamit ang GCash Reference Number sa itaas.</p>
+          </div>
         </div>
 
         <!-- Modal Actions -->
-        <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-between shrink-0">
           <a id="receipt-view-download-link" href="" target="_blank" download="receipt.jpg" class="text-xs text-blue-400 hover:underline flex items-center gap-1 font-semibold">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Open Full Image
+            Open Full Size in Tab
           </a>
           <div class="flex items-center gap-2">
-            <button onclick="icsApp.closeReceiptViewModal()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+            <button type="button" onclick="icsApp.closeReceiptViewModal()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
               Close
             </button>
             <button id="receipt-verify-btn" onclick="icsApp.verifyReceiptPayment()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1 cursor-pointer">
@@ -2658,6 +3105,277 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: MESSAGE STUDENT BUYER ("if may itatanong yung admin don sa bibili") -->
+  <!-- ======================================================== -->
+  <div id="admin-message-buyer-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative text-left">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3.5 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-cyan-950 text-cyan-400 border border-cyan-800 flex items-center justify-center shadow-inner">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-black text-white font-display flex items-center gap-2">
+              <span>Message Student Buyer</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold">Direct Inquiry</span>
+            </h3>
+            <p class="text-[11px] text-slate-400">Ask questions, clarify GCash payment, or confirm sizing directly with the buyer</p>
+          </div>
+        </div>
+        <button type="button" onclick="icsApp.closeAdminMessageBuyerModal()" class="text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <!-- Buyer & Order Summary Card -->
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Student Buyer:</span>
+            <span id="msg-buyer-student-name" class="font-bold text-white text-sm"></span>
+          </div>
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-slate-400">Student Number:</span>
+            <span id="msg-buyer-student-id" class="font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/60"></span>
+          </div>
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-slate-400">Order Reference Code:</span>
+            <span id="msg-buyer-ref-code" class="font-mono text-ics-gold font-bold"></span>
+          </div>
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-slate-400">Payment Status:</span>
+            <span id="msg-buyer-payment-status" class="font-bold px-2 py-0.5 rounded text-[10px]"></span>
+          </div>
+        </div>
+
+        <!-- Existing Active Ticket Indicator if any -->
+        <div id="msg-buyer-active-ticket-alert" class="hidden bg-amber-950/60 border border-amber-800/80 p-2.5 rounded-xl text-xs flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 text-amber-300">
+            <svg class="w-4 h-4 text-amber-400 animate-pulse shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span id="msg-buyer-active-ticket-text" class="text-[11px]">Active conversation exists for this order.</span>
+          </div>
+          <button type="button" onclick="icsApp.jumpToHelpdeskFromMessageModal()" class="px-2 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px] transition shrink-0 cursor-pointer">
+            Open Chat &rarr;
+          </button>
+        </div>
+
+        <!-- Subject Input -->
+        <div>
+          <label class="block text-[11px] uppercase font-bold text-slate-300 mb-1">Subject / Paksa:</label>
+          <input
+            type="text"
+            id="msg-buyer-subject"
+            placeholder="e.g. GCash Payment Verification / Sizing Confirmation"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-sans shadow-inner">
+        </div>
+
+        <!-- Quick Question Suggestions (Chips) -->
+        <div>
+          <span class="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">Quick Prompts (I-click para mabilisang mag-type):</span>
+          <div class="flex flex-wrap gap-1.5 text-[10px]">
+            <button
+              type="button"
+              onclick="icsApp.setAdminMessageQuickPrompt('Pakisend po ng clearer screenshot ng inyong GCash receipt para ma-verify namin ang payment. Salamat!')"
+              class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition cursor-pointer">
+              💳 Request Clearer Receipt
+            </button>
+            <button
+              type="button"
+              onclick="icsApp.setAdminMessageQuickPrompt('Gusto lang po naming i-confirm kung tama ang napili ninyong size bago namin i-prepare ang inyong order.')"
+              class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer">
+              👕 Confirm Sizing
+            </button>
+            <button
+              type="button"
+              onclick="icsApp.setAdminMessageQuickPrompt('Ready na po for pickup ang inyong merchandise sa ICS Council Office! Pakidala po ang inyong Student ID.')"
+              class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 transition cursor-pointer">
+              📦 Ready for Pickup Notice
+            </button>
+            <button
+              type="button"
+              onclick="icsApp.setAdminMessageQuickPrompt('Pakicheck po ulit ang inyong GCash Reference Number dahil hindi po nag-match sa opisyal na ledger.')"
+              class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 transition cursor-pointer">
+              ⚠️ GCash Ref Mismatch
+            </button>
+          </div>
+        </div>
+
+        <!-- Message Body Textarea -->
+        <div>
+          <label class="block text-[11px] uppercase font-bold text-slate-300 mb-1">Mensahe / Tanong ng Admin sa Estudyante:</label>
+          <textarea
+            id="msg-buyer-content"
+            rows="4"
+            placeholder="Isulat ang inyong tanong o mensahe para sa estudyante..."
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-sans shadow-inner"></textarea>
+        </div>
+
+        <!-- Modal Action Buttons -->
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onclick="icsApp.closeAdminMessageBuyerModal()"
+            class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+            Cancel
+          </button>
+          <button
+            type="button"
+            id="msg-buyer-send-btn"
+            onclick="icsApp.sendAdminMessageToBuyer()"
+            class="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-cyan-950/60 cursor-pointer">
+            <svg class="w-4 h-4 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            <span id="msg-buyer-send-btn-label">Send Message to Student</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL / PRINTABLE CLAIM SLIP (FOR ADMIN VERIFICATION & ISSUANCE) -->
+  <!-- ======================================================== -->
+  <div id="slip-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white text-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative text-left" id="printable-claim-slip">
+
+      <!-- Slip Header -->
+      <div class="flex items-center justify-between pb-4 border-b-2 border-slate-900">
+        <div class="flex items-center gap-3">
+          <img src="{{ asset('images/ics-logo.png') }}" alt="ICS" class="w-12 h-12 object-contain rounded-xl p-0.5 bg-slate-900">
+          <div>
+            <h2 class="text-sm font-black uppercase tracking-tight text-red-900 leading-none">
+              INTEGRATED COMPUTER SOCIETY
+            </h2>
+            <p class="text-[10px] text-slate-600 font-bold uppercase tracking-wider mt-0.5">
+              Official Uniform &amp; Merch Reservation Claim Slip
+            </p>
+            <p class="text-[9px] text-slate-500 font-mono">Official Administrator Copy | Verified Claim Slip</p>
+          </div>
+        </div>
+        <button type="button" onclick="icsApp.closeSlipModal()" class="text-slate-400 hover:text-black p-1 no-print cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Slip Details -->
+      <div class="mt-4 space-y-4">
+
+        <div class="flex items-center justify-between bg-slate-100 p-3 rounded-2xl border border-slate-200">
+          <div>
+            <p class="text-[10px] text-slate-500 font-bold uppercase">Reference Code</p>
+            <p id="slip-ref" class="text-base font-black font-mono text-red-800"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-slate-500 font-bold uppercase">Status</p>
+            <p id="slip-status" class="text-xs font-bold font-mono text-emerald-700"></p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p class="text-[10px] text-slate-500 font-bold uppercase">Student Name</p>
+            <p id="slip-student-name" class="font-bold text-slate-900"></p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-500 font-bold uppercase">Student ID</p>
+            <p id="slip-student-id" class="font-mono text-slate-900"></p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-500 font-bold uppercase">Department</p>
+            <p id="slip-dept" class="text-slate-700"></p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-500 font-bold uppercase">Pickup Slot</p>
+            <p id="slip-pickup-slot" class="font-semibold text-slate-900"></p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-500 font-bold uppercase">Payment Method</p>
+            <p id="slip-payment-method" class="font-bold text-slate-900"></p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-500 font-bold uppercase">Payment Status</p>
+            <p id="slip-payment-status" class="font-mono font-bold text-slate-800"></p>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 text-slate-600 text-[10px] uppercase font-mono border-b border-slate-200">
+              <tr>
+                <th class="py-2 px-3">Item Description</th>
+                <th class="py-2 px-2 text-center">Size</th>
+                <th class="py-2 px-2 text-center">Qty</th>
+                <th class="py-2 px-3 text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="slip-items-tbody" class="divide-y divide-slate-100">
+              <!-- Rendered via JS -->
+            </tbody>
+            <tfoot class="bg-slate-50 text-xs">
+              <tr class="text-slate-600">
+                <td colspan="3" class="py-1 px-3 text-right">Items Subtotal:</td>
+                <td id="slip-subtotal" class="py-1 px-3 text-right font-mono">₱0.00</td>
+              </tr>
+              <tr class="text-slate-600">
+                <td colspan="3" class="py-1 px-3 text-right">Additional Reservation Fee:</td>
+                <td class="py-1 px-3 text-right font-mono text-red-900 font-semibold">+₱10.00</td>
+              </tr>
+              <tr class="font-bold border-t border-slate-200">
+                <td colspan="3" class="py-2 px-3 text-right text-xs text-slate-900">Total Amount Due:</td>
+                <td id="slip-grandtotal" class="py-2 px-3 text-right text-sm font-mono text-red-900 font-black"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Barcode / QR Simulation -->
+        <div class="pt-3 border-t border-dashed border-slate-300 flex items-center justify-between">
+          <div>
+            <p class="text-[10px] text-slate-500 font-mono">Official record from ICS Admin Console.</p>
+            <p class="text-[9px] text-slate-400">Claims valid for 3 working days from scheduled date.</p>
+          </div>
+          <div class="text-right">
+            <div class="inline-flex gap-0.5 h-8 items-center bg-slate-100 p-1 rounded">
+              <span class="w-1 h-full bg-slate-900"></span>
+              <span class="w-0.5 h-full bg-slate-900"></span>
+              <span class="w-1.5 h-full bg-slate-900"></span>
+              <span class="w-0.5 h-full bg-slate-900"></span>
+              <span class="w-2 h-full bg-slate-900"></span>
+              <span class="w-1 h-full bg-slate-900"></span>
+              <span class="w-0.5 h-full bg-slate-900"></span>
+              <span class="w-1.5 h-full bg-slate-900"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Slip Footer Actions (No Print) -->
+      <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end gap-3 no-print">
+        <button type="button" onclick="icsApp.closeSlipModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition cursor-pointer">
+          Close
+        </button>
+        <button type="button" onclick="window.print()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-black text-white transition flex items-center gap-1.5 shadow cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          <span>Print Claim Slip</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -2732,6 +3450,35 @@
         this.actLogsCurrentPage = 1;
         this.actLogsPerPage = 50;
         this.actLogsFilterAction = 'all';
+        this.actLogsSearchQuery = '';
+        // Persistent Selection & Sort States (Saved across search, sort, and browser refresh)
+        try {
+          const savedReportIds = JSON.parse(localStorage.getItem('ics_selected_report_ids') || '[]');
+          this.selectedReportProductIds = new Set(Array.isArray(savedReportIds) ? savedReportIds.map(String) : []);
+        } catch (e) {
+          this.selectedReportProductIds = new Set();
+        }
+
+        try {
+          const savedClaimedIds = JSON.parse(localStorage.getItem('ics_selected_claimed_ids') || '[]');
+          this.selectedClaimedIds = new Set(Array.isArray(savedClaimedIds) ? savedClaimedIds.map(String) : []);
+        } catch (e) {
+          this.selectedClaimedIds = new Set();
+        }
+
+        try {
+          const savedResIds = JSON.parse(localStorage.getItem('ics_selected_reservation_ids') || '[]');
+          this.selectedReservationIds = new Set(Array.isArray(savedResIds) ? savedResIds.map(String) : []);
+        } catch (e) {
+          this.selectedReservationIds = new Set();
+        }
+
+        this.activeClaimedSort = 'date_claimed_desc';
+        this.activeReportSort = 'code_asc';
+        this.reportSearchQuery = '';
+
+        this._knownReservationRefs = new Set((this.reservations || []).map(x => x.ref_code));
+        this._hasRenderedInitialQueue = false;
 
         this.init();
       }
@@ -2743,6 +3490,11 @@
         this.updateMobileDrawerContent();
         this.renderAdminTicketsList();
         this.renderActivityLogsTable();
+        this.renderReservationsQueue();
+        this.renderClaimedLedgerTable();
+        this.restoreReportSelectionUI();
+        this.restoreClaimedSelectionUI();
+        this.restoreReservationSelectionUI();
 
         @if(session('success'))
           this.showToast(@json(session('success')), 'success');
@@ -2785,6 +3537,7 @@
           if (e.key === 'Escape') {
             this.closeMobileDrawer();
             this.closeQrZoomModal();
+            this.closeReceiptViewModal();
           }
         });
       }
@@ -2814,7 +3567,21 @@
 
             // 1. Synchronize in-memory collections
             if (data.products) this.catalog = data.products;
-            if (data.reservations) this.reservations = data.reservations;
+            if (data.reservations) {
+              const prevRefs = this._knownReservationRefs || new Set();
+              const currentRefs = new Set((data.reservations || []).map(x => x.ref_code));
+
+              if (this._hasRenderedInitialQueue) {
+                const newOrders = (data.reservations || []).filter(x => !prevRefs.has(x.ref_code));
+                if (newOrders.length > 0) {
+                  newOrders.forEach(no => {
+                    this.showToast(`New student order: #${no.ref_code} from ${no.student_name}!`, 'info');
+                  });
+                }
+              }
+              this._knownReservationRefs = currentRefs;
+              this.reservations = data.reservations;
+            }
             if (data.claimed_reservations) {
               this.claimedReservations = data.claimed_reservations;
               if (this.adminTab === 'reports') {
@@ -3383,6 +4150,8 @@
 
         if (tabName === 'dashboard') {
           setTimeout(() => this.initAdminCharts(), 100);
+        } else if (tabName === 'reservations') {
+          this.renderReservationsQueue();
         } else if (tabName === 'support' || tabName === 'helpdesk') {
           this.renderAdminTicketsList();
           if (this.activeAdminTicketId) {
@@ -3395,6 +4164,9 @@
           }
         } else if (tabName === 'claimed') {
           this.renderClaimedLedgerTable();
+          this.restoreClaimedSelectionUI();
+        } else if (tabName === 'reports') {
+          this.restoreReportSelectionUI();
         } else if (tabName === 'actlogs') {
           this.renderActivityLogsTable();
         }
@@ -4267,65 +5039,137 @@
       }
 
       // ==========================================
+      // OFFICIAL LOGSHEET PRINTING
+      // ==========================================
+      printClaimedLogsheet() {
+        const url = '{{ route("reports.export_claimed_pdf") }}?print=1';
+        const win = window.open(url, '_blank');
+        if (win) {
+          win.focus();
+        } else {
+          window.location.href = url;
+        }
+      }
+
+      // ==========================================
       // CLAIM SLIP DISPLAY & PRINT
       // ==========================================
       viewPrintClaimSlip(resObj) {
-        document.getElementById('slip-ref').textContent = resObj.ref_code;
-        document.getElementById('slip-status').textContent = resObj.status;
-        document.getElementById('slip-student-name').textContent = resObj.student_name;
-        document.getElementById('slip-student-id').textContent = resObj.student_id;
-        document.getElementById('slip-dept').textContent = resObj.department;
-        document.getElementById('slip-pickup-slot').textContent = `${resObj.pickup_date} (${resObj.pickup_slot})`;
+        if (typeof resObj === 'string' || typeof resObj === 'number') {
+          resObj = (this.reservations || []).find(r => String(r.id) === String(resObj))
+                || (this.claimedReservations || []).find(r => String(r.id) === String(resObj))
+                || null;
+        }
+        if (!resObj) return;
+        document.body.classList.add('slip-modal-open');
+
+        const refEl = document.getElementById('slip-ref');
+        const statusEl = document.getElementById('slip-status');
+        const nameEl = document.getElementById('slip-student-name');
+        const idEl = document.getElementById('slip-student-id');
+        const deptEl = document.getElementById('slip-dept');
+        const slotEl = document.getElementById('slip-pickup-slot');
+
+        if (refEl) refEl.textContent = resObj.ref_code || 'N/A';
+        if (statusEl) statusEl.textContent = resObj.status || 'Pending';
+        if (nameEl) nameEl.textContent = resObj.student_name || 'Student';
+        if (idEl) idEl.textContent = resObj.student_id || 'N/A';
+        if (deptEl) deptEl.textContent = resObj.department || 'ICS';
+        if (slotEl) slotEl.textContent = `${resObj.pickup_date || ''} (${resObj.pickup_slot || ''})`;
 
         const tbody = document.getElementById('slip-items-tbody');
-        tbody.innerHTML = '';
+        if (tbody) tbody.innerHTML = '';
         let total = 0;
 
         const items = typeof resObj.items === 'string' ? JSON.parse(resObj.items) : (resObj.items || []);
         items.forEach(it => {
           const sub = (it.price || 0) * (it.quantity || 1);
           total += sub;
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="py-2 px-3 font-medium text-slate-800">${it.productName}</td>
-            <td class="py-2 px-2 text-center font-mono font-bold text-red-800">${it.size}</td>
-            <td class="py-2 px-2 text-center font-mono">${it.quantity}</td>
-            <td class="py-2 px-3 text-right font-mono font-bold">₱${sub.toFixed(2)}</td>
-          `;
-          tbody.appendChild(tr);
+          if (tbody) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="py-2 px-3 font-medium text-slate-800">${it.productName || it.name || 'Apparel'}</td>
+              <td class="py-2 px-2 text-center font-mono font-bold text-red-800">${it.size || 'N/A'}</td>
+              <td class="py-2 px-2 text-center font-mono">${it.quantity || 1}</td>
+              <td class="py-2 px-3 text-right font-mono font-bold">₱${sub.toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+          }
         });
 
         const slipSubtotalEl = document.getElementById('slip-subtotal');
         if (slipSubtotalEl) slipSubtotalEl.textContent = '₱' + total.toFixed(2);
 
         const grandTotal = Number(resObj.total_amount) > total ? Number(resObj.total_amount) : total + 10.00;
-        document.getElementById('slip-grandtotal').textContent = '₱' + grandTotal.toFixed(2);
+        const grandTotalEl = document.getElementById('slip-grandtotal');
+        if (grandTotalEl) grandTotalEl.textContent = '₱' + grandTotal.toFixed(2);
 
         const payMethodEl = document.getElementById('slip-payment-method');
         const payStatusEl = document.getElementById('slip-payment-status');
         if (payMethodEl) payMethodEl.textContent = resObj.payment_method || 'Cash on Pickup';
         if (payStatusEl) payStatusEl.textContent = resObj.payment_status || 'Unpaid';
 
-        document.getElementById('slip-modal').classList.remove('hidden');
+        const modal = document.getElementById('slip-modal');
+        if (modal) modal.classList.remove('hidden');
       }
 
       // ==========================================
       // RECEIPT VIEWER MODAL & VERIFICATION
       // ==========================================
       openReceiptViewModal(resObj) {
+        if (typeof resObj === 'string' || typeof resObj === 'number') {
+          resObj = (this.reservations || []).find(r => String(r.id) === String(resObj))
+                || (this.claimedReservations || []).find(r => String(r.id) === String(resObj))
+                || null;
+        }
+        if (!resObj) return;
         this.activeViewingReceiptReservation = resObj;
-        document.getElementById('receipt-view-ref').textContent = resObj.ref_code;
-        document.getElementById('receipt-view-student').textContent = `${resObj.student_name} (${resObj.student_id})`;
-        document.getElementById('receipt-view-amount').textContent = '₱' + Number(resObj.total_amount).toFixed(2);
-        document.getElementById('receipt-view-gcash-ref').textContent = resObj.payment_reference || 'Not Provided';
+        const refEl = document.getElementById('receipt-view-ref');
+        if (refEl) refEl.textContent = resObj.ref_code || '';
+        const stuEl = document.getElementById('receipt-view-student');
+        if (stuEl) stuEl.textContent = `${resObj.student_name || 'Student'} (${resObj.student_id || 'N/A'})`;
+        const amtEl = document.getElementById('receipt-view-amount');
+        if (amtEl) amtEl.textContent = '₱' + Number(resObj.total_amount || 0).toFixed(2);
+        const gcashRefEl = document.getElementById('receipt-view-gcash-ref');
+        if (gcashRefEl) gcashRefEl.textContent = resObj.payment_reference || 'Not Provided';
 
-        const imgSrc = resObj.receipt_image ? (
-          (resObj.receipt_image.startsWith('http') || resObj.receipt_image.startsWith('data:'))
+        let imgSrc = '';
+        if (resObj.receipt_image && resObj.receipt_image !== 'images/gcash_qr.jpg' && !resObj.receipt_image.includes('gcash_qr')) {
+          imgSrc = (resObj.receipt_image.startsWith('http://') || resObj.receipt_image.startsWith('https://') || resObj.receipt_image.startsWith('data:image'))
             ? resObj.receipt_image
-            : (`{{ asset('') }}` + resObj.receipt_image.replace(/^\//, ''))
-        ) : '{{ asset("images/gcash_qr.jpg") }}';
-        document.getElementById('receipt-view-img').src = imgSrc;
-        document.getElementById('receipt-view-download-link').href = imgSrc;
+            : (`{{ asset('') }}` + resObj.receipt_image.replace(/^\//, ''));
+        }
+
+        const imgEl = document.getElementById('receipt-view-img');
+        const linkEl = document.getElementById('receipt-view-download-link');
+        const emptyNotice = document.getElementById('receipt-view-empty-notice');
+
+        if (imgSrc) {
+          if (imgEl) {
+            imgEl.src = imgSrc;
+            imgEl.classList.remove('hidden');
+          }
+          if (linkEl) {
+            linkEl.href = imgSrc;
+            linkEl.classList.remove('hidden');
+          }
+          if (emptyNotice) emptyNotice.classList.add('hidden');
+        } else {
+          if (imgEl) {
+            imgEl.src = '';
+            imgEl.classList.add('hidden');
+          }
+          if (linkEl) linkEl.classList.add('hidden');
+          if (emptyNotice) emptyNotice.classList.remove('hidden');
+        }
+
+        // Reset zoom & pan transforms
+        this.receiptZoomScale = 1;
+        this.receiptPanX = 0;
+        this.receiptPanY = 0;
+        this.receiptRotation = 0;
+        this.applyReceiptTransform();
+        this.initReceiptPanAndZoomEvents();
 
         const verifyBtn = document.getElementById('receipt-verify-btn');
         if (verifyBtn) {
@@ -4349,6 +5193,237 @@
       closeReceiptViewModal() {
         document.getElementById('receipt-view-modal').classList.add('hidden');
         this.activeViewingReceiptReservation = null;
+        this.receiptZoomScale = 1;
+        this.receiptPanX = 0;
+        this.receiptPanY = 0;
+        this.receiptRotation = 0;
+      }
+
+      zoomReceipt(delta) {
+        let newScale = (this.receiptZoomScale || 1) + delta;
+        newScale = Math.max(0.5, Math.min(newScale, 4.0)); // Zoom range 50% to 400%
+        this.receiptZoomScale = newScale;
+        if (newScale === 1) {
+          this.receiptPanX = 0;
+          this.receiptPanY = 0;
+        }
+        this.applyReceiptTransform();
+      }
+
+      rotateReceipt() {
+        this.receiptRotation = ((this.receiptRotation || 0) + 90) % 360;
+        this.applyReceiptTransform();
+      }
+
+      resetReceiptZoom() {
+        this.receiptZoomScale = 1;
+        this.receiptPanX = 0;
+        this.receiptPanY = 0;
+        this.receiptRotation = 0;
+        this.applyReceiptTransform();
+      }
+
+      applyReceiptTransform() {
+        const img = document.getElementById('receipt-view-img');
+        const zoomText = document.getElementById('receipt-zoom-level-text');
+        const scale = this.receiptZoomScale || 1;
+        const x = this.receiptPanX || 0;
+        const y = this.receiptPanY || 0;
+        const rot = this.receiptRotation || 0;
+
+        if (img) {
+          img.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${rot}deg)`;
+        }
+        if (zoomText) {
+          zoomText.textContent = `${Math.round(scale * 100)}%`;
+        }
+      }
+
+      initReceiptPanAndZoomEvents() {
+        const frame = document.getElementById('receipt-view-frame');
+        if (!frame || frame._hasZoomEventsAttached) return;
+        frame._hasZoomEventsAttached = true;
+
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+
+        frame.addEventListener('mousedown', (e) => {
+          if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+          isDragging = true;
+          startX = e.clientX - (this.receiptPanX || 0);
+          startY = e.clientY - (this.receiptPanY || 0);
+          e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          this.receiptPanX = e.clientX - startX;
+          this.receiptPanY = e.clientY - startY;
+          this.applyReceiptTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+          isDragging = false;
+        });
+
+        // Mousewheel zoom support
+        frame.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const delta = e.deltaY < 0 ? 0.2 : -0.2;
+          this.zoomReceipt(delta);
+        }, { passive: false });
+      }
+
+      // ==========================================
+      // ADMIN MESSAGE STUDENT BUYER MODAL
+      // ("also add ka ng msg icon sa reservation if may itatanong yung admin don sa bibili")
+      // ==========================================
+      openAdminMessageBuyerModal(resObj) {
+        if (typeof resObj === 'string' || typeof resObj === 'number') {
+          resObj = (this.reservations || []).find(r => String(r.id) === String(resObj))
+                || (this.claimedReservations || []).find(r => String(r.id) === String(resObj))
+                || null;
+        }
+        if (!resObj) return;
+        this.activeMessageReservation = resObj;
+
+        const nameEl = document.getElementById('msg-buyer-student-name');
+        const idEl = document.getElementById('msg-buyer-student-id');
+        const refEl = document.getElementById('msg-buyer-ref-code');
+        const statusEl = document.getElementById('msg-buyer-payment-status');
+        const subjectEl = document.getElementById('msg-buyer-subject');
+        const contentEl = document.getElementById('msg-buyer-content');
+        const alertBox = document.getElementById('msg-buyer-active-ticket-alert');
+        const alertText = document.getElementById('msg-buyer-active-ticket-text');
+
+        if (nameEl) nameEl.textContent = resObj.student_name || 'Student Buyer';
+        if (idEl) idEl.textContent = resObj.student_id || 'N/A';
+        if (refEl) refEl.textContent = resObj.ref_code || 'N/A';
+        if (statusEl) {
+          const pm = resObj.payment_method || 'Cash';
+          const ps = resObj.payment_status || 'Unpaid';
+          statusEl.textContent = `${pm} (${ps})`;
+          statusEl.className = ps === 'Verified'
+            ? 'font-bold px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800'
+            : 'font-bold px-2 py-0.5 rounded text-[10px] bg-amber-950 text-amber-300 border border-amber-800';
+        }
+
+        if (subjectEl) {
+          subjectEl.value = `Order Inquiry - ${resObj.ref_code}`;
+        }
+        if (contentEl) {
+          contentEl.value = '';
+        }
+
+        // Check if there is an active support ticket already for this reservation
+        const existingTicket = (this.supportTickets || []).find(t =>
+          t.reservation_ref === resObj.ref_code && (t.status === 'Open' || t.status === 'In Progress')
+        );
+
+        if (alertBox) {
+          if (existingTicket) {
+            alertBox.classList.remove('hidden');
+            if (alertText) alertText.textContent = `Active Ticket [${existingTicket.ticket_code}]: Message will be added to this ongoing chat.`;
+          } else {
+            alertBox.classList.add('hidden');
+          }
+        }
+
+        const modal = document.getElementById('admin-message-buyer-modal');
+        if (modal) modal.classList.remove('hidden');
+        if (contentEl) setTimeout(() => contentEl.focus(), 150);
+      }
+
+      closeAdminMessageBuyerModal() {
+        const modal = document.getElementById('admin-message-buyer-modal');
+        if (modal) modal.classList.add('hidden');
+        this.activeMessageReservation = null;
+      }
+
+      setAdminMessageQuickPrompt(text) {
+        const contentEl = document.getElementById('msg-buyer-content');
+        if (contentEl) {
+          contentEl.value = text;
+          contentEl.focus();
+        }
+      }
+
+      jumpToHelpdeskFromMessageModal() {
+        if (!this.activeMessageReservation) return;
+        const res = this.activeMessageReservation;
+        this.closeAdminMessageBuyerModal();
+
+        const ticket = (this.supportTickets || []).find(t =>
+          t.reservation_ref === res.ref_code && (t.status === 'Open' || t.status === 'In Progress')
+        );
+
+        this.setAdminTab('support');
+        if (ticket) {
+          this.selectAdminTicket(ticket.id);
+        }
+      }
+
+      async sendAdminMessageToBuyer() {
+        if (!this.activeMessageReservation) return;
+        const resObj = this.activeMessageReservation;
+
+        const contentEl = document.getElementById('msg-buyer-content');
+        const subjectEl = document.getElementById('msg-buyer-subject');
+        const sendBtn = document.getElementById('msg-buyer-send-btn');
+        const btnLabel = document.getElementById('msg-buyer-send-btn-label');
+
+        const messageText = (contentEl?.value || '').trim();
+        const subjectText = (subjectEl?.value || '').trim();
+
+        if (!messageText) {
+          this.showToast('Please type a message or question for the student buyer!', 'warning');
+          if (contentEl) contentEl.focus();
+          return;
+        }
+
+        if (sendBtn) sendBtn.disabled = true;
+        if (btnLabel) btnLabel.textContent = 'Sending Message...';
+
+        try {
+          const res = await fetch(`{{ url('api/reservations') }}/${resObj.id}/message-buyer`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+              message: messageText,
+              subject: subjectText
+            })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            this.showToast(`Message sent to ${resObj.student_name}!`, 'success');
+            if (data.ticket) {
+              // Update local state tickets
+              const existingIdx = (this.supportTickets || []).findIndex(t => t.id === data.ticket.id);
+              if (existingIdx >= 0) {
+                this.supportTickets[existingIdx] = data.ticket;
+              } else {
+                this.supportTickets.unshift(data.ticket);
+              }
+              this.renderAdminTicketsList();
+            }
+
+            this.closeAdminMessageBuyerModal();
+          } else {
+            this.showToast(data.message || 'Failed to send message.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          this.showToast('Network error while sending message to student.', 'error');
+        } finally {
+          if (sendBtn) sendBtn.disabled = false;
+          if (btnLabel) btnLabel.textContent = 'Send Message to Student';
+        }
       }
 
       async verifyReceiptPayment() {
@@ -4389,52 +5464,90 @@
       }
 
       closeSlipModal() {
-        document.getElementById('slip-modal').classList.add('hidden');
+        document.body.classList.remove('slip-modal-open');
+        const modal = document.getElementById('slip-modal');
+        if (modal) modal.classList.add('hidden');
       }
 
       // ==========================================
       // PRODUCT CRUD MODAL (IMAGE UPLOAD & EDIT)
       // ==========================================
       openAddProductModal() {
-        document.getElementById('product-modal-title').textContent = 'Add New Apparel / Merch Item';
-        document.getElementById('crud-product-id').value = '';
-        document.getElementById('crud-item-code').value = 'ICS-' + Math.floor(100 + Math.random() * 900);
-        document.getElementById('crud-name').value = '';
-        document.getElementById('crud-category').value = 'general';
-        document.getElementById('crud-price').value = '350';
-        document.getElementById('crud-material').value = 'Collegiate Cotton Twill';
-        document.getElementById('crud-desc').value = '';
-        document.getElementById('crud-image-preview').src = '{{ asset("images/male_polo.jpg") }}';
-        document.getElementById('crud-image-file').value = '';
-        document.getElementById('crud-image-preset').value = 'images/male_polo.jpg';
+        const titleEl = document.getElementById('product-modal-title');
+        if (titleEl) titleEl.textContent = 'Add New Apparel / Merch Item';
+        const idEl = document.getElementById('crud-product-id');
+        if (idEl) idEl.value = '';
+        const codeEl = document.getElementById('crud-item-code');
+        if (codeEl) codeEl.value = 'ICS-' + Math.floor(100 + Math.random() * 900);
+        const nameEl = document.getElementById('crud-name');
+        if (nameEl) nameEl.value = '';
+        const catEl = document.getElementById('crud-category');
+        if (catEl) catEl.value = 'general';
+        const priceEl = document.getElementById('crud-price');
+        if (priceEl) priceEl.value = '350';
+        const matEl = document.getElementById('crud-material');
+        if (matEl) matEl.value = 'Collegiate Cotton Twill';
+        const descEl = document.getElementById('crud-desc');
+        if (descEl) descEl.value = '';
+        const previewEl = document.getElementById('crud-image-preview');
+        if (previewEl) previewEl.src = '{{ asset("images/male_polo.jpg") }}';
+        const fileEl = document.getElementById('crud-image-file');
+        if (fileEl) fileEl.value = '';
+        const presetEl = document.getElementById('crud-image-preset');
+        if (presetEl) presetEl.value = 'images/male_polo.jpg';
 
         ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'].forEach(sz => {
-          document.getElementById(`crud-size-${sz}`).value = '15';
+          const szEl = document.getElementById(`crud-size-${sz}`);
+          if (szEl) szEl.value = '15';
         });
 
-        document.getElementById('product-crud-modal').classList.remove('hidden');
+        const modal = document.getElementById('product-crud-modal');
+        if (modal) modal.classList.remove('hidden');
       }
 
       openEditProductModal(product) {
-        document.getElementById('product-modal-title').textContent = `Edit Merchandise & Picture: ${product.name}`;
-        document.getElementById('crud-product-id').value = product.id;
-        document.getElementById('crud-item-code').value = product.item_code;
-        document.getElementById('crud-name').value = product.name;
-        document.getElementById('crud-category').value = product.category;
-        document.getElementById('crud-price').value = product.price;
-        document.getElementById('crud-gender').value = product.gender || 'Unisex';
-        document.getElementById('crud-dept').value = product.dept || 'all';
-        document.getElementById('crud-material').value = product.material || '';
-        document.getElementById('crud-desc').value = product.description || '';
-        document.getElementById('crud-image-preview').src = '{{ asset("") }}' + product.image_path;
-        document.getElementById('crud-image-file').value = '';
+        if (typeof product === 'string' || typeof product === 'number') {
+          product = (this.catalog || []).find(p => String(p.id) === String(product));
+        }
+        if (!product) return;
+
+        const titleEl = document.getElementById('product-modal-title');
+        if (titleEl) titleEl.textContent = `Edit Merchandise & Picture: ${product.name || 'Item'}`;
+        const idEl = document.getElementById('crud-product-id');
+        if (idEl) idEl.value = product.id || '';
+        const codeEl = document.getElementById('crud-item-code');
+        if (codeEl) codeEl.value = product.item_code || '';
+        const nameEl = document.getElementById('crud-name');
+        if (nameEl) nameEl.value = product.name || '';
+        const catEl = document.getElementById('crud-category');
+        if (catEl) catEl.value = product.category || 'general';
+        const priceEl = document.getElementById('crud-price');
+        if (priceEl) priceEl.value = product.price || '0';
+        const genderEl = document.getElementById('crud-gender');
+        if (genderEl) genderEl.value = product.gender || 'Unisex';
+        const deptEl = document.getElementById('crud-dept');
+        if (deptEl) deptEl.value = product.dept || 'all';
+        const matEl = document.getElementById('crud-material');
+        if (matEl) matEl.value = product.material || '';
+        const descEl = document.getElementById('crud-desc');
+        if (descEl) descEl.value = product.description || '';
+        const previewEl = document.getElementById('crud-image-preview');
+        if (previewEl && product.image_path) {
+          previewEl.src = (product.image_path.startsWith('http://') || product.image_path.startsWith('https://') || product.image_path.startsWith('data:image'))
+            ? product.image_path
+            : ('{{ asset("") }}' + product.image_path.replace(/^\//, ''));
+        }
+        const fileEl = document.getElementById('crud-image-file');
+        if (fileEl) fileEl.value = '';
 
         const sizes = product.sizes || {};
         ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'].forEach(sz => {
-          document.getElementById(`crud-size-${sz}`).value = sizes[sz] !== undefined ? sizes[sz] : 10;
+          const szEl = document.getElementById(`crud-size-${sz}`);
+          if (szEl) szEl.value = sizes[sz] !== undefined ? sizes[sz] : 10;
         });
 
-        document.getElementById('product-crud-modal').classList.remove('hidden');
+        const modal = document.getElementById('product-crud-modal');
+        if (modal) modal.classList.remove('hidden');
       }
 
       closeProductCrudModal() {
@@ -4554,19 +5667,32 @@
       }
 
       openEditUserModal(user) {
-        document.getElementById('user-modal-title').textContent = `Edit User: ${user.name}`;
-        document.getElementById('crud-user-id').value = user.id;
-        document.getElementById('crud-user-code').value = user.user_code;
-        document.getElementById('crud-user-name').value = user.name;
-        document.getElementById('crud-user-email').value = user.email;
-        document.getElementById('crud-user-role').value = user.role;
-        document.getElementById('crud-user-dept').value = user.department;
+        if (typeof user === 'string' || typeof user === 'number') {
+          user = (this.users || []).find(u => String(u.id) === String(user));
+        }
+        if (!user) return;
+
+        const titleEl = document.getElementById('user-modal-title');
+        if (titleEl) titleEl.textContent = `Edit User: ${user.name || 'User'}`;
+        const idEl = document.getElementById('crud-user-id');
+        if (idEl) idEl.value = user.id || '';
+        const codeEl = document.getElementById('crud-user-code');
+        if (codeEl) codeEl.value = user.user_code || '';
+        const nameEl = document.getElementById('crud-user-name');
+        if (nameEl) nameEl.value = user.name || '';
+        const emailEl = document.getElementById('crud-user-email');
+        if (emailEl) emailEl.value = user.email || '';
+        const roleEl = document.getElementById('crud-user-role');
+        if (roleEl) roleEl.value = user.role || 'Officer';
+        const deptEl = document.getElementById('crud-user-dept');
+        if (deptEl) deptEl.value = user.department || 'ICS';
         const feedbackEl = document.getElementById('user-email-feedback');
         if (feedbackEl) {
           feedbackEl.className = 'text-[10px] mt-1 text-slate-400';
           feedbackEl.textContent = 'Editing system user account.';
         }
-        document.getElementById('user-crud-modal').classList.remove('hidden');
+        const modal = document.getElementById('user-crud-modal');
+        if (modal) modal.classList.remove('hidden');
       }
 
       onUserEmailInput(val) {
@@ -4895,6 +6021,198 @@
             el.classList.add('hidden');
           }
         });
+        this.restoreReservationSelectionUI();
+      }
+
+      toggleReservationRowSelect(event, id) {
+        if (event && (event.target.tagName === 'INPUT' || event.target.closest('button') || event.target.closest('a') || event.target.closest('select'))) {
+          return;
+        }
+        const card = document.querySelector(`.reservation-queue-card[data-id="${id}"]`);
+        if (!card) return;
+        const status = card.getAttribute('data-status');
+        if (status !== 'Claimed' && status !== 'Cancelled') {
+          return; // Only finished orders are selectable for deletion
+        }
+
+        const cb = card.querySelector('.reservation-row-checkbox');
+        if (cb) {
+          cb.checked = !cb.checked;
+        }
+        const idStr = String(id);
+        if (this.selectedReservationIds.has(idStr)) {
+          this.selectedReservationIds.delete(idStr);
+        } else {
+          this.selectedReservationIds.add(idStr);
+        }
+        try {
+          localStorage.setItem('ics_selected_reservation_ids', JSON.stringify(Array.from(this.selectedReservationIds)));
+        } catch (e) {}
+        this.restoreReservationSelectionUI();
+      }
+
+      onReservationCheckboxChange() {
+        const checkboxes = document.querySelectorAll('.reservation-row-checkbox');
+        checkboxes.forEach(cb => {
+          const idStr = String(cb.value);
+          if (cb.checked) {
+            this.selectedReservationIds.add(idStr);
+          } else {
+            this.selectedReservationIds.delete(idStr);
+          }
+        });
+        try {
+          localStorage.setItem('ics_selected_reservation_ids', JSON.stringify(Array.from(this.selectedReservationIds)));
+        } catch (e) {}
+        this.restoreReservationSelectionUI();
+      }
+
+      toggleAllReservationCheckboxes(checked) {
+        const cards = document.querySelectorAll('#reservations-list .reservation-queue-card');
+        cards.forEach(card => {
+          if (!card.classList.contains('hidden') && card.style.display !== 'none') {
+            const status = card.getAttribute('data-status');
+            // Only select finished (Claimed or Cancelled) orders
+            if (status === 'Claimed' || status === 'Cancelled') {
+              const id = card.getAttribute('data-id');
+              const cb = card.querySelector('.reservation-row-checkbox');
+              if (cb) cb.checked = checked;
+              if (id) {
+                const idStr = String(id);
+                if (checked) {
+                  this.selectedReservationIds.add(idStr);
+                } else {
+                  this.selectedReservationIds.delete(idStr);
+                }
+              }
+            }
+          }
+        });
+        try {
+          localStorage.setItem('ics_selected_reservation_ids', JSON.stringify(Array.from(this.selectedReservationIds)));
+        } catch (e) {}
+        this.restoreReservationSelectionUI();
+      }
+
+      restoreReservationSelectionUI() {
+        try {
+          const raw = localStorage.getItem('ics_selected_reservation_ids');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            this.selectedReservationIds = new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+          }
+        } catch (e) {}
+
+        const cards = document.querySelectorAll('#reservations-list .reservation-queue-card');
+        let visibleSelectableTotal = 0;
+        let visibleChecked = 0;
+
+        cards.forEach(card => {
+          if (!card.classList.contains('hidden') && card.style.display !== 'none') {
+            const cb = card.querySelector('.reservation-row-checkbox');
+            if (cb) {
+              visibleSelectableTotal++;
+              const id = card.getAttribute('data-id');
+              const isSelected = id && this.selectedReservationIds.has(String(id));
+              cb.checked = isSelected;
+              if (isSelected) {
+                visibleChecked++;
+                card.classList.add('ring-2', 'ring-rose-500/80', 'bg-rose-950/20');
+              } else {
+                card.classList.remove('ring-2', 'ring-rose-500/80', 'bg-rose-950/20');
+              }
+            }
+          }
+        });
+
+        const selectAll = document.getElementById('reservations-select-all');
+        if (selectAll) {
+          selectAll.checked = visibleSelectableTotal > 0 && visibleChecked === visibleSelectableTotal;
+        }
+
+        const countBadge = document.getElementById('reservations-selected-badge');
+        const bulkDeleteBtn = document.getElementById('reservations-bulk-delete-btn');
+        const count = this.selectedReservationIds ? this.selectedReservationIds.size : 0;
+
+        if (countBadge) {
+          if (count > 0) {
+            countBadge.textContent = `${count} Selected`;
+            countBadge.classList.remove('hidden');
+          } else {
+            countBadge.classList.add('hidden');
+          }
+        }
+
+        if (bulkDeleteBtn) {
+          if (count > 0) {
+            bulkDeleteBtn.classList.remove('hidden');
+          } else {
+            bulkDeleteBtn.classList.add('hidden');
+          }
+        }
+      }
+
+      async deleteSelectedReservations() {
+        if (!this.selectedReservationIds || this.selectedReservationIds.size === 0) {
+          this.showToast('Please select at least one reservation to delete.', 'info');
+          return;
+        }
+
+        const count = this.selectedReservationIds.size;
+        if (!confirm(`Are you sure you want to permanently delete ${count} selected reservation(s)?\n\nThis will remove them from the database, return any reserved inventory back to available stock, and delete associated tickets. This action cannot be undone.`)) {
+          return;
+        }
+
+        this.setAdminTab('reservations');
+
+        try {
+          const res = await fetch(`{{ url('api/reservations/bulk-delete') }}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              ids: Array.from(this.selectedReservationIds)
+            })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            this.showToast(data.message || `Deleted ${count} reservation(s) permanently!`, 'success');
+
+            const idSet = this.selectedReservationIds;
+            this.reservations = (this.reservations || []).filter(r => !idSet.has(String(r.id)));
+
+            // Animate and remove cards
+            idSet.forEach(id => {
+              const card = document.querySelector(`.reservation-queue-card[data-id="${id}"]`);
+              if (card) {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.95)';
+                setTimeout(() => card.remove(), 300);
+              }
+            });
+
+            this.selectedReservationIds.clear();
+            try {
+              localStorage.removeItem('ics_selected_reservation_ids');
+            } catch (e) {}
+
+            this.restoreReservationSelectionUI();
+
+            // Update badge counters
+            const totalBadge = document.getElementById('reservations-total-badge');
+            if (totalBadge) totalBadge.textContent = `${(this.reservations || []).length} Total`;
+          } else {
+            this.showToast(data.message || 'Failed to delete selected reservations.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          this.showToast('Network error while deleting selected reservations.', 'error');
+        }
       }
 
       // ==========================================
@@ -4907,11 +6225,32 @@
 
         const allLogs = Array.isArray(this.activityLogs) ? this.activityLogs : Object.values(this.activityLogs || {});
         const actionFilter = this.actLogsFilterAction || 'all';
+        const q = (this.actLogsSearchQuery || '').toLowerCase().trim();
 
         const filtered = allLogs.filter(log => {
           if (!log) return false;
-          if (actionFilter === 'all') return true;
-          return (log.action || '').toUpperCase() === actionFilter.toUpperCase();
+          if (actionFilter !== 'all' && (log.action || '').toUpperCase() !== actionFilter.toUpperCase()) {
+            return false;
+          }
+          if (q) {
+            const userCode = String(log.user_code || '').toLowerCase();
+            const action = String(log.action || '').toLowerCase();
+            const activity = String(log.activity || '').toLowerCase();
+            const module = String(log.module || '').toLowerCase();
+            const rawDate = String(log.created_at || '').toLowerCase();
+            const formattedDate = log.created_at ? new Date(log.created_at).toLocaleString([], {
+              month: '2-digit', day: '2-digit', year: 'numeric',
+              hour: '2-digit', minute: '2-digit'
+            }).toLowerCase() : '';
+
+            return userCode.includes(q) ||
+                   action.includes(q) ||
+                   activity.includes(q) ||
+                   module.includes(q) ||
+                   rawDate.includes(q) ||
+                   formattedDate.includes(q);
+          }
+          return true;
         });
 
         const perPage = this.actLogsPerPage || 50;
@@ -4932,15 +6271,27 @@
         tbody.innerHTML = '';
 
         if (currentSlice.length === 0) {
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="5" class="py-12 text-center text-slate-500 font-sans">
-                <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                <p class="font-bold text-xs text-slate-400">No activity logs found</p>
-                <p class="text-[11px] text-slate-600 mt-0.5">Audit actions (CREATE, UPDATE, DELETE) will appear here.</p>
-              </td>
-            </tr>
-          `;
+          if (q) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="5" class="py-12 text-center text-slate-500 font-sans">
+                  <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  <p class="font-bold text-xs text-slate-300">No activity logs matching "${this.actLogsSearchQuery}"</p>
+                  <p class="text-[11px] text-slate-500 mt-1">Try another keyword or <button type="button" onclick="icsApp.clearActivityLogSearch()" class="text-cyan-400 underline font-semibold hover:text-cyan-300 cursor-pointer">clear search</button>.</p>
+                </td>
+              </tr>
+            `;
+          } else {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="5" class="py-12 text-center text-slate-500 font-sans">
+                  <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  <p class="font-bold text-xs text-slate-400">No activity logs found</p>
+                  <p class="text-[11px] text-slate-600 mt-0.5">Audit actions (CREATE, UPDATE, DELETE) will appear here.</p>
+                </td>
+              </tr>
+            `;
+          }
         } else {
           currentSlice.forEach(log => {
             const tr = document.createElement('tr');
@@ -4980,7 +6331,11 @@
         const infoEl = document.getElementById('act-logs-page-info');
         if (infoEl) {
           const from = totalLogs > 0 ? startIndex + 1 : 0;
-          infoEl.textContent = `Showing ${from} to ${endIndex} of ${totalLogs} logs (Page ${this.actLogsCurrentPage} of ${totalPages})`;
+          if (q) {
+            infoEl.textContent = `Showing ${from} to ${endIndex} of ${totalLogs} logs matching "${this.actLogsSearchQuery}" (Page ${this.actLogsCurrentPage} of ${totalPages})`;
+          } else {
+            infoEl.textContent = `Showing ${from} to ${endIndex} of ${totalLogs} logs (Page ${this.actLogsCurrentPage} of ${totalPages})`;
+          }
         }
 
         const btnContainer = document.getElementById('act-logs-pagination-buttons');
@@ -5042,6 +6397,576 @@
         this.renderActivityLogsTable();
       }
 
+      searchActivityLogs(query) {
+        this.actLogsSearchQuery = (query || '').trim();
+        const clearBtn = document.getElementById('act-log-search-clear');
+        if (clearBtn) {
+          if (this.actLogsSearchQuery.length > 0) {
+            clearBtn.classList.remove('hidden');
+          } else {
+            clearBtn.classList.add('hidden');
+          }
+        }
+        this.actLogsCurrentPage = 1;
+        this.renderActivityLogsTable();
+      }
+
+      clearActivityLogSearch() {
+        const input = document.getElementById('act-log-search-input');
+        if (input) input.value = '';
+        this.searchActivityLogs('');
+      }
+
+      // ==========================================
+      // REPORTS EXPORT CHOICES & ITEM BUYERS MODAL
+      // ==========================================
+      onReportScopeChange(scopeVal) {
+        const csvBtnLabel = document.getElementById('btn-label-report-csv');
+        const pdfBtnLabel = document.getElementById('btn-label-report-pdf');
+
+        if (scopeVal === 'all') {
+          if (csvBtnLabel) csvBtnLabel.textContent = 'Download Master CSV';
+          if (pdfBtnLabel) pdfBtnLabel.textContent = 'Download Master PDF';
+        } else {
+          if (csvBtnLabel) csvBtnLabel.textContent = 'Download Item CSV';
+          if (pdfBtnLabel) pdfBtnLabel.textContent = 'Download Item PDF';
+        }
+      }
+
+      toggleReportRowSelect(event, id) {
+        if (event && (event.target.tagName === 'INPUT' || event.target.closest('button') || event.target.closest('a') || event.target.closest('select'))) {
+          return;
+        }
+        const cb = document.querySelector(`.report-row-checkbox[value="${id}"]`);
+        if (cb) {
+          cb.checked = !cb.checked;
+        }
+        const idStr = String(id);
+        if (this.selectedReportProductIds.has(idStr)) {
+          this.selectedReportProductIds.delete(idStr);
+        } else {
+          this.selectedReportProductIds.add(idStr);
+        }
+        try {
+          localStorage.setItem('ics_selected_report_ids', JSON.stringify(Array.from(this.selectedReportProductIds)));
+        } catch (e) {}
+        this.restoreReportSelectionUI();
+      }
+
+      toggleAllReportCheckboxes(checked) {
+        const rows = document.querySelectorAll('#reports-table-tbody .report-table-row');
+        rows.forEach(row => {
+          if (row.style.display !== 'none') {
+            const id = row.getAttribute('data-id');
+            const cb = row.querySelector('.report-row-checkbox');
+            if (cb) cb.checked = checked;
+            if (id) {
+              const idStr = String(id);
+              if (checked) {
+                this.selectedReportProductIds.add(idStr);
+              } else {
+                this.selectedReportProductIds.delete(idStr);
+              }
+            }
+          }
+        });
+        try {
+          localStorage.setItem('ics_selected_report_ids', JSON.stringify(Array.from(this.selectedReportProductIds)));
+        } catch (e) {}
+        this.restoreReportSelectionUI();
+      }
+
+      onReportRowCheckboxChange() {
+        const checkboxes = document.querySelectorAll('.report-row-checkbox');
+        checkboxes.forEach(cb => {
+          const idStr = String(cb.value);
+          if (cb.checked) {
+            this.selectedReportProductIds.add(idStr);
+          } else {
+            this.selectedReportProductIds.delete(idStr);
+          }
+        });
+        try {
+          localStorage.setItem('ics_selected_report_ids', JSON.stringify(Array.from(this.selectedReportProductIds)));
+        } catch (e) {}
+        this.restoreReportSelectionUI();
+      }
+
+      clearReportSelection() {
+        this.selectedReportProductIds.clear();
+        try {
+          localStorage.removeItem('ics_selected_report_ids');
+        } catch (e) {}
+        this.restoreReportSelectionUI();
+      }
+
+      restoreReportSelectionUI() {
+        try {
+          const raw = localStorage.getItem('ics_selected_report_ids');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            this.selectedReportProductIds = new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+          }
+        } catch (e) {}
+
+        const rows = document.querySelectorAll('#reports-table-tbody .report-table-row');
+        let visibleTotal = 0;
+        let visibleChecked = 0;
+
+        rows.forEach(row => {
+          if (row.style.display !== 'none') {
+            visibleTotal++;
+            const id = row.getAttribute('data-id');
+            const cb = row.querySelector('.report-row-checkbox');
+            const isSelected = id && this.selectedReportProductIds.has(String(id));
+            if (cb) cb.checked = isSelected;
+            if (isSelected) {
+              visibleChecked++;
+              row.classList.add('bg-cyan-950/40', 'border-l-4', 'border-cyan-500');
+            } else {
+              row.classList.remove('bg-cyan-950/40', 'border-l-4', 'border-cyan-500');
+            }
+          }
+        });
+
+        const selectAll = document.getElementById('report-select-all');
+        if (selectAll) {
+          selectAll.checked = visibleTotal > 0 && visibleChecked === visibleTotal;
+        }
+
+        const banner = document.getElementById('report-selected-banner');
+        const countText = document.getElementById('report-selected-count');
+        if (this.selectedReportProductIds && this.selectedReportProductIds.size > 0) {
+          if (banner) banner.classList.remove('hidden');
+          if (countText) countText.textContent = `${this.selectedReportProductIds.size} item(s) selected across reports`;
+        } else {
+          if (banner) banner.classList.add('hidden');
+        }
+      }
+
+      filterReportsTable(query) {
+        this.reportSearchQuery = (query || '').toLowerCase().trim();
+        const q = this.reportSearchQuery;
+        const rows = document.querySelectorAll('#reports-table-tbody .report-table-row');
+        rows.forEach(row => {
+          const code = (row.getAttribute('data-code') || '').toLowerCase();
+          const name = (row.getAttribute('data-name') || '').toLowerCase();
+          const cat = (row.getAttribute('data-category') || '').toLowerCase();
+          const text = row.innerText.toLowerCase();
+          if (!q || code.includes(q) || name.includes(q) || cat.includes(q) || text.includes(q)) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+        this.restoreReportSelectionUI();
+      }
+
+      onReportSortChange(sortVal) {
+        this.activeReportSort = sortVal;
+        const tbody = document.getElementById('reports-table-tbody');
+        if (!tbody) return;
+        const rows = Array.from(tbody.querySelectorAll('.report-table-row'));
+        if (rows.length === 0) return;
+
+        rows.sort((a, b) => {
+          const codeA = (a.getAttribute('data-code') || '').toLowerCase();
+          const codeB = (b.getAttribute('data-code') || '').toLowerCase();
+          const nameA = (a.getAttribute('data-name') || '').toLowerCase();
+          const nameB = (b.getAttribute('data-name') || '').toLowerCase();
+          const soldA = parseInt(a.getAttribute('data-sold') || 0, 10);
+          const soldB = parseInt(b.getAttribute('data-sold') || 0, 10);
+          const stockA = parseInt(a.getAttribute('data-stock') || 0, 10);
+          const stockB = parseInt(b.getAttribute('data-stock') || 0, 10);
+          const revA = parseFloat(a.getAttribute('data-rev') || 0);
+          const revB = parseFloat(b.getAttribute('data-rev') || 0);
+
+          switch (sortVal) {
+            case 'code_asc':
+              return codeA.localeCompare(codeB);
+            case 'name_asc':
+              return nameA.localeCompare(nameB);
+            case 'sold_desc':
+              return soldB - soldA;
+            case 'sold_asc':
+              return soldA - soldB;
+            case 'stock_asc':
+              return stockA - stockB;
+            case 'stock_desc':
+              return stockB - stockA;
+            case 'rev_desc':
+              return revB - revA;
+            default:
+              return codeA.localeCompare(codeB);
+          }
+        });
+
+        rows.forEach(r => tbody.appendChild(r));
+        this.restoreReportSelectionUI();
+      }
+
+      downloadChosenReport(format, autoPrint = false) {
+        const printParam = autoPrint ? '&print=1' : '';
+        // Priority 1: Checkbox / selection if any (persisted in localStorage)
+        if (this.selectedReportProductIds && this.selectedReportProductIds.size > 0) {
+          const ids = Array.from(this.selectedReportProductIds).join(',');
+          const url = format === 'pdf'
+            ? `{{ route('reports.export_pdf') }}?product_ids=${encodeURIComponent(ids)}${printParam}`
+            : `{{ route('reports.export') }}?product_ids=${encodeURIComponent(ids)}`;
+
+          if (format === 'pdf') {
+            window.open(url, '_blank');
+          } else {
+            window.location.href = url;
+          }
+          return;
+        }
+
+        // Priority 2: Dropdown scope selector
+        const select = document.getElementById('report-scope-select');
+        const scope = select ? select.value : 'all';
+
+        let url = '';
+        if (scope === 'all') {
+          url = format === 'pdf'
+            ? `{{ route('reports.export_pdf') }}${autoPrint ? '?print=1' : ''}`
+            : `{{ route('reports.export') }}`;
+        } else {
+          url = format === 'pdf'
+            ? `{{ route('reports.export_pdf') }}?product_id=${encodeURIComponent(scope)}${printParam}`
+            : `{{ route('reports.export') }}?product_id=${encodeURIComponent(scope)}`;
+        }
+
+        if (format === 'pdf') {
+          window.open(url, '_blank');
+        } else {
+          window.location.href = url;
+        }
+      }
+
+      openItemBuyersModal(productData) {
+        if (!productData) return;
+        const modal = document.getElementById('admin-item-buyers-modal');
+        if (!modal) return;
+
+        // Populate info
+        const nameEl = document.getElementById('modal-buyer-item-name');
+        const codeEl = document.getElementById('modal-buyer-item-code');
+        const catEl = document.getElementById('modal-buyer-item-category');
+        const priceEl = document.getElementById('modal-buyer-item-price');
+        const imgContainer = document.getElementById('modal-buyer-item-img-container');
+
+        if (nameEl) nameEl.textContent = productData.name || 'Merchandise Item';
+        if (codeEl) codeEl.textContent = productData.item_code || 'N/A';
+        if (catEl) catEl.textContent = (productData.category || 'General').toUpperCase();
+        if (priceEl) priceEl.textContent = `₱${Number(productData.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        if (imgContainer) {
+          if (productData.image_path) {
+            imgContainer.innerHTML = `<img src="${productData.image_path}" class="w-full h-full object-cover">`;
+          } else {
+            imgContainer.innerHTML = `<span class="text-2xl">👕</span>`;
+          }
+        }
+
+        // Stats
+        const soldEl = document.getElementById('modal-buyer-units-sold');
+        const resEl = document.getElementById('modal-buyer-units-reserved');
+        const stockEl = document.getElementById('modal-buyer-stock');
+        const revEl = document.getElementById('modal-buyer-revenue');
+        const badgeEl = document.getElementById('modal-buyer-count-badge');
+
+        const buyers = Array.isArray(productData.buyers) ? productData.buyers : [];
+        if (soldEl) soldEl.textContent = `${productData.units_sold || 0} units`;
+        if (resEl) resEl.textContent = `${productData.units_reserved || 0} units`;
+        if (stockEl) stockEl.textContent = `${productData.current_stock || 0} units`;
+        if (revEl) revEl.textContent = `₱${Number(productData.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (badgeEl) badgeEl.textContent = `${buyers.length} registered orders`;
+
+        // Populate Buyers Table
+        const tbody = document.getElementById('modal-item-buyers-tbody');
+        if (tbody) {
+          tbody.innerHTML = '';
+          if (buyers.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="10" class="py-8 text-center text-slate-500 font-sans">
+                  <p class="font-bold text-xs text-slate-400">No student orders found for this item yet.</p>
+                  <p class="text-[11px] text-slate-600 mt-0.5">Purchases and claimed records will automatically appear here.</p>
+                </td>
+              </tr>
+            `;
+          } else {
+            buyers.forEach((b) => {
+              const tr = document.createElement('tr');
+              tr.className = 'hover:bg-slate-800/40 transition';
+
+              let statusBadge = 'bg-amber-950 text-amber-300 border border-amber-800';
+              if (b.status === 'Claimed') statusBadge = 'bg-emerald-950 text-emerald-300 border border-emerald-700 font-bold';
+              else if (b.status === 'Ready for Pickup') statusBadge = 'bg-blue-950 text-blue-300 border border-blue-800';
+
+              tr.innerHTML = `
+                <td class="py-2.5 px-3 font-mono font-bold text-cyan-300 whitespace-nowrap">${b.student_id || 'N/A'}</td>
+                <td class="py-2.5 px-3 font-bold text-white whitespace-nowrap">${b.student_name || 'N/A'}</td>
+                <td class="py-2.5 px-3 text-slate-400 whitespace-nowrap text-[11px]">${b.department || 'ICS'} - ${b.year_level || ''}</td>
+                <td class="py-2.5 px-3 text-center font-mono font-bold text-white">${b.quantity || 1}</td>
+                <td class="py-2.5 px-3 text-center font-mono"><span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700 text-[10px]">${b.size || 'Standard'}</span></td>
+                <td class="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">₱${Number(b.subtotal || b.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td class="py-2.5 px-3 font-mono text-slate-400 text-[10px] whitespace-nowrap">${b.created_at || b.ordered_display || 'N/A'}</td>
+                <td class="py-2.5 px-3 font-mono text-slate-300 text-[10px] whitespace-nowrap">${b.claimed_at || b.claimed_display || (b.status === 'Claimed' ? 'Claimed' : 'Pending')}</td>
+                <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono ${statusBadge}">${b.status || 'Pending'}</span>
+                </td>
+                <td class="py-2.5 px-3 font-mono text-[10px] text-slate-400 whitespace-nowrap">${b.ref_code || ''}</td>
+              `;
+              tbody.appendChild(tr);
+            });
+          }
+        }
+
+        // Configure Modal Action Buttons
+        const csvBtn = document.getElementById('modal-buyer-download-csv-btn');
+        const pdfBtn = document.getElementById('modal-buyer-download-pdf-btn');
+        if (csvBtn) csvBtn.href = `{{ route('reports.export') }}?product_id=${encodeURIComponent(productData.id)}`;
+        if (pdfBtn) pdfBtn.href = `{{ route('reports.export_pdf') }}?product_id=${encodeURIComponent(productData.id)}`;
+
+        modal.classList.remove('hidden');
+      }
+
+      closeItemBuyersModal() {
+        const modal = document.getElementById('admin-item-buyers-modal');
+        if (modal) modal.classList.add('hidden');
+      }
+
+      toggleClaimedRowSelect(event, id) {
+        if (event && (event.target.tagName === 'INPUT' || event.target.closest('button') || event.target.closest('a') || event.target.closest('select'))) {
+          return;
+        }
+        const cb = document.querySelector(`.claimed-row-checkbox[value="${id}"]`);
+        if (cb) {
+          cb.checked = !cb.checked;
+        }
+        const idStr = String(id);
+        if (this.selectedClaimedIds.has(idStr)) {
+          this.selectedClaimedIds.delete(idStr);
+        } else {
+          this.selectedClaimedIds.add(idStr);
+        }
+        try {
+          localStorage.setItem('ics_selected_claimed_ids', JSON.stringify(Array.from(this.selectedClaimedIds)));
+        } catch (e) {}
+        this.restoreClaimedSelectionUI();
+      }
+
+      onClaimedRowCheckboxChange() {
+        const checkboxes = document.querySelectorAll('.claimed-row-checkbox');
+        checkboxes.forEach(cb => {
+          const idStr = String(cb.value);
+          if (cb.checked) {
+            this.selectedClaimedIds.add(idStr);
+          } else {
+            this.selectedClaimedIds.delete(idStr);
+          }
+        });
+        try {
+          localStorage.setItem('ics_selected_claimed_ids', JSON.stringify(Array.from(this.selectedClaimedIds)));
+        } catch (e) {}
+        this.restoreClaimedSelectionUI();
+      }
+
+      toggleAllClaimedCheckboxes(checked) {
+        const rows = document.querySelectorAll('#claimed-tab-ledger-tbody .claimed-ledger-row');
+        rows.forEach(row => {
+          if (row.style.display !== 'none') {
+            const id = row.getAttribute('data-id');
+            const cb = row.querySelector('.claimed-row-checkbox');
+            if (cb) cb.checked = checked;
+            if (id) {
+              const idStr = String(id);
+              if (checked) {
+                this.selectedClaimedIds.add(idStr);
+              } else {
+                this.selectedClaimedIds.delete(idStr);
+              }
+            }
+          }
+        });
+        try {
+          localStorage.setItem('ics_selected_claimed_ids', JSON.stringify(Array.from(this.selectedClaimedIds)));
+        } catch (e) {}
+        this.restoreClaimedSelectionUI();
+      }
+
+      restoreClaimedSelectionUI() {
+        try {
+          const raw = localStorage.getItem('ics_selected_claimed_ids');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            this.selectedClaimedIds = new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+          }
+        } catch (e) {}
+
+        const rows = document.querySelectorAll('#claimed-tab-ledger-tbody .claimed-ledger-row');
+        let visibleTotal = 0;
+        let visibleChecked = 0;
+
+        rows.forEach(row => {
+          if (row.style.display !== 'none') {
+            visibleTotal++;
+            const id = row.getAttribute('data-id');
+            const cb = row.querySelector('.claimed-row-checkbox');
+            const isSelected = id && this.selectedClaimedIds.has(String(id));
+            if (cb) cb.checked = isSelected;
+            if (isSelected) {
+              visibleChecked++;
+              row.classList.add('bg-emerald-950/40', 'border-l-4', 'border-emerald-500');
+            } else {
+              row.classList.remove('bg-emerald-950/40', 'border-l-4', 'border-emerald-500');
+            }
+          }
+        });
+
+        const selectAll = document.getElementById('claimed-select-all');
+        if (selectAll) {
+          selectAll.checked = visibleTotal > 0 && visibleChecked === visibleTotal;
+        }
+
+        const badge = document.getElementById('claimed-selected-count-badge');
+        if (badge) {
+          if (this.selectedClaimedIds.size > 0) {
+            badge.textContent = this.selectedClaimedIds.size;
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+        }
+      }
+
+      onClaimedSortChange(sortVal) {
+        this.activeClaimedSort = sortVal;
+        if (!this.claimedReservations || this.claimedReservations.length === 0) return;
+
+        this.claimedReservations.sort((a, b) => {
+          const dateClaimedA = new Date(a.claimed_at || a.updated_at || 0).getTime();
+          const dateClaimedB = new Date(b.claimed_at || b.updated_at || 0).getTime();
+          const dateOrderedA = new Date(a.created_at || 0).getTime();
+          const dateOrderedB = new Date(b.created_at || 0).getTime();
+          const nameA = (a.student_name || '').toLowerCase();
+          const nameB = (b.student_name || '').toLowerCase();
+          const amtA = parseFloat(a.total_amount || 0);
+          const amtB = parseFloat(b.total_amount || 0);
+
+          switch (sortVal) {
+            case 'date_claimed_asc':
+              return dateClaimedA - dateClaimedB;
+            case 'date_claimed_desc':
+              return dateClaimedB - dateClaimedA;
+            case 'date_ordered_asc':
+              return dateOrderedA - dateOrderedB;
+            case 'date_ordered_desc':
+              return dateOrderedB - dateOrderedA;
+            case 'name_asc':
+              return nameA.localeCompare(nameB);
+            case 'name_desc':
+              return nameB.localeCompare(nameA);
+            case 'amount_asc':
+              return amtA - amtB;
+            case 'amount_desc':
+              return amtB - amtA;
+            default:
+              return dateClaimedB - dateClaimedA;
+          }
+        });
+
+        this.renderClaimedLedgerTable();
+        const searchInput = document.getElementById('claimed-tab-search');
+        if (searchInput && searchInput.value) {
+          this.filterClaimedLedger(searchInput.value);
+        }
+      }
+
+      async deleteSelectedClaimed() {
+        if (!this.selectedClaimedIds || this.selectedClaimedIds.size === 0) {
+          this.showToast('Please select at least one claimed order to delete.', 'info');
+          return;
+        }
+
+        const count = this.selectedClaimedIds.size;
+        if (!confirm(`Are you sure you want to permanently delete ${count} selected claimed order(s)?\n\nThis will remove the release ledger record(s) and return stock if applicable.`)) {
+          return;
+        }
+
+        try {
+          const res = await fetch(`{{ url('api/reservations/bulk-delete') }}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              ids: Array.from(this.selectedClaimedIds)
+            })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            this.showToast(data.message || `Deleted ${count} claimed order(s).`, 'success');
+            const idSet = this.selectedClaimedIds;
+            this.claimedReservations = this.claimedReservations.filter(c => !idSet.has(String(c.id)));
+            this.selectedClaimedIds.clear();
+            try {
+              localStorage.removeItem('ics_selected_claimed_ids');
+            } catch (e) {}
+            this.renderClaimedLedgerTable();
+          } else {
+            this.showToast(data.message || 'Failed to delete selected claimed orders.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          this.showToast('Network error while deleting selected claimed orders.', 'error');
+        }
+      }
+
+      async deleteAllClaimed() {
+        if (!this.claimedReservations || this.claimedReservations.length === 0) {
+          this.showToast('No claimed orders available to delete.', 'info');
+          return;
+        }
+
+        const count = this.claimedReservations.length;
+        if (!confirm(`DANGER: Are you sure you want to permanently delete ALL ${count} claimed order(s) from the release ledger?\n\nThis action cannot be undone.`)) {
+          return;
+        }
+
+        try {
+          const res = await fetch(`{{ url('api/reservations/delete-all-claimed') }}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+              'Accept': 'application/json'
+            }
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            this.showToast(data.message || 'All claimed records deleted.', 'success');
+            this.claimedReservations = [];
+            this.selectedClaimedIds.clear();
+            try {
+              localStorage.removeItem('ics_selected_claimed_ids');
+            } catch (e) {}
+            this.renderClaimedLedgerTable();
+          } else {
+            this.showToast(data.message || 'Failed to delete all claimed orders.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          this.showToast('Network error while deleting all claimed orders.', 'error');
+        }
+      }
+
       filterClaimedLedger(query) {
         const q = (query || '').toLowerCase().trim();
         const searchInputTab = document.getElementById('claimed-tab-search');
@@ -5065,7 +6990,6 @@
           }
         });
 
-        // Visible count divided by 2 if both tables exist, or counted per table
         const tabRows = document.querySelectorAll('#claimed-tab-ledger-tbody .claimed-ledger-row');
         let tabVisible = 0;
         tabRows.forEach(r => { if (r.style.display !== 'none') tabVisible++; });
@@ -5075,6 +6999,8 @@
 
         const badgeReports = document.getElementById('claimed-log-count-badge');
         if (badgeReports) badgeReports.textContent = `${tabVisible} Confirmed Releases`;
+
+        this.restoreClaimedSelectionUI();
       }
 
       renderClaimedLedgerTable(records) {
@@ -5114,7 +7040,7 @@
         if (list.length === 0) {
           const emptyHtml = `
             <tr>
-              <td colspan="10" class="py-12 text-center text-slate-500 font-sans">
+              <td colspan="11" class="py-12 text-center text-slate-500 font-sans">
                 <svg class="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <p class="font-bold text-xs text-slate-400">No Claimed Releases Recorded Yet</p>
                 <p class="text-[11px] text-slate-600 mt-0.5">When student orders are marked as "Claimed", their pickup timestamp and buyer details will automatically log here.</p>
@@ -5123,10 +7049,11 @@
           `;
           if (tbodyTab) tbodyTab.innerHTML = emptyHtml;
           if (tbodyReports) tbodyReports.innerHTML = emptyHtml;
+          this.restoreClaimedSelectionUI();
           return;
         }
 
-        // 1. Render Dedicated Claimed Tab Table (Columns: Student Number, Name, Items, Price, Date Ordered, Date Claimed, Ref, Dept, Payment, Officer)
+        // 1. Render Dedicated Claimed Tab Table with Checkbox, Row Select, and Sort Support
         if (tbodyTab) {
           tbodyTab.innerHTML = list.map(c => {
             let itemsHtml = '';
@@ -5154,11 +7081,16 @@
             const officer = c.claimed_by || 'J. Derramas (ICS Officer)';
 
             return `
-              <tr class="hover:bg-slate-800/40 transition claimed-ledger-row"
+              <tr class="hover:bg-slate-800/40 transition cursor-pointer claimed-ledger-row"
+                  data-id="${c.id}"
                   data-ref="${(c.ref_code || '').toLowerCase()}"
                   data-name="${(c.student_name || '').toLowerCase()}"
-                  data-stuid="${(c.student_id || '').toLowerCase()}">
-                <td class="py-3 px-3 font-mono font-bold text-rose-400 whitespace-nowrap bg-rose-950/20 border-r border-slate-800/60">${c.student_id || ''}</td>
+                  data-stuid="${(c.student_id || '').toLowerCase()}"
+                  onclick="icsApp.toggleClaimedRowSelect(event, '${c.id}')">
+                <td class="py-3 px-3 text-center" onclick="event.stopPropagation()">
+                  <input type="checkbox" class="claimed-row-checkbox rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer" value="${c.id}" onchange="icsApp.onClaimedRowCheckboxChange()">
+                </td>
+                <td class="py-3 px-3 font-mono font-bold text-cyan-300 whitespace-nowrap bg-cyan-950/20 border-r border-slate-800/60">${c.student_id || ''}</td>
                 <td class="py-3 px-3 font-bold text-white whitespace-nowrap">${c.student_name || ''}</td>
                 <td class="py-3 px-3"><div class="flex flex-wrap gap-1 max-w-xs">${itemsHtml}</div></td>
                 <td class="py-3 px-3 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">₱${Number(c.total_amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
@@ -5225,6 +7157,8 @@
             `;
           }).join('');
         }
+
+        this.restoreClaimedSelectionUI();
       }
 
       async clearActivityLogs() {
@@ -6269,21 +8203,301 @@
         this.adminDeleteTicket(ticket.id, ticket.ticket_code);
       }
 
+      escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      formatReservationDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        try {
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return dateStr;
+          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          const month = months[d.getMonth()];
+          const day = String(d.getDate()).padStart(2, '0');
+          const year = d.getFullYear();
+          let hours = d.getHours();
+          const minutes = String(d.getMinutes()).padStart(2, '0');
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          hours = hours % 12;
+          hours = hours ? hours : 12;
+          const strHours = String(hours).padStart(2, '0');
+          return `${month} ${day}, ${year} ${strHours}:${minutes} ${ampm}`;
+        } catch (e) {
+          return dateStr;
+        }
+      }
+
+      createReservationCardElement(r) {
+        const isFinishedOrder = (r.status === 'Claimed' || r.status === 'Cancelled');
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition reservation-queue-card ${isFinishedOrder ? 'cursor-pointer hover:border-slate-600' : ''}`;
+        card.setAttribute('data-id', r.id);
+        card.setAttribute('data-status', r.status);
+        card.setAttribute('data-ref', r.ref_code);
+        if (isFinishedOrder) {
+          card.onclick = (e) => this.toggleReservationRowSelect(e, r.id);
+        }
+
+        const activeTicket = r.active_ticket || (this.supportTickets || []).find(t =>
+          t.reservation_ref === r.ref_code && (t.status === 'Open' || t.status === 'In Progress')
+        );
+
+        let statusClass = 'bg-amber-950 text-amber-300 border border-amber-700';
+        let statusContent = this.escapeHtml(r.status);
+        if (r.status === 'Ready for Pickup') {
+          statusClass = 'bg-blue-950 text-blue-300 border border-blue-700';
+        } else if (r.status === 'Claimed') {
+          statusClass = 'bg-emerald-950 text-emerald-300 border border-emerald-700';
+        } else if (r.status === 'Cancelled') {
+          statusClass = 'bg-rose-950 text-rose-300 border border-rose-700 font-extrabold';
+          statusContent = '<span class="text-rose-500 font-black mr-1">✕</span> Cancelled';
+        }
+
+        const purchasedAt = this.formatReservationDate(r.created_at);
+        const claimedAt = this.formatReservationDate(r.claimed_at || r.updated_at);
+
+        let warningBadgeHtml = '';
+        if (activeTicket) {
+          warningBadgeHtml = `
+            <span class="ticket-warning-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50 animate-pulse" title="This reservation has a pending Helpdesk Support Ticket">
+              <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span>⚠️ ON HOLD: Active Support Ticket (${this.escapeHtml(activeTicket.ticket_code)})</span>
+            </span>
+          `;
+        }
+
+        let receiptHtml = '';
+        if (r.receipt_image && r.receipt_image !== 'images/gcash_qr.jpg' && !r.receipt_image.includes('gcash_qr')) {
+          const receiptSrc = (r.receipt_image.startsWith('http://') || r.receipt_image.startsWith('https://') || r.receipt_image.startsWith('data:image'))
+            ? r.receipt_image
+            : (`{{ asset('') }}` + r.receipt_image.replace(/^\//, ''));
+          receiptHtml = `
+            <div class="relative group cursor-pointer inline-block" onclick="icsApp.openReceiptViewModal('${r.id}')" title="Click to view full receipt image">
+              <img
+                src="${receiptSrc}"
+                alt="Payment Receipt"
+                class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-cyan-500/80 group-hover:border-cyan-300 shadow-lg group-hover:scale-105 group-hover:shadow-cyan-500/20 transition-all duration-200"
+              />
+              <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity pointer-events-none p-1 text-center">
+                <svg class="w-5 h-5 text-cyan-300 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                <span class="text-[9px] font-bold text-white leading-tight">Click to zoom</span>
+              </div>
+              <span class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-700 shadow flex items-center gap-1">
+                <span>🔍 Zoom</span>
+              </span>
+            </div>
+          `;
+        } else if ((r.payment_method || '') === 'GCash Online') {
+          receiptHtml = `
+            <div class="mt-2 text-[11px] text-slate-400 italic flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Verified via GCash Ref</span>
+            </div>
+          `;
+        }
+
+        let itemsHtml = '';
+        let itemsList = Array.isArray(r.items) ? r.items : [];
+        if (typeof r.items === 'string') {
+          try { itemsList = JSON.parse(r.items); } catch (e) { itemsList = []; }
+        }
+        itemsList.forEach(it => {
+          itemsHtml += `
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-300">
+              <strong class="text-white">${this.escapeHtml(it.productName || it.name || 'Item')}</strong>
+              <span class="text-ics-gold">(${this.escapeHtml(it.size || 'M')})</span>
+              <span>&times;${this.escapeHtml(it.quantity || 1)}</span>
+            </span>
+          `;
+        });
+
+        const isChecked = this.selectedReservationIds && this.selectedReservationIds.has(String(r.id));
+        const checkboxHtml = isFinishedOrder ? `
+          <label class="inline-flex items-center cursor-pointer mr-0.5" onclick="event.stopPropagation()">
+            <input
+              type="checkbox"
+              value="${r.id}"
+              ${isChecked ? 'checked' : ''}
+              onchange="icsApp.onReservationCheckboxChange()"
+              class="reservation-row-checkbox w-4 h-4 rounded text-rose-500 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer"
+              title="Select finished order for bulk delete"
+            />
+          </label>
+        ` : '';
+
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+            <div class="reservation-header-badges flex items-center gap-2.5 flex-wrap">
+              ${checkboxHtml}
+              <span class="font-mono font-bold text-sm text-ics-gold">${this.escapeHtml(r.ref_code)}</span>
+              <span class="reservation-status-badge px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">
+                ${statusContent}
+              </span>
+              ${warningBadgeHtml}
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono text-left sm:text-right">
+              <div>Purchased: ${purchasedAt}</div>
+              ${r.status === 'Claimed' ? `
+                <div class="text-emerald-400 font-semibold flex items-center sm:justify-end gap-1">
+                  <svg class="w-3 h-3 text-emerald-400 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>Claimed: ${claimedAt}</span>
+                </div>` : ''}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-4 pt-3 border-t border-slate-800/60">
+            <div>
+              <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Student Buyer</p>
+              <p class="text-sm font-black text-white mt-1">${this.escapeHtml(r.student_name || 'N/A')}</p>
+              <div class="mt-1">
+                <span class="font-mono text-xs font-bold text-cyan-300 bg-cyan-950/60 px-2 py-0.5 rounded-md border border-cyan-800/60 inline-block">${this.escapeHtml(r.student_id || 'N/A')}</span>
+                <span class="text-xs text-slate-300 ml-1">(${this.escapeHtml(r.year_level || 'N/A')})</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">${this.escapeHtml(r.department || 'N/A')}</p>
+              <p class="text-xs text-slate-400 font-mono mt-0.5">Contact: ${this.escapeHtml(r.contact || 'N/A')}</p>
+            </div>
+
+            <div>
+              <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Pickup Schedule</p>
+              <p class="text-sm font-bold text-ics-gold mt-1">${this.escapeHtml(r.pickup_date || 'N/A')}</p>
+              <p class="text-xs text-slate-200 mt-0.5">${this.escapeHtml(r.pickup_slot || 'N/A')}</p>
+              <p class="text-xs text-slate-400 mt-1 italic">${this.escapeHtml(r.notes || 'No additional notes')}</p>
+            </div>
+
+            <div>
+              <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Payment &amp; Receipt</p>
+              <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold ${r.payment_method === 'GCash Online' ? 'bg-blue-950 text-blue-300 border border-blue-800' : 'bg-amber-950 text-amber-300 border border-amber-800'} flex items-center gap-1">
+                  ${this.escapeHtml(r.payment_method || 'Cash on Pickup')}
+                </span>
+                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 ${(r.payment_status || 'Unpaid') === 'Verified' ? 'text-emerald-400' : 'text-amber-400'}">
+                  ${this.escapeHtml(r.payment_status || 'Unpaid')}
+                </span>
+              </div>
+              ${r.payment_reference ? `
+                <div class="mt-2 p-1.5 rounded-lg bg-slate-950/80 border border-slate-800/80 flex items-center justify-between gap-1">
+                  <span class="text-[10px] uppercase font-bold text-slate-400">GCash Ref:</span>
+                  <span class="font-mono text-xs font-bold text-ics-gold select-all">${this.escapeHtml(r.payment_reference)}</span>
+                </div>` : ''}
+              <div class="mt-2.5 reservation-receipt-container">
+                ${receiptHtml}
+              </div>
+            </div>
+
+            <div class="text-left md:text-right flex flex-col justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Grand Total</p>
+                <p class="text-2xl font-black text-emerald-400 font-mono mt-1">₱${Number(r.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              </div>
+              <div class="reservation-actions-container flex items-center md:justify-end gap-2 mt-3 flex-wrap">
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-3 border-t border-slate-900 text-xs text-slate-400">
+            <p class="text-[10px] uppercase font-semibold text-slate-500 mb-1">Reserved Items:</p>
+            <div class="flex flex-wrap gap-2">
+              ${itemsHtml}
+            </div>
+          </div>
+        `;
+
+        return card;
+      }
+
       renderReservationsQueue() {
         const container = document.getElementById('reservations-list');
         if (!container || !this.reservations) return;
 
-        this.reservations.forEach(r => {
-          const card = container.querySelector(`[data-ref="${r.ref_code}"]`);
-          if (!card) return;
+        // Clean up cards removed from database
+        const activeRefs = new Set(this.reservations.map(x => x.ref_code));
+        container.querySelectorAll('[data-ref]').forEach(cardEl => {
+          const ref = cardEl.getAttribute('data-ref');
+          if (ref && !activeRefs.has(ref)) {
+            cardEl.remove();
+          }
+        });
+
+        if (this.reservations.length === 0) {
+          container.innerHTML = `
+            <div id="reservations-empty-notice" class="text-center py-12 px-4 rounded-3xl bg-slate-950/40 border border-slate-800/80">
+              <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              <h4 class="text-sm font-bold text-slate-300">No Reservations in Queue</h4>
+              <p class="text-xs text-slate-500 mt-1">Incoming student orders will appear here automatically in real time.</p>
+            </div>
+          `;
+          const totalBadge = document.getElementById('reservations-total-badge');
+          if (totalBadge) totalBadge.textContent = '0 Total';
+          this._hasRenderedInitialQueue = true;
+          return;
+        } else {
+          const emptyNotice = document.getElementById('reservations-empty-notice');
+          if (emptyNotice) emptyNotice.remove();
+        }
+
+        // Strict FIFO Queue Ordering:
+        // 1. Pending orders first (oldest created_at first)
+        // 2. Ready for Pickup orders second (oldest created_at first)
+        // 3. Other statuses last
+        this.reservations.sort((a, b) => {
+          const getStatusRank = (s) => (s === 'Pending' ? 1 : (s === 'Ready for Pickup' ? 2 : 3));
+          const rankA = getStatusRank(a.status);
+          const rankB = getStatusRank(b.status);
+          if (rankA !== rankB) return rankA - rankB;
+          return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+        });
+
+        const firstPendingIdx = this.reservations.findIndex(r => r.status === 'Pending');
+
+        this.reservations.forEach((r, idx) => {
+          let card = container.querySelector(`[data-ref="${r.ref_code}"]`);
 
           // Auto-hide cancelled orders in code after 10 minutes (600,000 ms) without showing timer UI
           if (r.status === 'Cancelled') {
             const updated = r.updated_at ? new Date(r.updated_at).getTime() : 0;
             if (updated && (Date.now() - updated > 600000)) {
-              card.style.display = 'none';
+              if (card) card.remove();
               return;
             }
+          }
+
+          if (!card) {
+            card = this.createReservationCardElement(r);
+            container.appendChild(card);
+
+            card.classList.add('ring-2', 'ring-amber-400', 'animate-pulse');
+            setTimeout(() => {
+              card.classList.remove('ring-2', 'ring-amber-400', 'animate-pulse');
+            }, 6000);
+          } else {
+            // Re-append in FIFO sorted order
+            container.appendChild(card);
+          }
+
+          card.setAttribute('data-status', r.status);
+
+          // FIFO Priority Badge & Top Locking for earliest pending order
+          const headerBadges = card.querySelector('.reservation-header-badges');
+          let fifoBadge = card.querySelector('.fifo-queue-badge');
+          if (idx === firstPendingIdx) {
+            card.classList.add('border-amber-500/80', 'bg-amber-950/20', 'shadow-lg', 'shadow-amber-500/10');
+            if (!fifoBadge && headerBadges) {
+              fifoBadge = document.createElement('span');
+              fifoBadge.className = 'fifo-queue-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm';
+              fifoBadge.title = 'First-In, First-Out: Earliest pending order, locked at top for priority processing';
+              fifoBadge.innerHTML = '<span>🔒 1st in Queue (FIFO)</span>';
+              headerBadges.appendChild(fifoBadge);
+            }
+          } else {
+            card.classList.remove('border-amber-500/80', 'bg-amber-950/20', 'shadow-lg', 'shadow-amber-500/10');
+            if (fifoBadge) fifoBadge.remove();
           }
 
           const activeTicket = r.active_ticket || (this.supportTickets || []).find(t =>
@@ -6315,16 +8529,50 @@
             }
             warnEl.innerHTML = `
               <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-              <span>⚠️ ON HOLD: Active Support Ticket (${activeTicket.ticket_code})</span>
+              <span>⚠️ ON HOLD: Active Support Ticket (${this.escapeHtml(activeTicket.ticket_code)})</span>
             `;
             warnEl.classList.remove('hidden');
           } else if (warnEl) {
             warnEl.classList.add('hidden');
           }
 
+          const receiptContainer = card.querySelector('.reservation-receipt-container');
+          if (receiptContainer && r.receipt_image && r.receipt_image !== 'images/gcash_qr.jpg' && !r.receipt_image.includes('gcash_qr')) {
+            const receiptSrc = (r.receipt_image.startsWith('http://') || r.receipt_image.startsWith('https://') || r.receipt_image.startsWith('data:image'))
+              ? r.receipt_image
+              : (`{{ asset('') }}` + r.receipt_image.replace(/^\//, ''));
+            receiptContainer.innerHTML = `
+              <div class="relative group cursor-pointer inline-block" onclick="icsApp.openReceiptViewModal('${r.id}')" title="Click to view full receipt image">
+                <img
+                  src="${receiptSrc}"
+                  alt="Payment Receipt"
+                  class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-cyan-500/80 group-hover:border-cyan-300 shadow-lg group-hover:scale-105 group-hover:shadow-cyan-500/20 transition-all duration-200"
+                />
+                <div class="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity pointer-events-none p-1 text-center">
+                  <svg class="w-5 h-5 text-cyan-300 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                  <span class="text-[9px] font-bold text-white leading-tight">Click to zoom</span>
+                </div>
+                <span class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-700 shadow flex items-center gap-1">
+                  <span>🔍 Zoom</span>
+                </span>
+              </div>
+            `;
+          }
+
           const actionsEl = card.querySelector('.reservation-actions-container');
           if (actionsEl) {
-            let actionsHtml = '';
+            let actionsHtml = `
+              <button
+                type="button"
+                onclick="icsApp.openAdminMessageBuyerModal('${r.id}')"
+                class="px-2.5 py-1 rounded-xl text-xs font-bold bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                title="Message Student Buyer">
+                <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span>Message</span>
+              </button>
+            `;
             if (activeTicket) {
               actionsHtml += `
                 <button
@@ -6333,7 +8581,7 @@
                   class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                   title="This reservation has an active support ticket. Please resolve ticket before claiming.">
                   <svg class="w-3.5 h-3.5 text-amber-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                  <span>⚠️ Resolve Ticket [${activeTicket.ticket_code}]</span>
+                  <span>⚠️ Resolve Ticket [${this.escapeHtml(activeTicket.ticket_code)}]</span>
                 </button>
               `;
             } else {
@@ -6370,7 +8618,7 @@
 
             actionsHtml += `
               <button
-                onclick="icsApp.viewPrintClaimSlip(icsApp.reservations.find(x => x.id === ${r.id}))"
+                onclick="icsApp.viewPrintClaimSlip('${r.id}')"
                 class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
                 Print Slip
               </button>
@@ -6392,6 +8640,15 @@
             actionsEl.innerHTML = actionsHtml;
           }
         });
+
+        const totalBadge = document.getElementById('reservations-total-badge');
+        if (totalBadge) {
+          totalBadge.textContent = `${this.reservations.length} Total`;
+        }
+
+        const currentFilter = document.getElementById('reservation-filter-status')?.value || 'all';
+        this.filterReservations(currentFilter);
+        this._hasRenderedInitialQueue = true;
       }
 
     }

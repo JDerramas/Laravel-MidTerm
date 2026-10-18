@@ -112,18 +112,18 @@
       scrollbar-width: none;
     }
 
-    /* Print Slip Styles */
+    /* Print Styles (Prevents blank page and isolates claim slip only when modal is active) */
     @media print {
-      body * {
+      body.slip-modal-open * {
         visibility: hidden !important;
       }
 
-      #printable-claim-slip,
-      #printable-claim-slip * {
+      body.slip-modal-open #printable-claim-slip,
+      body.slip-modal-open #printable-claim-slip * {
         visibility: visible !important;
       }
 
-      #printable-claim-slip {
+      body.slip-modal-open #printable-claim-slip {
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
@@ -132,7 +132,14 @@
         color: black !important;
       }
 
-      .no-print {
+      body:not(.slip-modal-open) {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+
+      .no-print,
+      header,
+      nav {
         display: none !important;
       }
     }
@@ -213,7 +220,10 @@
               class="flex items-center gap-2.5 p-1 px-3 py-1 rounded-2xl bg-slate-900 border border-ics-600/70 hover:border-ics-500 shadow-md transition group"
               title="View student account menu">
               @if(!empty($stu['avatar']))
-              <img src="{{ $stu['avatar'] }}" alt="{{ $stu['name'] }}" class="w-7 h-7 rounded-xl object-cover border border-ics-600/70 shadow flex-shrink-0" id="header-student-avatar-img">
+              <img src="{{ $stu['avatar'] }}" alt="{{ $stu['name'] }}" onerror="this.style.display='none'; document.getElementById('header-student-avatar-box')?.classList.remove('hidden');" class="w-7 h-7 rounded-xl object-cover border border-ics-600/70 shadow flex-shrink-0" id="header-student-avatar-img">
+              <div id="header-student-avatar-box" class="hidden w-7 h-7 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-xs shadow flex-shrink-0">
+                {{ $stu['initials'] ?? 'ST' }}
+              </div>
               @else
               <div id="header-student-avatar-box" class="w-7 h-7 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-xs shadow flex-shrink-0">
                 {{ $stu['initials'] ?? 'ST' }}
@@ -233,19 +243,31 @@
 
             <!-- Dynamic Unified Dropdown Menu (ICS Black & Red Design) -->
             <div id="user-profile-dropdown" class="hidden absolute right-0 mt-2 w-72 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 text-xs">
-              <div class="px-4 py-3 border-b border-slate-800 bg-slate-950/80 rounded-t-2xl">
-                <p class="text-slate-400 text-[10px] uppercase font-mono tracking-wider font-semibold">Active Student Account</p>
-                <p class="font-bold text-white text-sm mt-0.5" id="dropdown-student-name">{{ $stu['name'] }}</p>
-                <p class="text-ics-gold font-mono text-[11px]" id="dropdown-student-id">{{ $stu['student_id'] }} &bull; {{ $stu['department'] ?? 'Information Systems' }}</p>
-                <div class="flex items-center gap-2 mt-2">
-                  <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-ics-950 text-ics-300 border border-ics-800">
-                    Verified ICS Student
-                  </span>
-                  @if(!empty($stu['section']))
-                  <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-mono text-slate-300 bg-slate-800 border border-slate-700">
-                    Section {{ $stu['section'] }}
-                  </span>
-                  @endif
+              <div class="px-4 py-3 border-b border-slate-800 bg-slate-950/80 rounded-t-2xl flex items-center gap-3">
+                @if(!empty($stu['avatar']))
+                <img src="{{ $stu['avatar'] }}" alt="{{ $stu['name'] }}" onerror="this.style.display='none'; document.getElementById('dropdown-student-avatar-box')?.classList.remove('hidden');" class="w-10 h-10 rounded-xl object-cover border border-ics-600/70 shadow flex-shrink-0" id="dropdown-student-avatar-img">
+                <div id="dropdown-student-avatar-box" class="hidden w-10 h-10 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-sm shadow flex-shrink-0">
+                  {{ $stu['initials'] ?? 'ST' }}
+                </div>
+                @else
+                <div id="dropdown-student-avatar-box" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-sm shadow flex-shrink-0">
+                  {{ $stu['initials'] ?? 'ST' }}
+                </div>
+                @endif
+                <div class="min-w-0 flex-1">
+                  <p class="text-slate-400 text-[10px] uppercase font-mono tracking-wider font-semibold">Active Student Account</p>
+                  <p class="font-bold text-white text-sm mt-0.5 truncate" id="dropdown-student-name">{{ $stu['name'] }}</p>
+                  <p class="text-ics-gold font-mono text-[11px] truncate" id="dropdown-student-id">{{ $stu['student_id'] }} &bull; {{ $stu['department'] ?? 'Information Systems' }}</p>
+                  <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    <span class="inline-block px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-ics-950 text-ics-300 border border-ics-800">
+                      Verified
+                    </span>
+                    @if(!empty($stu['section']))
+                    <span class="inline-block px-1.5 py-0.2 rounded-full text-[9px] font-mono text-slate-300 bg-slate-800 border border-slate-700">
+                      Sec {{ $stu['section'] }}
+                    </span>
+                    @endif
+                  </div>
                 </div>
               </div>
 
@@ -259,6 +281,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
+                <!-- Student Order History & Past Purchases Trigger -->
+                <button type="button" onclick="icsApp.openStudentOrderHistoryModal()" class="w-full text-left px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 flex items-center gap-2.5 transition border border-amber-500/30 group">
+                  <svg class="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <span class="font-bold text-xs">My Orders &amp; History</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-950 font-mono text-amber-300 ml-auto border border-amber-800" id="dropdown-order-count">{{ count($reservations) }}</span>
+                </button>
                 <a href="{{ route('oauth.login') }}" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-200 flex items-center gap-2.5 transition">
                   <svg class="w-4 h-4 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -273,6 +303,7 @@
                 </button>
               </div>
 
+              @if(!empty($isAdminUser) && $isAdminUser)
               <div class="px-2 pt-2 mt-2 border-t border-slate-800">
                 <a href="{{ route('admin') }}" class="w-full text-left px-3 py-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800 group shadow-sm text-xs font-semibold">
                   <svg class="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -283,6 +314,7 @@
                   <span class="text-slate-400 group-hover:text-white ml-auto">&rarr;</span>
                 </a>
               </div>
+              @endif
             </div>
             @else
             <!-- Guest Student: Direct OnePass SSO Login Button + Register Link (ICS Black & Red Design) -->
@@ -365,7 +397,10 @@
       <div id="mob-user-profile-card" class="p-3 rounded-2xl bg-ics-950/90 border border-ics-900 flex items-center justify-between shadow">
         <a href="https://onepass-gdbe.onrender.com/profile" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 hover:opacity-90 transition group" title="Open OnePass Profile">
           @if(!empty($mStu['avatar']))
-          <img src="{{ $mStu['avatar'] }}" alt="{{ $mStu['name'] }}" class="w-9 h-9 rounded-xl object-cover border border-ics-700 shadow group-hover:border-ics-crimson transition">
+          <img src="{{ $mStu['avatar'] }}" alt="{{ $mStu['name'] }}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" class="w-9 h-9 rounded-xl object-cover border border-ics-700 shadow group-hover:border-ics-crimson transition">
+          <div class="hidden w-9 h-9 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-xs shadow group-hover:scale-105 transition-transform">
+            {{ $mStu['initials'] ?? 'ST' }}
+          </div>
           @else
           <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-xs shadow group-hover:scale-105 transition-transform">
             {{ $mStu['initials'] ?? 'ST' }}
@@ -425,7 +460,8 @@
       </div>
       @endif
 
-      <!-- Portal Switcher Options (Big Touch Cards) -->
+      @if(!empty($isAdminUser) && $isAdminUser)
+      <!-- Portal Switcher Options (Visible only to authorized Admins) -->
       <div>
         <p class="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-2 font-bold">Switch Portal View</p>
         <div class="space-y-2">
@@ -439,7 +475,7 @@
               </svg>
               <span>Student Catalog Portal</span>
             </div>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-950/60 font-mono">10 Merch</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-950/60 font-mono">{{ count($products) }} Merch</span>
           </button>
 
           <a
@@ -456,12 +492,24 @@
           </a>
         </div>
       </div>
+      @endif
 
       <!-- Context-Aware Links: Student Portal Links -->
       <div id="mob-drawer-student-links" class="space-y-3 pt-2 border-t border-slate-800">
         <p class="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">Student Quick Actions</p>
 
         <div class="space-y-1">
+          <!-- My Orders & History -->
+          <button onclick="icsApp.openStudentOrderHistoryModal(); icsApp.closeMobileDrawer();" class="w-full text-left p-2.5 rounded-xl hover:bg-slate-800 text-amber-300 text-xs font-semibold flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span>My Orders &amp; History</span>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-950 text-amber-300 border border-amber-800">{{ count($reservations) }}</span>
+          </button>
+
           <button onclick="icsApp.openCartDrawer(); icsApp.closeMobileDrawer();" class="w-full text-left p-2.5 rounded-xl hover:bg-slate-800 text-slate-200 text-xs font-medium flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <svg class="w-4 h-4 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -496,7 +544,8 @@
         </div>
       </div>
 
-      <!-- Admin Console Link -->
+      @if(!empty($isAdminUser) && $isAdminUser)
+      <!-- Admin Console Link (Visible only to authorized Admins) -->
       <div class="pt-2 border-t border-slate-800">
         <a href="{{ route('admin') }}" class="w-full text-left p-3 rounded-2xl bg-gradient-to-r from-slate-950 to-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/50 flex items-center justify-between shadow transition">
           <div class="flex items-center gap-2.5">
@@ -511,6 +560,7 @@
           <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-800 font-mono font-bold">Admin</span>
         </a>
       </div>
+      @endif
     </div>
 
 
@@ -663,6 +713,12 @@
                 @endif
               </select>
             </div>
+            <button onclick="icsApp.openStudentOrderHistoryModal()" class="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/40 transition flex items-center gap-1.5 shadow">
+              <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span>Order History</span>
+            </button>
             <button onclick="icsApp.printActiveTrackedSlip()" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 shadow">
               <svg class="w-3.5 h-3.5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -676,7 +732,10 @@
         <div class="mt-4 p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
           <div class="flex items-center gap-3">
             @if(!empty($studentUser['avatar']))
-            <img id="tracker-buyer-avatar-img" src="{{ $studentUser['avatar'] }}" class="w-9 h-9 rounded-xl object-cover border border-ics-600 shadow" alt="Avatar">
+            <img id="tracker-buyer-avatar-img" src="{{ $studentUser['avatar'] }}" onerror="this.style.display='none'; document.getElementById('tracker-buyer-avatar')?.classList.remove('hidden');" class="w-9 h-9 rounded-xl object-cover border border-ics-600 shadow" alt="Avatar">
+            <div id="tracker-buyer-avatar" class="hidden w-9 h-9 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-600 flex items-center justify-center font-bold text-white text-xs">
+              {{ $studentUser['initials'] ?? 'ST' }}
+            </div>
             @else
             <div id="tracker-buyer-avatar" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-600 flex items-center justify-center font-bold text-white text-xs">
               {{ $studentUser['initials'] ?? 'ST' }}
@@ -786,9 +845,7 @@
               <p class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
                 <span>Payment:</span>
                 <span id="tracker-payment-badge" class="font-semibold text-white font-mono">Cash on Pickup</span>
-                <span id="tracker-receipt-link-container" class="hidden">
-                  <button type="button" onclick="icsApp.viewActiveReceipt()" class="text-blue-400 hover:text-blue-300 underline text-[10px] font-bold cursor-pointer">View My Receipt</button>
-                </span>
+                <span id="tracker-receipt-link-container" class="hidden"></span>
               </p>
             </div>
           </div>
@@ -1258,21 +1315,22 @@
         <!-- Logged-in Student Account (Automatic) -->
         @php
         $activeStudent = session('student_user') ?? [
-        'name' => 'Louvie Rose Derramas',
-        'student_id' => '2026-79818',
-        'department' => 'Associate in Information Systems (AIS)',
-        'year_level' => '2nd Year',
-        'section' => '2A',
-        'contact' => '0917-882-3419',
-        'avatar' => 'https://lh3.googleusercontent.com/a/ACg8ocJ90cEExETC-aQuo-VEYELCIH7mUJZXGQ8o0XevR358Yu0qfaRa=s96-c',
-        'initials' => 'LD'
+          'name' => 'Guest Student',
+          'student_id' => '2026-00000',
+          'department' => 'Integrated Computer Society',
+          'year_level' => '1st Year',
+          'section' => '1A',
+          'contact' => '',
+          'avatar' => null,
+          'initials' => 'GS'
         ];
         @endphp
         <div class="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div id="chk-display-avatar" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-600 flex items-center justify-center text-white font-black text-sm shadow overflow-hidden flex-shrink-0">
               @if(!empty($activeStudent['avatar']))
-              <img src="{{ $activeStudent['avatar'] }}" alt="{{ $activeStudent['name'] }}" class="w-full h-full object-cover" id="chk-avatar-img">
+              <img src="{{ $activeStudent['avatar'] }}" alt="{{ $activeStudent['name'] }}" onerror="this.style.display='none'; document.getElementById('chk-avatar-initials')?.classList.remove('hidden');" class="w-full h-full object-cover" id="chk-avatar-img">
+              <span id="chk-avatar-initials" class="hidden">{{ $activeStudent['initials'] ?? 'ST' }}</span>
               @else
               <span id="chk-avatar-initials">{{ $activeStudent['initials'] ?? 'ST' }}</span>
               @endif
@@ -1490,8 +1548,9 @@
               <p id="chk-total-preview" class="text-lg font-black text-ics-gold font-mono">₱0.00</p>
             </div>
             <button
+              id="chk-submit-btn"
               type="submit"
-              class="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white text-xs font-bold shadow-xl transition flex items-center gap-2 border border-ics-600">
+              class="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white text-xs font-bold shadow-xl transition flex items-center gap-2 border border-ics-600 cursor-pointer">
               <span>Confirm & Generate Slip</span>
               <svg class="w-4 h-4 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -1500,6 +1559,51 @@
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: STUDENT ORDER HISTORY & PURCHASE ARCHIVE -->
+  <!-- ======================================================== -->
+  <div id="student-order-history-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl relative text-left my-8 flex flex-col max-h-[90vh]">
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800 flex-shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-white font-display flex items-center gap-2">
+              <span>My Orders &amp; Purchase History</span>
+              <span id="order-history-total-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800">
+                {{ count($reservations) }} Orders
+              </span>
+            </h3>
+            <p class="text-xs text-slate-400">
+              Complete archive of your merchandise reservations, ordered items, sizes, and claim statuses.
+            </p>
+          </div>
+        </div>
+        <button onclick="icsApp.closeStudentOrderHistoryModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Scrollable Orders List Container -->
+      <div id="student-order-history-list" class="overflow-y-auto space-y-4 py-4 pr-1 flex-1">
+        <!-- Rendered dynamically by icsApp.renderStudentOrderHistoryModal() -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 flex-shrink-0">
+        <span class="font-mono text-[11px] text-slate-400">Integrated Computer Society Store</span>
+        <button onclick="icsApp.closeStudentOrderHistoryModal()" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold transition">
+          Close
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1687,8 +1791,13 @@
         </div>
 
         <!-- Receipt Image Frame -->
-        <div class="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden flex items-center justify-center p-2 max-h-[420px]">
+        <div id="receipt-view-frame" class="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden flex items-center justify-center p-2 min-h-[140px] max-h-[420px]">
           <img id="receipt-view-img" src="" alt="Payment Receipt" class="max-h-[380px] w-auto object-contain rounded-xl shadow-lg">
+          <div id="receipt-view-empty-notice" class="hidden py-8 px-4 text-center">
+            <svg class="w-10 h-10 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <p class="text-xs font-bold text-slate-300">Walang naka-attach na screenshot ng resibo</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">I-verify ang bayad gamit ang GCash Reference Number sa itaas.</p>
+          </div>
         </div>
 
         <!-- Modal Actions -->
@@ -1700,14 +1809,8 @@
             Open Full Image
           </a>
           <div class="flex items-center gap-2">
-            <button onclick="icsApp.closeReceiptViewModal()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+            <button onclick="icsApp.closeReceiptViewModal()" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
               Close
-            </button>
-            <button id="receipt-verify-btn" onclick="icsApp.verifyReceiptPayment()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1 cursor-pointer">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Mark Payment Verified</span>
             </button>
           </div>
         </div>
@@ -2136,6 +2239,8 @@
 
         // Logged-in Student Account (Verified via OnePass OAuth)
         this.currentUser = @json($studentUser ?? null);
+        this.isAdminUser = {{ !empty($isAdminUser) && $isAdminUser ? 'true' : 'false' }};
+        this.isSubmittingReservation = false;
 
         this.cart = this.loadCartFromStorage();
         this.currentView = 'student'; // 'student' or 'admin'
@@ -2264,7 +2369,7 @@
         const profileContainer = document.getElementById('header-user-profile-container');
         if (profileContainer) {
           const avatarHtml = user.avatar ?
-            `<img src="${user.avatar}" alt="${user.name}" class="w-7 h-7 rounded-xl object-cover border border-ics-600/70 shadow flex-shrink-0" id="header-student-avatar-img">` :
+            `<img src="${user.avatar}" alt="${user.name}" onerror="this.style.display='none'; document.getElementById('header-student-avatar-box')?.classList.remove('hidden');" class="w-7 h-7 rounded-xl object-cover border border-ics-600/70 shadow flex-shrink-0" id="header-student-avatar-img"><div id="header-student-avatar-box" class="hidden w-7 h-7 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-xs shadow flex-shrink-0">${user.initials || 'ST'}</div>` :
             `<div id="header-student-avatar-box" class="w-7 h-7 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-xs shadow flex-shrink-0">${user.initials || 'ST'}</div>`;
 
           profileContainer.innerHTML = `
@@ -2309,6 +2414,14 @@
                   <span class="font-bold text-xs text-white">View OnePass Profile</span>
                   <svg class="w-3 h-3 text-ics-gold ml-auto group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 </a>
+                <!-- Student Order History & Past Purchases Trigger -->
+                <button type="button" onclick="icsApp.openStudentOrderHistoryModal()" class="w-full text-left px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 flex items-center gap-2.5 transition border border-amber-500/30 group">
+                  <svg class="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <span class="font-bold text-xs">My Orders &amp; History</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-950 font-mono text-amber-300 ml-auto border border-amber-800" id="dropdown-order-count">${(this.reservations || []).length}</span>
+                </button>
                 <a href="{{ route('oauth.login') }}" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-200 flex items-center gap-2.5 transition">
                   <svg class="w-4 h-4 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -2323,6 +2436,7 @@
                 </button>
               </div>
 
+              ${this.isAdminUser ? `
               <div class="px-2 pt-2 mt-2 border-t border-slate-800">
                 <a href="{{ route('admin') }}" class="w-full text-left px-3 py-2 rounded-xl bg-slate-950/80 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center gap-2.5 transition border border-slate-800 group shadow-sm text-xs font-semibold">
                   <svg class="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2333,6 +2447,7 @@
                   <span class="text-slate-400 group-hover:text-white ml-auto">&rarr;</span>
                 </a>
               </div>
+              ` : ''}
             </div>
           `;
         }
@@ -2341,7 +2456,7 @@
         const mobCard = document.getElementById('mob-user-profile-card');
         if (mobCard) {
           const mobAvatarHtml = user.avatar ?
-            `<img src="${user.avatar}" alt="${user.name}" class="w-9 h-9 rounded-xl object-cover border border-ics-700 shadow group-hover:border-ics-crimson transition">` :
+            `<img src="${user.avatar}" alt="${user.name}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" class="w-9 h-9 rounded-xl object-cover border border-ics-700 shadow group-hover:border-ics-crimson transition"><div class="hidden w-9 h-9 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-xs shadow group-hover:scale-105 transition-transform">${user.initials || 'ST'}</div>` :
             `<div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-ics-800 to-ics-crimson border border-ics-700 flex items-center justify-center text-white font-bold text-xs shadow group-hover:scale-105 transition-transform">${user.initials || 'ST'}</div>`;
 
           mobCard.className = 'p-3 rounded-2xl bg-ics-950/90 border border-ics-900 flex items-center justify-between shadow';
@@ -2686,7 +2801,15 @@
           }
         }
         if (receiptLinkBox) {
-          if (res.receipt_image) {
+          if (res.receipt_image && res.receipt_image !== 'images/gcash_qr.jpg' && !res.receipt_image.includes('gcash_qr')) {
+            const receiptSrc = (res.receipt_image.startsWith('http://') || res.receipt_image.startsWith('https://') || res.receipt_image.startsWith('data:image'))
+              ? res.receipt_image
+              : (`{{ asset('') }}` + res.receipt_image.replace(/^\//, ''));
+            receiptLinkBox.innerHTML = `
+              <span class="inline-flex items-center ml-1.5 cursor-pointer group relative" onclick="icsApp.viewActiveReceipt()" title="Click to view full receipt">
+                <img src="${receiptSrc}" class="w-6 h-6 rounded-md object-cover border border-blue-500/80 group-hover:border-cyan-300 group-hover:scale-110 transition-transform shadow cursor-pointer" alt="Receipt Thumbnail">
+              </span>
+            `;
             receiptLinkBox.classList.remove('hidden');
           } else {
             receiptLinkBox.classList.add('hidden');
@@ -3268,14 +3391,16 @@
         const file = e.target.files[0];
         if (!file) return;
 
-        if (!file.type.startsWith('image/')) {
-          this.showToast('Please upload a valid image (PNG, JPG, WebP).', 'warning');
+        // Mobile-friendly validation: Check file.type OR extension
+        const isImage = (file.type && file.type.startsWith('image/')) || /\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(file.name || '');
+        if (!isImage) {
+          this.showToast('Please upload a valid image file (PNG, JPG, WebP).', 'warning');
           return;
         }
 
         this.isProcessingReceipt = true;
         const fileNameEl = document.getElementById('receipt-file-name');
-        if (fileNameEl) fileNameEl.textContent = 'Optimizing receipt image...';
+        if (fileNameEl) fileNameEl.textContent = 'Optimizing receipt photo...';
 
         const reader = new FileReader();
         reader.onerror = () => {
@@ -3285,15 +3410,25 @@
 
         reader.onload = (event) => {
           const rawData = event.target.result;
+          // Store rawData immediately so the picture is guaranteed to be saved even if canvas fails
+          this.receiptBase64 = rawData;
+
           const img = new Image();
           img.onerror = () => {
             this.isProcessingReceipt = false;
-            this.showToast('Failed to load image preview.', 'error');
+            const placeholder = document.getElementById('receipt-upload-placeholder');
+            const previewContainer = document.getElementById('receipt-upload-preview-container');
+            const previewImg = document.getElementById('receipt-upload-preview-img');
+            if (placeholder) placeholder.classList.add('hidden');
+            if (previewContainer) previewContainer.classList.remove('hidden');
+            if (previewImg) previewImg.src = this.receiptBase64;
+            if (fileNameEl) fileNameEl.textContent = file.name;
+            this.showToast('Payment receipt screenshot attached!', 'info');
           };
 
           img.onload = () => {
             try {
-              const maxDim = 850;
+              const maxDim = 1200;
               let width = img.width;
               let height = img.height;
 
@@ -3313,11 +3448,13 @@
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
 
-              // 0.75 compression produces clear text at ~50KB - 80KB payload
-              this.receiptBase64 = canvas.toDataURL('image/jpeg', 0.75);
+              // 0.80 compression produces high-clarity GCash receipt numbers at ~70KB-130KB
+              const optimized = canvas.toDataURL('image/jpeg', 0.80);
+              if (optimized && optimized.length > 100) {
+                this.receiptBase64 = optimized;
+              }
             } catch(cvErr) {
-              // Fallback to raw data if canvas fails
-              this.receiptBase64 = rawData;
+              // Canvas fallback: retain rawData
             } finally {
               this.isProcessingReceipt = false;
             }
@@ -3338,10 +3475,20 @@
       }
 
       async submitReservation(e) {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
+
+        // Anti-Spam / Double-Submit Protection: Lock concurrent or rapid repeated clicks
+        if (this.isSubmittingReservation) {
+          return;
+        }
 
         if (this.isProcessingReceipt) {
           this.showToast('Please wait a moment, receipt image is still being optimized...', 'warning');
+          return;
+        }
+
+        if (!this.cart || this.cart.length === 0) {
+          this.showToast('Your reservation cart is empty. Please add merchandise items first.', 'warning');
           return;
         }
 
@@ -3359,6 +3506,22 @@
           }
         }
 
+        // Lock submission immediately
+        this.isSubmittingReservation = true;
+
+        const submitBtn = document.getElementById('chk-submit-btn');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add('opacity-60', 'pointer-events-none', 'cursor-not-allowed');
+          submitBtn.innerHTML = `
+            <svg class="w-4 h-4 animate-spin inline mr-1.5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span>Processing Order...</span>
+          `;
+        }
+
         const payload = {
           student_name: document.getElementById('chk-name').value,
           student_id: document.getElementById('chk-id').value,
@@ -3374,12 +3537,6 @@
           payment_reference: gcashRef,
           receipt_image: this.receiptBase64 || null
         };
-
-        const submitBtn = document.getElementById('chk-submit-btn');
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.innerHTML = `<span>Processing Order...</span>`;
-        }
 
         try {
           const res = await fetch('{{ route("api.reservations.store") }}', {
@@ -3408,8 +3565,14 @@
             return;
           }
 
-          // Celebrate with confetti
-          if (window.confetti) {
+          // Clear cart immediately on successful creation
+          this.cart = [];
+          this.saveCartToStorage();
+          this.updateCartBadge();
+          this.closeCheckoutModal();
+
+          // Confetti celebration (only on fresh new reservations, not duplicate spam callbacks)
+          if (window.confetti && !data.is_duplicate) {
             window.confetti({
               particleCount: 120,
               spread: 70,
@@ -3419,10 +3582,7 @@
             });
           }
 
-          this.cart = [];
-          this.saveCartToStorage();
-          this.closeCheckoutModal();
-          this.showToast('Reservation successfully recorded in queue!', 'success');
+          this.showToast(data.message || 'Reservation successfully recorded in queue!', 'success');
 
           // Update Shopee-Style Live Tracker with New Reservation
           if (data.reservation) {
@@ -3436,9 +3596,21 @@
             if (!Array.isArray(this.reservations)) {
               this.reservations = [];
             }
-            this.reservations.unshift(data.reservation);
+
+            // Deduplicate in memory
+            const existingIdx = this.reservations.findIndex(x => x.ref_code === data.reservation.ref_code);
+            if (existingIdx === -1) {
+              this.reservations.unshift(data.reservation);
+            } else {
+              this.reservations[existingIdx] = data.reservation;
+            }
+
             this.activeTrackedRef = data.reservation.ref_code;
             this.updateTrackerVisibility();
+
+            // Refresh order history modal and badge if present
+            const dropdownOrderBadge = document.getElementById('dropdown-order-count');
+            if (dropdownOrderBadge) dropdownOrderBadge.textContent = this.reservations.length;
 
             // Smoothly scroll to the Shopee-Style Order Tracker so student sees the progress bar immediately!
             setTimeout(() => {
@@ -3450,26 +3622,203 @@
             }, 250);
           }
 
-          // View Confirmation Slip
-          this.viewPrintClaimSlip(data.reservation);
+          // View Confirmation Slip - Guard to prevent duplicate popups
+          const isSlipModalOpen = document.body.classList.contains('slip-modal-open');
+          if (!isSlipModalOpen && data.reservation) {
+            this.viewPrintClaimSlip(data.reservation);
+          }
         } catch (err) {
           console.error(err);
           this.showToast('Failed to complete reservation. Please try again.', 'error');
         } finally {
+          this.isSubmittingReservation = false;
           if (submitBtn) {
             submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-60', 'pointer-events-none', 'cursor-not-allowed');
             submitBtn.innerHTML = `
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Confirm & Lock In Reservation</span>
+              <span>Confirm & Generate Slip</span>
+              <svg class="w-4 h-4 text-ics-gold inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
             `;
           }
         }
       }
 
       // ==========================================
+      // STUDENT ORDER HISTORY & PURCHASE ARCHIVE
+      // ==========================================
+      openStudentOrderHistoryModal() {
+        const modal = document.getElementById('student-order-history-modal');
+        if (!modal) return;
+        this.renderStudentOrderHistoryModal();
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+      }
+
+      closeStudentOrderHistoryModal() {
+        const modal = document.getElementById('student-order-history-modal');
+        if (modal) modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      }
+
+      renderStudentOrderHistoryModal() {
+        const listContainer = document.getElementById('student-order-history-list');
+        const badge = document.getElementById('order-history-total-badge');
+        const orders = this.reservations || [];
+
+        if (badge) {
+          badge.textContent = `${orders.length} Orders`;
+        }
+
+        if (!listContainer) return;
+
+        if (orders.length === 0) {
+          listContainer.innerHTML = `
+            <div class="text-center py-12 px-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+              <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 text-slate-500 flex items-center justify-center mx-auto mb-3">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
+              <h4 class="text-sm font-bold text-white">No Reservation History Found</h4>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+                You have not placed any uniform pre-orders yet. Browse our collegiate catalog to start your reservation!
+              </p>
+              <button onclick="icsApp.closeStudentOrderHistoryModal(); window.scrollTo({top: 400, behavior: 'smooth'});" class="mt-4 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-ics-700 to-ics-800 text-white shadow hover:from-ics-600 hover:to-ics-700 transition">
+                Browse Merchandise Catalog
+              </button>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '';
+        orders.forEach(r => {
+          let statusBadgeClass = 'bg-amber-950 text-amber-300 border-amber-700';
+          if (r.status === 'Ready for Pickup') statusBadgeClass = 'bg-blue-950 text-blue-300 border-blue-700';
+          else if (r.status === 'Claimed') statusBadgeClass = 'bg-emerald-950 text-emerald-300 border-emerald-700';
+          else if (r.status === 'Cancelled') statusBadgeClass = 'bg-rose-950 text-rose-300 border-rose-700';
+
+          const createdDate = r.created_at ? new Date(r.created_at).toLocaleString('en-US', {
+            month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+          }) : 'Recorded Order';
+
+          const items = Array.isArray(r.items) ? r.items : [];
+          let itemsTableHtml = '';
+
+          items.forEach(it => {
+            const itemName = it.productName || it.name || 'Merchandise Item';
+            const size = it.size || 'M';
+            const qty = Number(it.quantity || 1);
+            const price = Number(it.price || 0);
+            const subtotal = price * qty;
+
+            itemsTableHtml += `
+              <tr class="border-b border-slate-900/80 text-[11px] text-slate-300">
+                <td class="py-2 pr-2 font-medium text-white">
+                  ${itemName}
+                  <span class="inline-block text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 ml-1 font-mono">Size ${size}</span>
+                </td>
+                <td class="py-2 px-2 text-center font-mono">×${qty}</td>
+                <td class="py-2 px-2 text-right font-mono text-slate-400">₱${price.toFixed(2)}</td>
+                <td class="py-2 pl-2 text-right font-mono font-bold text-white">₱${subtotal.toFixed(2)}</td>
+              </tr>
+            `;
+          });
+
+          const receiptSrc = (r.receipt_image && r.receipt_image !== 'images/gcash_qr.jpg' && !r.receipt_image.includes('gcash_qr'))
+            ? ((r.receipt_image.startsWith('http://') || r.receipt_image.startsWith('https://') || r.receipt_image.startsWith('data:image'))
+              ? r.receipt_image
+              : (`{{ asset('') }}` + r.receipt_image.replace(/^\//, '')))
+            : null;
+
+          html += `
+            <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-mono font-bold text-sm text-ics-gold">${r.ref_code}</span>
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusBadgeClass}">
+                    ${r.status}
+                  </span>
+                  <span class="text-[10px] text-slate-400 font-mono">${createdDate}</span>
+                </div>
+                <div class="text-right font-mono text-emerald-400 font-black text-sm">
+                  ₱${Number(r.total_amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                </div>
+              </div>
+
+              <!-- Pickup & Payment Meta -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-1 text-xs">
+                <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/60">
+                  <span class="text-[10px] text-slate-400 uppercase font-semibold block">Pickup Schedule</span>
+                  <p class="font-bold text-white mt-0.5">${r.pickup_date || 'Schedule to be confirmed'}</p>
+                  <p class="text-[11px] text-slate-400">${r.pickup_slot || 'Standard Window'}</p>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/60">
+                  <span class="text-[10px] text-slate-400 uppercase font-semibold block">Payment Method</span>
+                  <p class="font-bold text-white mt-0.5 flex items-center gap-1.5">
+                    <span>${r.payment_method || 'Cash on Pickup'}</span>
+                    <span class="text-[9px] font-mono px-1.5 py-0.2 rounded ${r.payment_status === 'Verified' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">
+                      ${r.payment_status || 'Unpaid'}
+                    </span>
+                  </p>
+                  ${r.payment_reference ? `<p class="text-[10px] text-ics-gold font-mono mt-0.5">GCash Ref: ${r.payment_reference}</p>` : ''}
+                  ${receiptSrc ? `
+                    <button type="button" onclick="icsApp.openReceiptViewModal(icsApp.reservations.find(x => x.ref_code === '${r.ref_code}'))" class="mt-1 text-[10px] text-blue-400 hover:text-blue-300 font-bold underline cursor-pointer">
+                      View Attached Receipt
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+
+              <!-- Items Breakdown Table -->
+              <div class="mt-3 pt-2">
+                <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Items Ordered (${items.length}):</p>
+                <div class="overflow-x-auto rounded-xl bg-slate-900/40 p-2.5 border border-slate-800/40">
+                  <table class="w-full text-left">
+                    <thead>
+                      <tr class="text-[9px] font-mono uppercase text-slate-500 border-b border-slate-800">
+                        <th class="pb-1">Product & Size</th>
+                        <th class="pb-1 text-center">Qty</th>
+                        <th class="pb-1 text-right">Price</th>
+                        <th class="pb-1 text-right">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${itemsTableHtml}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2 flex-wrap">
+                <div class="text-[10px] text-slate-400 italic">
+                  ${r.notes ? `Note: "${r.notes}"` : 'Official Student Pre-Order'}
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="icsApp.closeStudentOrderHistoryModal(); icsApp.selectTrackerReservation('${r.ref_code}'); document.getElementById('tracker-section')?.scrollIntoView({behavior:'smooth'});" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <span>Track Order</span>
+                  </button>
+                  <button type="button" onclick="icsApp.viewPrintClaimSlip(icsApp.reservations.find(x => x.ref_code === '${r.ref_code}'))" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white shadow transition flex items-center gap-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>View Slip</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        listContainer.innerHTML = html;
+      }
+
+      // ==========================================
       // CLAIM SLIP DISPLAY & PRINT
       // ==========================================
       viewPrintClaimSlip(resObj) {
+        if (!resObj) return;
+        document.body.classList.add('slip-modal-open');
         document.getElementById('slip-ref').textContent = resObj.ref_code;
         document.getElementById('slip-status').textContent = resObj.status;
         document.getElementById('slip-student-name').textContent = resObj.student_name;
@@ -3519,24 +3868,34 @@
         document.getElementById('receipt-view-amount').textContent = '₱' + Number(resObj.total_amount).toFixed(2);
         document.getElementById('receipt-view-gcash-ref').textContent = resObj.payment_reference || 'Not Provided';
 
-        const imgSrc = resObj.receipt_image ? (`{{ asset('') }}` + resObj.receipt_image) : '{{ asset("images/gcash_qr.jpg") }}';
-        document.getElementById('receipt-view-img').src = imgSrc;
-        document.getElementById('receipt-view-download-link').href = imgSrc;
+        let imgSrc = '';
+        if (resObj.receipt_image && resObj.receipt_image !== 'images/gcash_qr.jpg' && !resObj.receipt_image.includes('gcash_qr')) {
+          imgSrc = (resObj.receipt_image.startsWith('http://') || resObj.receipt_image.startsWith('https://') || resObj.receipt_image.startsWith('data:image'))
+            ? resObj.receipt_image
+            : (`{{ asset('') }}` + resObj.receipt_image.replace(/^\//, ''));
+        }
 
-        const verifyBtn = document.getElementById('receipt-verify-btn');
-        if (verifyBtn) {
-          if (resObj.payment_status === 'Verified') {
-            verifyBtn.disabled = true;
-            verifyBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed';
-            verifyBtn.innerHTML = `<span>Payment Already Verified</span>`;
-          } else {
-            verifyBtn.disabled = false;
-            verifyBtn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1 cursor-pointer';
-            verifyBtn.innerHTML = `
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Mark Payment Verified</span>
-            `;
+        const imgEl = document.getElementById('receipt-view-img');
+        const linkEl = document.getElementById('receipt-view-download-link');
+        const emptyNotice = document.getElementById('receipt-view-empty-notice');
+
+        if (imgSrc) {
+          if (imgEl) {
+            imgEl.src = imgSrc;
+            imgEl.classList.remove('hidden');
           }
+          if (linkEl) {
+            linkEl.href = imgSrc;
+            linkEl.classList.remove('hidden');
+          }
+          if (emptyNotice) emptyNotice.classList.add('hidden');
+        } else {
+          if (imgEl) {
+            imgEl.src = '';
+            imgEl.classList.add('hidden');
+          }
+          if (linkEl) linkEl.classList.add('hidden');
+          if (emptyNotice) emptyNotice.classList.remove('hidden');
         }
 
         document.getElementById('receipt-view-modal').classList.remove('hidden');
@@ -3545,32 +3904,6 @@
       closeReceiptViewModal() {
         document.getElementById('receipt-view-modal').classList.add('hidden');
         this.activeViewingReceiptReservation = null;
-      }
-
-      async verifyReceiptPayment() {
-        if (!this.activeViewingReceiptReservation) return;
-        const id = this.activeViewingReceiptReservation.id;
-        try {
-          const res = await fetch(`{{ url('api/reservations') }}/${id}/status`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-              status: 'Ready for Pickup',
-              payment_status: 'Verified'
-            })
-          });
-          const data = await res.json();
-          this.showToast('Payment verified & reservation marked Ready for Pickup!', 'success');
-          this.closeReceiptViewModal();
-          setTimeout(() => window.location.reload(), 800);
-        } catch (e) {
-          this.showToast('Payment verified successfully!', 'success');
-          this.closeReceiptViewModal();
-          setTimeout(() => window.location.reload(), 800);
-        }
       }
 
       viewActiveReceipt() {
@@ -3584,7 +3917,9 @@
       }
 
       closeSlipModal() {
-        document.getElementById('slip-modal').classList.add('hidden');
+        document.body.classList.remove('slip-modal-open');
+        const modal = document.getElementById('slip-modal');
+        if (modal) modal.classList.add('hidden');
       }
 
 

@@ -37,6 +37,8 @@ Route::get('/api/catalog', [MerchController::class, 'getCatalog'])->name('api.ca
 Route::post('/api/reservations', [MerchController::class, 'storeReservation'])->name('api.reservations.store');
 Route::patch('/api/reservations/{id}/status', [MerchController::class, 'updateReservationStatus'])->name('api.reservations.status');
 Route::delete('/api/reservations/{id}', [MerchController::class, 'destroyReservation'])->name('api.reservations.destroy');
+Route::post('/api/reservations/bulk-delete', [MerchController::class, 'bulkDeleteReservations'])->name('api.reservations.bulk_delete');
+Route::post('/api/reservations/delete-all-claimed', [MerchController::class, 'deleteAllClaimedReservations'])->name('api.reservations.delete_all_claimed');
 
 // Products (Information Management CRUD with Image Upload & Edit)
 Route::post('/api/products', [MerchController::class, 'storeProduct'])->name('api.products.store');
@@ -50,6 +52,7 @@ Route::delete('/api/users/{id}', [MerchController::class, 'deleteUser'])->name('
 
 // Reports Export & Claimed Releases Logsheet
 Route::get('/reports/export-csv', [MerchController::class, 'exportReportCsv'])->name('reports.export');
+Route::get('/reports/export-pdf', [MerchController::class, 'exportReportPdf'])->name('reports.export_pdf');
 Route::get('/reports/export-claimed-csv', [MerchController::class, 'exportClaimedLedgerCsv'])->name('reports.export_claimed');
 Route::get('/reports/export-claimed-pdf', [MerchController::class, 'exportClaimedPdf'])->name('reports.export_claimed_pdf');
 Route::get('/api/reports/claimed-logs', [MerchController::class, 'getClaimedLogs'])->name('api.reports.claimed_logs');
@@ -88,3 +91,6 @@ Route::post('/api/activity-logs/clear', [MerchController::class, 'clearActivityL
 Route::post('/api/students/{id}/snooze', [MerchController::class, 'snoozeStudent'])->name('api.students.snooze');
 Route::post('/api/students/{id}/ban', [MerchController::class, 'banStudent'])->name('api.students.ban');
 Route::post('/api/students/{id}/unban', [MerchController::class, 'unbanStudent'])->name('api.students.unban');
+
+// Admin Message Buyer from Reservation Queue
+Route::post('/api/reservations/{id}/message-buyer', [MerchController::class, 'messageBuyerFromReservation'])->name('api.reservations.message_buyer');

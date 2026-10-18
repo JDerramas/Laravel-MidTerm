@@ -161,23 +161,29 @@ class OAuthController extends Controller
                 $userData = array_merge($userData, $tokenData['user']);
             }
 
-            // 3. Fallback: Only hit network userinfo endpoint if email claim was not present in id_token
-            if (empty($userData['email']) && $accessToken) {
+            // 3. Userinfo Endpoint: Fetch live user profile & avatar from OnePass
+            if ($accessToken) {
                 $userinfoEndpoints = [
                     "{$issuerUrl}/api/oauth/userinfo",
                     "{$issuerUrl}/api/user",
+                    "{$issuerUrl}/api/me",
                 ];
 
                 foreach ($userinfoEndpoints as $uEp) {
                     try {
                         $userResponse = Http::withToken($accessToken)
                             ->withHeaders(['Accept' => 'application/json'])
-                            ->timeout(5)
+                            ->timeout(6)
                             ->get($uEp);
 
                         if ($userResponse->successful()) {
                             $fetchedUser = $userResponse->json();
                             if (is_array($fetchedUser) && !empty($fetchedUser)) {
+                                if (isset($fetchedUser['user']) && is_array($fetchedUser['user'])) {
+                                    $fetchedUser = array_merge($fetchedUser, $fetchedUser['user']);
+                                } elseif (isset($fetchedUser['data']) && is_array($fetchedUser['data'])) {
+                                    $fetchedUser = array_merge($fetchedUser, $fetchedUser['data']);
+                                }
                                 $userData = array_merge($userData, $fetchedUser);
                                 break;
                             }
@@ -196,7 +202,51 @@ class OAuthController extends Controller
             $yearLevel = $userData['year_level'] ?? '2nd Year';
             $section = $userData['section'] ?? 'AIS 2A';
             $contact = $userData['contact_number'] ?? $userData['contact'] ?? null;
-            $avatar = $userData['avatar'] ?? $userData['picture'] ?? null;
+
+            // Comprehensively resolve avatar image from all potential OnePass claim keys
+            $rawAvatar = $userData['avatar']
+                ?? $userData['picture']
+                ?? $userData['avatar_url']
+                ?? $userData['profile_photo']
+                ?? $userData['profile_picture']
+                ?? $userData['photo']
+                ?? $userData['photo_url']
+                ?? $userData['image']
+                ?? ($userData['user_metadata']['avatar'] ?? null)
+                ?? ($userData['user_metadata']['picture'] ?? null)
+                ?? ($userData['user_metadata']['avatar_url'] ?? null)
+                ?? null;
+
+            $avatar = null;
+            if (!empty($rawAvatar) && is_string($rawAvatar)) {
+                $rawAvatar = trim($rawAvatar);
+                if (str_starts_with($rawAvatar, 'http://') || str_starts_with($rawAvatar, 'https://') || str_starts_with($rawAvatar, 'data:image')) {
+                    $avatar = $rawAvatar;
+                } elseif (str_starts_with($rawAvatar, '/')) {
+                    $avatar = $issuerUrl . $rawAvatar;
+                } else {
+                    $avatar = $issuerUrl . '/' . $rawAvatar;
+                }
+            }
+
+            // Fallback 1: Match existing local student avatar by student_id, email, or name
+            if (empty($avatar)) {
+                try {
+                    $matchedStu = \App\Models\Student::where(function ($q) use ($studentId, $email, $name) {
+                        if ($studentId) $q->where('student_id', $studentId);
+                        if ($email) $q->orWhere('email', $email);
+                        if ($name) $q->orWhere('name', $name);
+                    })->whereNotNull('avatar')->where('avatar', '!=', '')->first();
+                    if ($matchedStu && !empty($matchedStu->avatar)) {
+                        $avatar = $matchedStu->avatar;
+                    }
+                } catch (\Throwable $e) {}
+            }
+
+            // Fallback 2: Fetch avatar from Supabase Auth user metadata
+            if (empty($avatar)) {
+                $avatar = $this->fetchAvatarFromSupabase($email, $studentId, $name);
+            }
 
             $studentProfile = [
                 'name'         => $name,
@@ -355,5 +405,44 @@ class OAuthController extends Controller
         } catch (\Throwable $t) {
             // Non-blocking sync
         }
+    }
+
+    /**
+     * Fetch avatar from Supabase Auth user metadata
+     */
+    protected function fetchAvatarFromSupabase($email = null, $studentId = null, $name = null): ?string
+    {
+        $supabaseUrl = rtrim(config('services.supabase.url', ''), '/');
+        $serviceKey = config('services.supabase.service_role_key');
+        if (!$supabaseUrl || !$serviceKey) return null;
+
+        try {
+            $res = Http::withHeaders([
+                'apikey'        => $serviceKey,
+                'Authorization' => "Bearer {$serviceKey}",
+            ])->timeout(3)->get("{$supabaseUrl}/auth/v1/admin/users");
+
+            if ($res->successful()) {
+                $users = $res->json()['users'] ?? [];
+                foreach ($users as $u) {
+                    $uEmail = strtolower($u['email'] ?? '');
+                    $meta = $u['user_metadata'] ?? [];
+                    $mStuId = $meta['student_id'] ?? '';
+                    $mName = strtolower($meta['name'] ?? '');
+
+                    $matched = false;
+                    if ($email && strtolower($email) === $uEmail) $matched = true;
+                    if ($studentId && (string)$studentId === (string)$mStuId) $matched = true;
+                    if ($name && $mName && (strtolower($name) === $mName || str_contains($mName, strtolower($name)))) $matched = true;
+
+                    if ($matched && !empty($meta['avatar'])) {
+                        return $meta['avatar'];
+                    }
+                }
+            }
+        } catch (\Throwable $t) {
+            Log::warning('Non-blocking Supabase avatar fetch warning: ' . $t->getMessage());
+        }
+        return null;
     }
 }

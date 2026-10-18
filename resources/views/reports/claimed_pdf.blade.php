@@ -326,10 +326,17 @@
   </main>
 
   <script>
-    // Automatically trigger print dialog if loaded with ?print=1
-    if (new URLSearchParams(window.location.search).get('print') === '1') {
+    // Automatically trigger print dialog if loaded with ?print=1 or ?auto_print=1
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('print') === '1' || urlParams.get('auto_print') === '1') {
       window.addEventListener('load', () => {
-        setTimeout(() => window.print(), 350);
+        setTimeout(() => {
+          try {
+            window.print();
+          } catch(e) {
+            console.error('Print trigger error:', e);
+          }
+        }, 350);
       });
     }
   </script>

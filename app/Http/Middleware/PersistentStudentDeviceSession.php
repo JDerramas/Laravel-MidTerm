@@ -37,6 +37,18 @@ class PersistentStudentDeviceSession
                 // Update active timestamp and keep device token fresh
                 $request->session()->put('student_last_activity', $now);
                 $studentUser = $request->session()->get('student_user');
+                if ($studentUser && empty($studentUser['avatar'])) {
+                    $stuIdent = $studentUser['student_id'] ?? $studentUser['email'] ?? null;
+                    if ($stuIdent) {
+                        $matchedStu = Student::where(function($q) use ($stuIdent) {
+                            $q->where('student_id', $stuIdent)->orWhere('email', $stuIdent);
+                        })->whereNotNull('avatar')->where('avatar', '!=', '')->first();
+                        if ($matchedStu && !empty($matchedStu->avatar)) {
+                            $studentUser['avatar'] = $matchedStu->avatar;
+                            $request->session()->put('student_user', $studentUser);
+                        }
+                    }
+                }
                 $this->queueDeviceCookie($studentUser, $now);
             }
         } else {
@@ -53,9 +65,10 @@ class PersistentStudentDeviceSession
                         if ($minutesInactive < self::INACTIVITY_TIMEOUT_MINUTES) {
                             $identifier = $payload['identifier'];
 
-                            // Attempt matching from Student model
+                            // Attempt matching from Student model, prioritizing non-empty avatar
                             $student = Student::where('student_id', $identifier)
                                 ->orWhere('email', $identifier)
+                                ->orderByRaw("CASE WHEN avatar IS NOT NULL AND avatar != '' THEN 0 ELSE 1 END")
                                 ->first();
 
                             if ($student) {
