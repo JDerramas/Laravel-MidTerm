@@ -36,6 +36,7 @@ class StudentAuthController extends Controller
         }
 
         // 0. Direct Supabase Cloud Auth Query (Real Student Identity Verification)
+        $student = null;
         $supabaseUrl = rtrim(config('services.supabase.url', ''), '/');
         $serviceKey = config('services.supabase.service_role_key');
         $anonKey = config('services.supabase.key');

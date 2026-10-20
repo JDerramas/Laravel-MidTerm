@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MerchController;
 use App\Http\Controllers\OAuthController;
 use App\Http\Controllers\StudentAuthController;
+use App\Http\Controllers\PaymentSandboxController;
 
 /*
 |--------------------------------------------------------------------------
@@ -94,3 +95,11 @@ Route::post('/api/students/{id}/unban', [MerchController::class, 'unbanStudent']
 
 // Admin Message Buyer from Reservation Queue
 Route::post('/api/reservations/{id}/message-buyer', [MerchController::class, 'messageBuyerFromReservation'])->name('api.reservations.message_buyer');
+
+// Real-Time Online Payment Sandbox & PayMongo Test Mode Routes (GCash, Maya, Debit/Credit Card + Normal Camera QR Scan)
+Route::post('/api/payment/sandbox/create', [PaymentSandboxController::class, 'createSession'])->name('api.payment.sandbox.create');
+Route::get('/payment/sandbox/{token}', [PaymentSandboxController::class, 'showPortal'])->name('payment.sandbox.portal');
+Route::get('/payment/sandbox/{token}/paymongo', [PaymentSandboxController::class, 'createPayMongoRedirect'])->name('payment.sandbox.paymongo');
+Route::post('/api/payment/sandbox/{token}/step', [PaymentSandboxController::class, 'updateStep'])->name('api.payment.sandbox.step');
+Route::post('/api/payment/sandbox/{token}/complete', [PaymentSandboxController::class, 'completePayment'])->name('api.payment.sandbox.complete');
+Route::get('/api/payment/sandbox/{token}/status', [PaymentSandboxController::class, 'checkStatus'])->name('api.payment.sandbox.status');

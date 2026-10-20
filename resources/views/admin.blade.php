@@ -142,18 +142,32 @@
         visibility: hidden !important;
       }
 
+      body.slip-modal-open #slip-modal {
+        position: static !important;
+        display: block !important;
+        visibility: visible !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+      }
+
       body.slip-modal-open #printable-claim-slip,
       body.slip-modal-open #printable-claim-slip * {
         visibility: visible !important;
       }
 
       body.slip-modal-open #printable-claim-slip {
-        position: absolute !important;
+        position: relative !important;
         left: 0 !important;
         top: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
         background: white !important;
         color: black !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 1.5rem !important;
       }
 
       body:not(.slip-modal-open) {
@@ -1091,6 +1105,14 @@
                         <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-950 text-blue-300 border border-blue-800 flex items-center gap-1">
                           GCash Online
                         </span>
+                        @elseif(($r->payment_method ?? '') === 'Maya Online')
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1">
+                          Maya Online
+                        </span>
+                        @elseif(($r->payment_method ?? '') === 'Debit/Credit Card')
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-950 text-indigo-300 border border-indigo-800 flex items-center gap-1">
+                          Debit/Credit Card
+                        </span>
                         @else
                         <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1">
                           Pay at School
@@ -1116,7 +1138,7 @@
                           : asset(ltrim($r->receipt_image, '/'));
                       @endphp
                       <div class="mt-2.5 reservation-receipt-container">
-                        <div class="relative group cursor-pointer inline-block" onclick="icsApp.openReceiptViewModal('{{ $r->id }}')" title="Click to view full receipt image">
+                        <div class="relative group cursor-pointer inline-block" onclick="event.stopPropagation(); icsApp.openReceiptViewModal('{{ $r->id }}')" title="Click to view full receipt image">
                           <img
                             src="{{ $receiptSrc }}"
                             alt="Payment Receipt from {{ $r->student_name }}"
@@ -1146,11 +1168,11 @@
                       </div>
 
                       <!-- Action Buttons -->
-                      <div class="reservation-actions-container flex items-center md:justify-end gap-2 mt-3 flex-wrap">
+                      <div class="reservation-actions-container flex items-center md:justify-end gap-2 mt-3 flex-wrap" onclick="event.stopPropagation()">
                         <!-- Message Student Buyer Button -->
                         <button
                           type="button"
-                          onclick="icsApp.openAdminMessageBuyerModal('{{ $r->id }}')"
+                          onclick="event.stopPropagation(); icsApp.openAdminMessageBuyerModal('{{ $r->id }}')"
                           class="px-2.5 py-1 rounded-xl text-xs font-bold bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                           title="Message Student Buyer ({{ $r->student_name }})">
                           <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1163,7 +1185,7 @@
                         <!-- LOCKED: Cannot Mark Ready or Mark Claimed while ticket is pending -->
                         <button
                           type="button"
-                          onclick="icsApp.setAdminTab('helpdesk'); icsApp.selectAdminTicket({{ $r->activeTicket->id }});"
+                          onclick="event.stopPropagation(); icsApp.setAdminTab('helpdesk'); icsApp.selectAdminTicket({{ $r->activeTicket->id }});"
                           class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                           title="This reservation has an active support ticket. Please resolve ticket before claiming.">
                           <svg class="w-3.5 h-3.5 text-amber-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1175,7 +1197,7 @@
                         @if($r->status === 'Pending')
                         <button
                           type="button"
-                          onclick="icsApp.updateReservationStatus('{{ $r->id }}', 'Ready for Pickup')"
+                          onclick="event.stopPropagation(); icsApp.updateReservationStatus('{{ $r->id }}', 'Ready for Pickup')"
                           class="px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition cursor-pointer">
                           Mark Ready
                         </button>
@@ -1184,7 +1206,7 @@
                         @if($r->status === 'Ready for Pickup')
                         <button
                           type="button"
-                          onclick="icsApp.updateReservationStatus('{{ $r->id }}', 'Claimed')"
+                          onclick="event.stopPropagation(); icsApp.updateReservationStatus('{{ $r->id }}', 'Claimed')"
                           class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition cursor-pointer">
                           Mark Claimed
                         </button>
@@ -1194,7 +1216,7 @@
                         @if($r->status !== 'Cancelled' && $r->status !== 'Claimed')
                         <button
                           type="button"
-                          onclick="icsApp.updateReservationStatus('{{ $r->id }}', 'Cancelled')"
+                          onclick="event.stopPropagation(); icsApp.updateReservationStatus('{{ $r->id }}', 'Cancelled')"
                           class="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 transition cursor-pointer">
                           Cancel
                         </button>
@@ -1202,7 +1224,7 @@
 
                         <button
                           type="button"
-                          onclick="icsApp.viewPrintClaimSlip('{{ $r->id }}')"
+                          onclick="event.stopPropagation(); icsApp.viewPrintClaimSlip('{{ $r->id }}')"
                           class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer">
                           Print Slip
                         </button>
@@ -1211,7 +1233,7 @@
                         <!-- Delete Button: Only appears when reservation is finished (Claimed or Cancelled) -->
                         <button
                           type="button"
-                          onclick="icsApp.deleteReservation('{{ $r->id }}', '{{ $r->ref_code }}')"
+                          onclick="event.stopPropagation(); icsApp.deleteReservation('{{ $r->id }}', '{{ $r->ref_code }}')"
                           class="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 transition flex items-center gap-1 shadow-sm cursor-pointer"
                           title="Permanently delete finished reservation from database">
                           <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1394,9 +1416,14 @@
                 </div>
               </div>
 
+              <!-- Top Synchronized Horizontal Scrollbar -->
+              <div id="claimed-top-scrollbar-wrapper" class="overflow-x-auto overflow-y-hidden rounded-t-xl bg-slate-950/80 border-t border-x border-slate-800/80 mb-0.5" style="scrollbar-width: thin;">
+                <div id="claimed-top-scrollbar-dummy" class="h-3" style="min-height: 12px;"></div>
+              </div>
+
               <!-- Claimed Orders Table -->
-              <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
-                <table class="w-full text-left text-xs sm:text-sm">
+              <div id="claimed-table-scroll-container" class="overflow-x-auto rounded-2xl border border-slate-800/80">
+                <table id="claimed-orders-ledger-table" class="w-full text-left text-xs sm:text-sm">
                   <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
                       <th class="py-3.5 px-3 text-center w-10">
@@ -1642,9 +1669,14 @@
                 </div>
               </div>
 
+              <!-- Top Synchronized Horizontal Scrollbar -->
+              <div id="reports-top-scrollbar-wrapper" class="overflow-x-auto overflow-y-hidden rounded-t-xl bg-slate-950/80 border-t border-x border-slate-800/80 mb-0.5" style="scrollbar-width: thin;">
+                <div id="reports-top-scrollbar-dummy" class="h-3" style="min-height: 12px;"></div>
+              </div>
+
               <!-- Report Table -->
-              <div class="overflow-x-auto rounded-2xl border border-slate-800/80">
-                <table class="w-full text-left text-xs sm:text-sm">
+              <div id="reports-table-scroll-container" class="overflow-x-auto rounded-2xl border border-slate-800/80">
+                <table id="reports-sales-stock-table" class="w-full text-left text-xs sm:text-sm">
                   <thead class="text-slate-300 bg-slate-950 uppercase text-xs font-mono font-bold border-b border-slate-800">
                     <tr>
                       <th class="py-3.5 px-3 text-center w-10">
@@ -3008,7 +3040,7 @@
   <!-- ======================================================== -->
 
 
-  <div id="receipt-view-modal" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+  <div id="receipt-view-modal" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative text-left flex flex-col max-h-[92vh]">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
         <div class="flex items-center gap-2.5">
@@ -3056,18 +3088,19 @@
             <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
             <span>Zoom Level:</span>
             <span id="receipt-zoom-level-text" class="font-mono text-cyan-300 font-bold">100%</span>
+            <span class="text-[9px] text-slate-500 hidden sm:inline">(Click image to toggle 2x Zoom)</span>
           </span>
           <div class="flex items-center gap-1">
-            <button type="button" onclick="icsApp.zoomReceipt(-0.25)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition border border-slate-700" title="Zoom Out (-)">
+            <button type="button" onclick="icsApp.zoomReceipt(-0.25)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition border border-slate-700 cursor-pointer" title="Zoom Out (-)">
               −
             </button>
-            <button type="button" onclick="icsApp.resetReceiptZoom()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition border border-slate-700" title="Reset Zoom">
+            <button type="button" onclick="icsApp.resetReceiptZoom()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition border border-slate-700 cursor-pointer" title="Reset Zoom">
               Reset
             </button>
-            <button type="button" onclick="icsApp.zoomReceipt(0.25)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition border border-slate-700" title="Zoom In (+)">
+            <button type="button" onclick="icsApp.zoomReceipt(0.25)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition border border-slate-700 cursor-pointer" title="Zoom In (+)">
               +
             </button>
-            <button type="button" onclick="icsApp.rotateReceipt()" class="ml-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700 flex items-center gap-1" title="Rotate 90 deg">
+            <button type="button" onclick="icsApp.rotateReceipt()" class="ml-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700 flex items-center gap-1 cursor-pointer" title="Rotate 90 deg">
               <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
               <span>Rotate</span>
             </button>
@@ -3076,7 +3109,14 @@
 
         <!-- Receipt Image Frame with Drag & Zoom -->
         <div id="receipt-view-frame" class="relative rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden flex items-center justify-center p-2 min-h-[220px] max-h-[460px] select-none cursor-grab active:cursor-grabbing">
-          <img id="receipt-view-img" src="" alt="Payment Receipt" class="max-h-[420px] w-auto object-contain rounded-xl shadow-lg transition-transform duration-100 ease-out origin-center">
+          <img
+            id="receipt-view-img"
+            src=""
+            alt="Payment Receipt"
+            onclick="icsApp.toggleReceiptZoom(event)"
+            title="Click to toggle 2x Zoom / reset"
+            class="max-h-[420px] w-auto object-contain rounded-xl shadow-lg transition-transform duration-100 ease-out origin-center cursor-zoom-in"
+          />
           <div id="receipt-view-empty-notice" class="hidden py-8 px-4 text-center">
             <svg class="w-10 h-10 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <p class="text-xs font-bold text-slate-300">Walang naka-attach na screenshot ng resibo</p>
@@ -3111,7 +3151,7 @@
   <!-- ======================================================== -->
   <!-- MODAL: MESSAGE STUDENT BUYER ("if may itatanong yung admin don sa bibili") -->
   <!-- ======================================================== -->
-  <div id="admin-message-buyer-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="admin-message-buyer-modal" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative text-left">
       <!-- Modal Header -->
       <div class="flex items-center justify-between pb-3.5 border-b border-slate-800">
@@ -3245,7 +3285,7 @@
   <!-- ======================================================== -->
   <!-- MODAL / PRINTABLE CLAIM SLIP (FOR ADMIN VERIFICATION & ISSUANCE) -->
   <!-- ======================================================== -->
-  <div id="slip-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="slip-modal" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white text-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative text-left" id="printable-claim-slip">
 
       <!-- Slip Header -->
@@ -3520,6 +3560,10 @@
         } catch (e) {}
 
         this.setAdminTab(initialTab, true);
+        setTimeout(() => this.syncTableTopScrollbars(), 200);
+        window.addEventListener('resize', () => {
+          this.syncTableTopScrollbars();
+        });
 
         if (initialTab === 'dashboard') {
           this.initAdminCharts();
@@ -3670,38 +3714,9 @@
                 
                 if (brandNewLogs.length > 0) {
                   this._lastSeenActivityLogId = Math.max(...incomingLogs.map(l => Number(l.id) || 0));
-
-                  // Alert with Toast for new logs (especially LOGIN & LOGOUT)
-                  brandNewLogs.forEach(log => {
-                    let toastType = 'info';
-                    let actionBadge = '⚡';
-                    
-                    if (log.action === 'LOGIN') {
-                      toastType = 'success';
-                      actionBadge = '🔑 LOGIN';
-                    } else if (log.action === 'LOGOUT') {
-                      toastType = 'warning';
-                      actionBadge = '🚪 LOGOUT';
-                    } else if (log.action === 'CREATE') {
-                      toastType = 'success';
-                      actionBadge = '📦 NEW';
-                    } else if (log.action === 'DELETE') {
-                      toastType = 'error';
-                      actionBadge = '🗑️ DELETE';
-                    } else if (log.action === 'UPDATE') {
-                      toastType = 'info';
-                      actionBadge = '✏️ UPDATE';
-                    } else {
-                      actionBadge = `📋 ${log.action}`;
-                    }
-
-                    this.showToast(`<strong>${actionBadge}:</strong> ${log.activity || 'Activity recorded'}`, toastType);
-                    this.playNotificationChime();
-                  });
-
                   this.activityLogs = incomingLogs;
 
-                  // Update sidebar badge
+                  // Update sidebar badge silently without toast spam
                   const badge = document.getElementById('admin-nav-actlogs-badge');
                   if (badge) badge.textContent = incomingLogs.length;
 
@@ -4165,8 +4180,10 @@
         } else if (tabName === 'claimed') {
           this.renderClaimedLedgerTable();
           this.restoreClaimedSelectionUI();
+          setTimeout(() => this.syncTableTopScrollbars(), 50);
         } else if (tabName === 'reports') {
           this.restoreReportSelectionUI();
+          setTimeout(() => this.syncTableTopScrollbars(), 50);
         } else if (tabName === 'actlogs') {
           this.renderActivityLogsTable();
         }
@@ -5056,11 +5073,37 @@
       // ==========================================
       viewPrintClaimSlip(resObj) {
         if (typeof resObj === 'string' || typeof resObj === 'number') {
-          resObj = (this.reservations || []).find(r => String(r.id) === String(resObj))
-                || (this.claimedReservations || []).find(r => String(r.id) === String(resObj))
+          const targetId = String(resObj).trim();
+          resObj = (this.reservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
+                || (this.claimedReservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
                 || null;
+
+          // DOM fallback if not yet loaded in arrays
+          if (!resObj) {
+            const cardEl = document.querySelector(`.reservation-queue-card[data-id="${targetId}"], .reservation-queue-card[data-ref="${targetId}"], .claimed-ledger-row[data-id="${targetId}"], .claimed-ledger-row[data-ref="${targetId}"]`);
+            if (cardEl) {
+              resObj = {
+                id: targetId,
+                ref_code: cardEl.getAttribute('data-ref') || targetId,
+                student_name: cardEl.querySelector('p.font-black, td:nth-child(3)')?.textContent?.trim() || 'Student',
+                student_id: cardEl.getAttribute('data-stuid') || cardEl.querySelector('.font-mono.text-cyan-300')?.textContent?.trim() || 'N/A',
+                department: cardEl.querySelector('p.text-xs.text-slate-300')?.textContent?.trim() || 'ICS',
+                pickup_date: cardEl.querySelector('p.text-sm.font-bold.text-ics-gold')?.textContent?.trim() || 'TBD',
+                pickup_slot: cardEl.querySelector('p.text-xs.text-slate-200')?.textContent?.trim() || 'Claim during pickup hours',
+                total_amount: cardEl.querySelector('.text-emerald-400.font-mono')?.textContent?.replace(/[^0-9.]/g, '') || '0',
+                payment_reference: cardEl.querySelector('.font-mono.text-ics-gold.select-all')?.textContent?.trim() || '',
+                payment_method: cardEl.querySelector('.reservation-actions-container')?.closest('.reservation-queue-card')?.querySelector('.px-2\\.5.py-1.rounded-full')?.textContent?.trim() || 'Cash on Pickup',
+                payment_status: cardEl.getAttribute('data-status') || 'Pending',
+                status: cardEl.getAttribute('data-status') || 'Pending',
+                items: []
+              };
+            }
+          }
         }
-        if (!resObj) return;
+        if (!resObj) {
+          this.showToast('Unable to open claim slip: reservation record not found.', 'warning');
+          return;
+        }
         document.body.classList.add('slip-modal-open');
 
         const refEl = document.getElementById('slip-ref');
@@ -5081,16 +5124,25 @@
         if (tbody) tbody.innerHTML = '';
         let total = 0;
 
-        const items = typeof resObj.items === 'string' ? JSON.parse(resObj.items) : (resObj.items || []);
+        let items = [];
+        if (Array.isArray(resObj.items)) {
+          items = resObj.items;
+        } else if (typeof resObj.items === 'string') {
+          try {
+            items = JSON.parse(resObj.items);
+          } catch (e) {
+            items = [];
+          }
+        }
         items.forEach(it => {
           const sub = (it.price || 0) * (it.quantity || 1);
           total += sub;
           if (tbody) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td class="py-2 px-3 font-medium text-slate-800">${it.productName || it.name || 'Apparel'}</td>
-              <td class="py-2 px-2 text-center font-mono font-bold text-red-800">${it.size || 'N/A'}</td>
-              <td class="py-2 px-2 text-center font-mono">${it.quantity || 1}</td>
+              <td class="py-2 px-3 font-medium text-slate-800">${this.escapeHtml(it.productName || it.name || 'Apparel')}</td>
+              <td class="py-2 px-2 text-center font-mono font-bold text-red-800">${this.escapeHtml(it.size || 'N/A')}</td>
+              <td class="py-2 px-2 text-center font-mono">${this.escapeHtml(String(it.quantity || 1))}</td>
               <td class="py-2 px-3 text-right font-mono font-bold">₱${sub.toFixed(2)}</td>
             `;
             tbody.appendChild(tr);
@@ -5117,10 +5169,40 @@
       // RECEIPT VIEWER MODAL & VERIFICATION
       // ==========================================
       openReceiptViewModal(resObj) {
-        if (typeof resObj === 'string' || typeof resObj === 'number') {
-          resObj = (this.reservations || []).find(r => String(r.id) === String(resObj))
-                || (this.claimedReservations || []).find(r => String(r.id) === String(resObj))
+        if (typeof resObj === 'string' && (resObj.startsWith('data:image') || resObj.startsWith('http://') || resObj.startsWith('https://') || resObj.includes('.jpg') || resObj.includes('.png') || resObj.includes('.webp') || resObj.includes('images/'))) {
+          resObj = {
+            id: 'IMG_PREVIEW',
+            ref_code: 'IMAGE PREVIEW',
+            student_name: 'Image Viewer',
+            student_id: 'N/A',
+            total_amount: 0,
+            payment_reference: 'N/A',
+            receipt_image: resObj,
+            payment_status: 'Preview'
+          };
+        } else if (typeof resObj === 'string' || typeof resObj === 'number') {
+          const targetId = String(resObj).trim();
+          resObj = (this.reservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
+                || (this.claimedReservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
                 || null;
+
+          // DOM fallback if not yet loaded in arrays
+          if (!resObj) {
+            const cardEl = document.querySelector(`.reservation-queue-card[data-id="${targetId}"], .reservation-queue-card[data-ref="${targetId}"], .claimed-ledger-row[data-id="${targetId}"], .claimed-ledger-row[data-ref="${targetId}"]`);
+            if (cardEl) {
+              const imgEl = cardEl.querySelector('.reservation-receipt-container img');
+              resObj = {
+                id: targetId,
+                ref_code: cardEl.getAttribute('data-ref') || 'N/A',
+                student_name: cardEl.querySelector('p.font-black, td:nth-child(3)')?.textContent?.trim() || 'Student',
+                student_id: cardEl.getAttribute('data-stuid') || cardEl.querySelector('.font-mono.text-cyan-300')?.textContent?.trim() || 'N/A',
+                total_amount: cardEl.querySelector('.text-emerald-400.font-mono')?.textContent?.replace(/[^0-9.]/g, '') || '0',
+                payment_reference: cardEl.querySelector('.font-mono.text-ics-gold.select-all')?.textContent?.trim() || '',
+                receipt_image: imgEl ? imgEl.src : '',
+                payment_status: cardEl.getAttribute('data-status') || 'Unverified'
+              };
+            }
+          }
         }
         if (!resObj) return;
         this.activeViewingReceiptReservation = resObj;
@@ -5187,11 +5269,13 @@
           }
         }
 
-        document.getElementById('receipt-view-modal').classList.remove('hidden');
+        const modalEl = document.getElementById('receipt-view-modal');
+        if (modalEl) modalEl.classList.remove('hidden');
       }
 
       closeReceiptViewModal() {
-        document.getElementById('receipt-view-modal').classList.add('hidden');
+        const modalEl = document.getElementById('receipt-view-modal');
+        if (modalEl) modalEl.classList.add('hidden');
         this.activeViewingReceiptReservation = null;
         this.receiptZoomScale = 1;
         this.receiptPanX = 0;
@@ -5215,6 +5299,18 @@
         this.applyReceiptTransform();
       }
 
+      toggleReceiptZoom(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if ((this.receiptZoomScale || 1) <= 1.1) {
+          this.receiptZoomScale = 2.0;
+        } else {
+          this.receiptZoomScale = 1.0;
+          this.receiptPanX = 0;
+          this.receiptPanY = 0;
+        }
+        this.applyReceiptTransform();
+      }
+
       resetReceiptZoom() {
         this.receiptZoomScale = 1;
         this.receiptPanX = 0;
@@ -5233,6 +5329,13 @@
 
         if (img) {
           img.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${rot}deg)`;
+          if (scale > 1.1) {
+            img.classList.remove('cursor-zoom-in');
+            img.classList.add('cursor-zoom-out');
+          } else {
+            img.classList.remove('cursor-zoom-out');
+            img.classList.add('cursor-zoom-in');
+          }
         }
         if (zoomText) {
           zoomText.textContent = `${Math.round(scale * 100)}%`;
@@ -5267,6 +5370,26 @@
           isDragging = false;
         });
 
+        // Touch support for mobile / tablet drag pan
+        frame.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].clientX - (this.receiptPanX || 0);
+            startY = e.touches[0].clientY - (this.receiptPanY || 0);
+          }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+          if (!isDragging || e.touches.length !== 1) return;
+          this.receiptPanX = e.touches[0].clientX - startX;
+          this.receiptPanY = e.touches[0].clientY - startY;
+          this.applyReceiptTransform();
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+          isDragging = false;
+        });
+
         // Mousewheel zoom support
         frame.addEventListener('wheel', (e) => {
           e.preventDefault();
@@ -5276,16 +5399,118 @@
       }
 
       // ==========================================
+      // SYNCHRONIZED TOP & BOTTOM HORIZONTAL SCROLLBARS
+      // ==========================================
+      syncTableTopScrollbars() {
+        // 1. Claimed Orders Table
+        const claimedTopWrapper = document.getElementById('claimed-top-scrollbar-wrapper');
+        const claimedTopDummy = document.getElementById('claimed-top-scrollbar-dummy');
+        const claimedTableScroll = document.getElementById('claimed-table-scroll-container');
+        const claimedTable = document.getElementById('claimed-orders-ledger-table');
+
+        if (claimedTopWrapper && claimedTopDummy && claimedTableScroll && claimedTable) {
+          const updateClaimedWidth = () => {
+            const tableWidth = claimedTable.scrollWidth;
+            claimedTopDummy.style.width = tableWidth + 'px';
+            if (tableWidth <= claimedTableScroll.clientWidth) {
+              claimedTopWrapper.classList.add('hidden');
+            } else {
+              claimedTopWrapper.classList.remove('hidden');
+            }
+          };
+          updateClaimedWidth();
+
+          if (!claimedTopWrapper._hasSyncListeners) {
+            claimedTopWrapper._hasSyncListeners = true;
+            let isSyncingTop = false;
+            let isSyncingBottom = false;
+
+            claimedTopWrapper.addEventListener('scroll', () => {
+              if (isSyncingBottom) return;
+              isSyncingTop = true;
+              claimedTableScroll.scrollLeft = claimedTopWrapper.scrollLeft;
+              setTimeout(() => { isSyncingTop = false; }, 30);
+            });
+
+            claimedTableScroll.addEventListener('scroll', () => {
+              if (isSyncingTop) return;
+              isSyncingBottom = true;
+              claimedTopWrapper.scrollLeft = claimedTableScroll.scrollLeft;
+              setTimeout(() => { isSyncingBottom = false; }, 30);
+            });
+          }
+        }
+
+        // 2. Reports (Sales vs Stock) Table
+        const reportsTopWrapper = document.getElementById('reports-top-scrollbar-wrapper');
+        const reportsTopDummy = document.getElementById('reports-top-scrollbar-dummy');
+        const reportsTableScroll = document.getElementById('reports-table-scroll-container');
+        const reportsTable = document.getElementById('reports-sales-stock-table');
+
+        if (reportsTopWrapper && reportsTopDummy && reportsTableScroll && reportsTable) {
+          const updateReportsWidth = () => {
+            const tableWidth = reportsTable.scrollWidth;
+            reportsTopDummy.style.width = tableWidth + 'px';
+            if (tableWidth <= reportsTableScroll.clientWidth) {
+              reportsTopWrapper.classList.add('hidden');
+            } else {
+              reportsTopWrapper.classList.remove('hidden');
+            }
+          };
+          updateReportsWidth();
+
+          if (!reportsTopWrapper._hasSyncListeners) {
+            reportsTopWrapper._hasSyncListeners = true;
+            let isSyncingTop = false;
+            let isSyncingBottom = false;
+
+            reportsTopWrapper.addEventListener('scroll', () => {
+              if (isSyncingBottom) return;
+              isSyncingTop = true;
+              reportsTableScroll.scrollLeft = reportsTopWrapper.scrollLeft;
+              setTimeout(() => { isSyncingTop = false; }, 30);
+            });
+
+            reportsTableScroll.addEventListener('scroll', () => {
+              if (isSyncingTop) return;
+              isSyncingBottom = true;
+              reportsTopWrapper.scrollLeft = reportsTableScroll.scrollLeft;
+              setTimeout(() => { isSyncingBottom = false; }, 30);
+            });
+          }
+        }
+      }
+
+      // ==========================================
       // ADMIN MESSAGE STUDENT BUYER MODAL
       // ("also add ka ng msg icon sa reservation if may itatanong yung admin don sa bibili")
       // ==========================================
       openAdminMessageBuyerModal(resObj) {
         if (typeof resObj === 'string' || typeof resObj === 'number') {
-          resObj = (this.reservations || []).find(r => String(r.id) === String(resObj))
-                || (this.claimedReservations || []).find(r => String(r.id) === String(resObj))
+          const targetId = String(resObj).trim();
+          resObj = (this.reservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
+                || (this.claimedReservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
                 || null;
+
+          // DOM fallback if not yet loaded in arrays
+          if (!resObj) {
+            const cardEl = document.querySelector(`.reservation-queue-card[data-id="${targetId}"], .reservation-queue-card[data-ref="${targetId}"], .claimed-ledger-row[data-id="${targetId}"], .claimed-ledger-row[data-ref="${targetId}"]`);
+            if (cardEl) {
+              resObj = {
+                id: targetId,
+                ref_code: cardEl.getAttribute('data-ref') || targetId,
+                student_name: cardEl.querySelector('p.font-black, td:nth-child(3)')?.textContent?.trim() || 'Student Buyer',
+                student_id: cardEl.getAttribute('data-stuid') || cardEl.querySelector('.font-mono.text-cyan-300')?.textContent?.trim() || 'N/A',
+                payment_method: cardEl.querySelector('.reservation-actions-container')?.closest('.reservation-queue-card')?.querySelector('.px-2\\.5.py-1.rounded-full')?.textContent?.trim() || 'Cash',
+                payment_status: cardEl.getAttribute('data-status') || 'Pending'
+              };
+            }
+          }
         }
-        if (!resObj) return;
+        if (!resObj) {
+          this.showToast('Unable to open message modal: reservation record not found.', 'warning');
+          return;
+        }
         this.activeMessageReservation = resObj;
 
         const nameEl = document.getElementById('msg-buyer-student-name');
@@ -7359,6 +7584,12 @@
         const container = document.getElementById('toast-container');
         if (!container) return;
 
+        // Anti-Duplicate Toast Guard: Never show identical message if already visible
+        const existingToasts = Array.from(container.querySelectorAll('span.leading-snug'));
+        if (existingToasts.some(el => el.textContent.trim() === String(message).trim())) {
+          return;
+        }
+
         const toast = document.createElement('div');
         const bgColors = {
           success: 'bg-emerald-950/95 border-emerald-500/80 text-emerald-100 shadow-emerald-950/70',
@@ -8279,7 +8510,7 @@
             ? r.receipt_image
             : (`{{ asset('') }}` + r.receipt_image.replace(/^\//, ''));
           receiptHtml = `
-            <div class="relative group cursor-pointer inline-block" onclick="icsApp.openReceiptViewModal('${r.id}')" title="Click to view full receipt image">
+            <div class="relative group cursor-pointer inline-block" onclick="event.stopPropagation(); icsApp.openReceiptViewModal('${r.id}')" title="Click to view full receipt image">
               <img
                 src="${receiptSrc}"
                 alt="Payment Receipt"
@@ -8374,7 +8605,7 @@
             <div>
               <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">Payment &amp; Receipt</p>
               <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-                <span class="px-2.5 py-1 rounded-full text-xs font-bold ${r.payment_method === 'GCash Online' ? 'bg-blue-950 text-blue-300 border border-blue-800' : 'bg-amber-950 text-amber-300 border border-amber-800'} flex items-center gap-1">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold ${r.payment_method === 'GCash Online' ? 'bg-blue-950 text-blue-300 border border-blue-800' : (r.payment_method === 'Maya Online' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : (r.payment_method === 'Debit/Credit Card' ? 'bg-indigo-950 text-indigo-300 border border-indigo-800' : 'bg-amber-950 text-amber-300 border border-amber-800'))} flex items-center gap-1">
                   ${this.escapeHtml(r.payment_method || 'Cash on Pickup')}
                 </span>
                 <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 ${(r.payment_status || 'Unpaid') === 'Verified' ? 'text-emerald-400' : 'text-amber-400'}">
@@ -8442,16 +8673,16 @@
           if (emptyNotice) emptyNotice.remove();
         }
 
-        // Strict FIFO Queue Ordering:
-        // 1. Pending orders first (oldest created_at first)
-        // 2. Ready for Pickup orders second (oldest created_at first)
+        // Priority Queue Ordering:
+        // 1. Pending orders first (newest orders right at the top for immediate visibility)
+        // 2. Ready for Pickup orders second (newest first)
         // 3. Other statuses last
         this.reservations.sort((a, b) => {
           const getStatusRank = (s) => (s === 'Pending' ? 1 : (s === 'Ready for Pickup' ? 2 : 3));
           const rankA = getStatusRank(a.status);
           const rankB = getStatusRank(b.status);
           if (rankA !== rankB) return rankA - rankB;
-          return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
         });
 
         const firstPendingIdx = this.reservations.findIndex(r => r.status === 'Pending');
@@ -8483,7 +8714,7 @@
 
           card.setAttribute('data-status', r.status);
 
-          // FIFO Priority Badge & Top Locking for earliest pending order
+          // Priority Badge for latest incoming pending order
           const headerBadges = card.querySelector('.reservation-header-badges');
           let fifoBadge = card.querySelector('.fifo-queue-badge');
           if (idx === firstPendingIdx) {
@@ -8491,8 +8722,8 @@
             if (!fifoBadge && headerBadges) {
               fifoBadge = document.createElement('span');
               fifoBadge.className = 'fifo-queue-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm';
-              fifoBadge.title = 'First-In, First-Out: Earliest pending order, locked at top for priority processing';
-              fifoBadge.innerHTML = '<span>🔒 1st in Queue (FIFO)</span>';
+              fifoBadge.title = 'Top Priority: Latest pending order';
+              fifoBadge.innerHTML = '<span>⚡ Latest Order</span>';
               headerBadges.appendChild(fifoBadge);
             }
           } else {
@@ -8542,7 +8773,7 @@
               ? r.receipt_image
               : (`{{ asset('') }}` + r.receipt_image.replace(/^\//, ''));
             receiptContainer.innerHTML = `
-              <div class="relative group cursor-pointer inline-block" onclick="icsApp.openReceiptViewModal('${r.id}')" title="Click to view full receipt image">
+              <div class="relative group cursor-pointer inline-block" onclick="event.stopPropagation(); icsApp.openReceiptViewModal('${r.id}')" title="Click to view full receipt image">
                 <img
                   src="${receiptSrc}"
                   alt="Payment Receipt"
@@ -8564,7 +8795,7 @@
             let actionsHtml = `
               <button
                 type="button"
-                onclick="icsApp.openAdminMessageBuyerModal('${r.id}')"
+                onclick="event.stopPropagation(); icsApp.openAdminMessageBuyerModal('${r.id}')"
                 class="px-2.5 py-1 rounded-xl text-xs font-bold bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                 title="Message Student Buyer">
                 <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -8577,7 +8808,7 @@
               actionsHtml += `
                 <button
                   type="button"
-                  onclick="icsApp.setAdminTab('support'); icsApp.selectAdminTicket(${activeTicket.id});"
+                  onclick="event.stopPropagation(); icsApp.setAdminTab('support'); icsApp.selectAdminTicket(${activeTicket.id});"
                   class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                   title="This reservation has an active support ticket. Please resolve ticket before claiming.">
                   <svg class="w-3.5 h-3.5 text-amber-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -8588,7 +8819,7 @@
               if (r.status === 'Pending') {
                 actionsHtml += `
                   <button
-                    onclick="icsApp.updateReservationStatus('${r.id}', 'Ready for Pickup')"
+                    onclick="event.stopPropagation(); icsApp.updateReservationStatus('${r.id}', 'Ready for Pickup')"
                     class="px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition">
                     Mark Ready
                   </button>
@@ -8598,7 +8829,7 @@
               if (r.status === 'Ready for Pickup') {
                 actionsHtml += `
                   <button
-                    onclick="icsApp.updateReservationStatus('${r.id}', 'Claimed')"
+                    onclick="event.stopPropagation(); icsApp.updateReservationStatus('${r.id}', 'Claimed')"
                     class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition">
                     Mark Claimed
                   </button>
@@ -8609,7 +8840,7 @@
             if (r.status !== 'Cancelled' && r.status !== 'Claimed') {
               actionsHtml += `
                 <button
-                  onclick="icsApp.updateReservationStatus('${r.id}', 'Cancelled')"
+                  onclick="event.stopPropagation(); icsApp.updateReservationStatus('${r.id}', 'Cancelled')"
                   class="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 transition">
                   Cancel
                 </button>
@@ -8618,7 +8849,7 @@
 
             actionsHtml += `
               <button
-                onclick="icsApp.viewPrintClaimSlip('${r.id}')"
+                onclick="event.stopPropagation(); icsApp.viewPrintClaimSlip('${r.id}')"
                 class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
                 Print Slip
               </button>
@@ -8628,7 +8859,7 @@
               actionsHtml += `
                 <button
                   type="button"
-                  onclick="icsApp.deleteReservation('${r.id}', '${r.ref_code}')"
+                  onclick="event.stopPropagation(); icsApp.deleteReservation('${r.id}', '${r.ref_code}')"
                   class="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 transition flex items-center gap-1 shadow-sm cursor-pointer"
                   title="Permanently delete finished reservation from database">
                   <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>

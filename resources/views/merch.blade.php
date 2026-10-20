@@ -26,6 +26,8 @@
 
   <!-- Canvas Confetti CDN -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- QRCode.js CDN for Normal Phone Camera Scannable Online Payment QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 
   <!-- Tailwind Theme Extension: ICS Red Palette -->
@@ -971,16 +973,6 @@
               @endif
             </div>
 
-            <!-- Stock status pill -->
-            <div class="absolute top-1.5 right-1.5 sm:top-3 sm:right-3">
-              @if($product->current_stock <= 0)
-                <span id="prod-stock-badge-{{ $product->id }}" class="px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-rose-900/90 text-rose-200 border border-rose-700">Out of Stock</span>
-                @elseif($product->current_stock < 20)
-                  <span id="prod-stock-badge-{{ $product->id }}" class="px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-amber-900/90 text-amber-200 border border-amber-600">Low Stock ({{ $product->current_stock }})</span>
-                  @else
-                  <span id="prod-stock-badge-{{ $product->id }}" class="px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-emerald-900/90 text-emerald-200 border border-emerald-700">In Stock ({{ $product->current_stock }})</span>
-                  @endif
-            </div>
           </div>
 
           <!-- Product Body (Compact & Neat on Mobile) -->
@@ -998,12 +990,25 @@
               </p>
             </div>
 
-            <div class="mt-2 sm:mt-4 pt-2 sm:pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
-              <div>
-                <p class="hidden sm:block text-[9px] sm:text-[10px] text-slate-400 uppercase font-semibold">Reserve Price</p>
-                <p class="text-xs sm:text-base font-extrabold text-white font-mono">
-                  ₱{{ number_format($product->price, 2) }}
-                </p>
+            <div class="mt-2 sm:mt-4 pt-2 sm:pt-4 border-t border-slate-800/80 flex flex-col gap-2">
+              <div class="flex items-center justify-between gap-1.5">
+                <div>
+                  <p class="text-[9px] sm:text-[10px] text-slate-400 uppercase font-semibold">Reserve Price</p>
+                  <p class="text-xs sm:text-base font-extrabold text-white font-mono">
+                    ₱{{ number_format($product->price, 2) }}
+                  </p>
+                </div>
+
+                <!-- Stock status badge placed cleanly at bottom -->
+                <div class="text-right">
+                  @if($product->current_stock <= 0)
+                    <span id="prod-stock-badge-{{ $product->id }}" class="inline-flex px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-rose-900/90 text-rose-200 border border-rose-700">Out of Stock</span>
+                  @elseif($product->current_stock < 20)
+                    <span id="prod-stock-badge-{{ $product->id }}" class="inline-flex px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-amber-900/90 text-amber-200 border border-amber-600">Low Stock ({{ $product->current_stock }})</span>
+                  @else
+                    <span id="prod-stock-badge-{{ $product->id }}" class="inline-flex px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded-full text-[8px] sm:text-[10px] font-bold bg-emerald-900/90 text-emerald-200 border border-emerald-700">In Stock ({{ $product->current_stock }})</span>
+                  @endif
+                </div>
               </div>
 
               <button
@@ -1011,7 +1016,7 @@
                 type="button"
                 {{ $product->current_stock <= 0 ? 'disabled' : '' }}
                 onclick="event.stopPropagation(); icsApp.openProductModal('{{ $product->id }}')"
-                class="w-full sm:w-auto px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white transition flex items-center justify-center gap-1 shadow {{ $product->current_stock <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
+                class="w-full px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white transition flex items-center justify-center gap-1 shadow {{ $product->current_stock <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
                 <span>Reserve</span>
                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -1040,8 +1045,12 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
         <!-- Photo -->
-        <div class="aspect-square bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow">
-          <img id="modal-product-img" src="{{ asset('images/male_polo.jpg') }}" alt="Product" class="w-full h-full object-cover">
+        <div class="aspect-square bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow relative group cursor-pointer" onclick="icsApp.openReceiptViewModalDirect(document.getElementById('modal-product-img').src)" title="Click to view full photo & zoom">
+          <img id="modal-product-img" src="{{ asset('images/male_polo.jpg') }}" alt="Product" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+          <div class="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-lg bg-slate-950/85 border border-slate-700/80 text-[10px] font-mono text-cyan-300 flex items-center gap-1 shadow pointer-events-none">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+            <span>Click to Zoom</span>
+          </div>
         </div>
 
         <!-- Details -->
@@ -1382,126 +1391,385 @@
           <input type="text" id="chk-notes" placeholder="e.g. Paid in advance, fitting required..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
         </div>
 
-        <!-- PAYMENT METHOD SELECTION (CASH ON PICKUP vs GCASH ONLINE) -->
-        <div class="pt-1">
-          <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1.5">Payment Method *</label>
-          <div class="grid grid-cols-2 gap-2.5">
-            <!-- Option 1: Cash on Pickup (School) -->
-            <label class="cursor-pointer">
-              <input type="radio" name="chk_payment_method" value="Cash on Pickup" checked onchange="icsApp.togglePaymentMethod('cash')" class="peer sr-only">
-              <div class="p-3 rounded-2xl bg-slate-950 border-2 border-slate-800 peer-checked:border-amber-400 peer-checked:bg-amber-950/20 transition flex flex-col justify-between h-full">
-                <div class="flex items-center justify-between mb-1.5">
-                  <div class="w-7 h-7 rounded-xl bg-amber-950/80 text-amber-400 flex items-center justify-center text-xs font-bold border border-amber-800">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-800">In-Person</span>
+        <!-- PAYMENT METHOD SELECTION (PAYMONGO INSPIRED LAYOUT) -->
+        <div class="pt-2">
+          <!-- Order & Customer Header Breakdown (PayMongo Style) -->
+          <div class="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950/40 border border-slate-800 shadow-inner mb-3">
+            <div class="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-black text-sm">
+                  JD
                 </div>
                 <div>
-                  <p class="text-xs font-bold text-white">Pay at School</p>
-                  <p class="text-[10px] text-slate-400 mt-0.5">Cash on Pickup at ICS Center</p>
+                  <h4 class="text-xs font-black text-white uppercase tracking-wider" id="pm-header-order-title">ICS Merchandise Order</h4>
+                  <p class="text-[10px] text-slate-400">
+                    Billed to <strong class="text-white" id="pm-header-billed-name">{{ $activeStudent['name'] ?? 'JILO DERRAMAS' }}</strong>, 
+                    <span class="text-blue-300 font-mono" id="pm-header-billed-email">{{ $activeStudent['email'] ?? ($activeStudent['student_id'] . '@student.npc.edu.ph') }}</span>
+                  </p>
                 </div>
               </div>
-            </label>
+              <div class="text-right">
+                <span class="text-[9px] uppercase tracking-wider text-slate-400 block font-semibold">Total Due</span>
+                <span class="text-base font-black text-emerald-400 font-mono" id="pm-header-total-due">₱0.00</span>
+              </div>
+            </div>
 
-            <!-- Option 2: GCash Online Payment -->
-            <label class="cursor-pointer">
-              <input type="radio" name="chk_payment_method" value="GCash Online" onchange="icsApp.togglePaymentMethod('gcash')" class="peer sr-only">
-              <div class="p-3 rounded-2xl bg-slate-950 border-2 border-slate-800 peer-checked:border-blue-400 peer-checked:bg-blue-950/30 transition flex flex-col justify-between h-full">
-                <div class="flex items-center justify-between mb-1.5">
-                  <div class="w-7 h-7 rounded-xl bg-blue-950/80 text-blue-400 flex items-center justify-center text-xs font-bold border border-blue-800">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
+            <!-- Breakdown Summary Rows -->
+            <div class="pt-2.5 space-y-1.5 text-[11px]">
+              <div class="flex items-center justify-between text-slate-300">
+                <span class="text-slate-400">ICS Apparel & Merch Reservation (<span id="pm-summary-student-name">{{ $activeStudent['name'] ?? 'JILO DERRAMAS' }}</span>)</span>
+                <span class="font-mono font-semibold text-white" id="pm-breakdown-subtotal">₱0.00</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span class="text-slate-400">Subtotal</span>
+                <span class="font-mono font-semibold text-white" id="pm-breakdown-subtotal-val">₱0.00</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span class="text-slate-400">Processing Fees</span>
+                <span class="font-mono font-bold text-emerald-400">Free</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Method Category Selection -->
+          <div class="space-y-2 mb-3">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wide">Select Payment Method *</label>
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800">Secure Direct Checkout</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <!-- Category: Card (Mastercard / Visa) -->
+              <label class="cursor-pointer">
+                <input type="radio" name="chk_payment_method" value="Debit/Credit Card" onchange="icsApp.togglePaymentMethod('card')" class="peer sr-only">
+                <div class="p-3 rounded-2xl bg-slate-950 border-2 border-slate-800 peer-checked:border-indigo-500 peer-checked:bg-indigo-950/30 hover:border-slate-700 transition flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center text-sm">
+                      💳
+                    </div>
+                    <div>
+                      <p class="text-xs font-bold text-white">Card</p>
+                      <p class="text-[9px] text-slate-400 font-mono">Mastercard &bull; Visa</p>
+                    </div>
                   </div>
-                  <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800">QR / Online</span>
+                  <span class="w-4 h-4 rounded-full border border-slate-700 peer-checked:border-indigo-400 peer-checked:bg-indigo-500 flex items-center justify-center"></span>
                 </div>
-                <div>
-                  <p class="text-xs font-bold text-white">GCash Online</p>
-                  <p class="text-[10px] text-slate-400 mt-0.5">Scan QR & Upload Receipt</p>
+              </label>
+
+              <!-- Category: E-Wallets (GCash & Maya) -->
+              <label class="cursor-pointer">
+                <input type="radio" name="chk_payment_method" value="GCash Online" onchange="icsApp.togglePaymentMethod('gcash')" class="peer sr-only">
+                <div class="p-3 rounded-2xl bg-slate-950 border-2 border-slate-800 peer-checked:border-blue-500 peer-checked:bg-blue-950/30 hover:border-slate-700 transition flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center text-sm font-black">
+                      📱
+                    </div>
+                    <div>
+                      <p class="text-xs font-bold text-white">E-Wallets</p>
+                      <p class="text-[9px] text-slate-400 font-mono">GCash &bull; Maya</p>
+                    </div>
+                  </div>
+                  <span class="w-4 h-4 rounded-full border border-slate-700 peer-checked:border-blue-400 peer-checked:bg-blue-500 flex items-center justify-center"></span>
                 </div>
+              </label>
+            </div>
+
+            <!-- Alternative: Cash on Pickup -->
+            <label class="cursor-pointer block">
+              <input type="radio" name="chk_payment_method" value="Cash on Pickup" checked onchange="icsApp.togglePaymentMethod('cash')" class="peer sr-only">
+              <div class="p-2.5 px-3 rounded-2xl bg-slate-950 border-2 border-slate-800 peer-checked:border-amber-400 peer-checked:bg-amber-950/20 hover:border-slate-700 transition flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-6 h-6 rounded-lg bg-amber-950 text-amber-400 flex items-center justify-center text-xs font-bold border border-amber-800">
+                    ₱
+                  </div>
+                  <div>
+                    <span class="text-xs font-bold text-white">Cash on Pickup</span>
+                    <span class="text-[10px] text-slate-400 ml-1.5">(Pay at ICS Student Council Booth)</span>
+                  </div>
+                </div>
+                <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">School Pickup</span>
               </div>
             </label>
           </div>
         </div>
 
-        <!-- GCASH PAYMENT DETAILS & RECEIPT UPLOAD BOX (Toggled by JS) -->
-        <div id="gcash-payment-box" class="hidden p-3.5 rounded-2xl bg-slate-950 border border-blue-900/60 space-y-3 transition-all duration-300">
-          <div class="flex flex-col sm:flex-row items-center gap-3.5 bg-blue-950/30 p-3.5 rounded-2xl border border-blue-900/50">
-            <!-- Pure QR Code Only (Clickable to Enlarge & High-Resolution Scan) -->
-            <div
-              onclick="icsApp.openQrZoomModal()"
-              title="Click to enlarge and zoom QR Code for crystal-clear scanning"
-              class="group relative cursor-pointer bg-white p-2.5 rounded-2xl shadow-lg border-2 border-blue-400 hover:border-blue-300 hover:scale-[1.03] active:scale-95 transition-all duration-200 flex flex-col items-center justify-center flex-shrink-0 w-32 h-auto text-center">
-              <img
-                src="{{ asset('images/gcash_qr_code_hd.png') }}"
-                alt="ICS GCash QR Code"
-                class="w-24 h-24 sm:w-26 sm:h-26 object-contain rounded-lg">
-              <span class="text-[9px] font-black text-blue-700 uppercase tracking-tight flex items-center justify-center gap-1 mt-1 group-hover:text-blue-900 transition">
-                <svg class="w-3 h-3 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                </svg>
-                Click to Enlarge
-              </span>
-              <!-- Hover Zoom Indicator Badge -->
-              <div class="absolute inset-0 bg-blue-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                <span class="bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                  🔍 Zoom QR
-                </span>
+        <!-- ======================================================== -->
+        <!-- DEBIT / CREDIT CARD PAYMONGO-STYLE FORM SECTION -->
+        <!-- ======================================================== -->
+        <div id="card-payment-box" class="hidden p-4 rounded-2xl bg-slate-950 border border-indigo-900/60 space-y-4 transition-all duration-300">
+          <!-- Interactive Visual Card (4343 •••• •••• 4343) -->
+          <div class="relative w-full max-w-sm mx-auto p-4 sm:p-5 rounded-2xl bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-900/80 border border-indigo-500/40 shadow-2xl text-white">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-1.5">
+                <span class="w-7 h-5 rounded bg-amber-400/90 inline-block shadow-sm"></span>
+                <span class="w-3.5 h-3.5 rounded-full border border-white/40 inline-block"></span>
+              </div>
+              <div class="flex items-center gap-1.5 font-mono text-[10px] font-bold text-indigo-300">
+                <span>VISA</span>
+                <span>/</span>
+                <span>MASTERCARD</span>
               </div>
             </div>
 
-            <!-- Account Info -->
-            <div class="flex-1 text-left min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-500 text-white">GCash Official</span>
-                <span class="text-[10px] text-slate-400">ICS Student Council</span>
-              </div>
-              <h4 class="text-xs font-bold text-white mt-1">RO****Y D.</h4>
-              <p class="text-[11px] text-blue-300 font-mono">+63 930 635 ****</p>
+            <!-- Card Number Preview -->
+            <div class="mb-4">
+              <span class="text-[9px] uppercase tracking-widest text-slate-400 block font-mono">Card Number</span>
+              <p id="card-preview-number" class="font-mono text-base sm:text-lg font-black tracking-wider text-slate-100">
+                4343 &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 4343
+              </p>
+            </div>
 
-              <div class="mt-2 pt-2 border-t border-blue-900/50 flex items-center justify-between">
-                <span class="text-[10px] text-slate-400 uppercase font-semibold">Amount to Send:</span>
-                <span id="gcash-amount-badge" class="text-xs font-black font-mono text-ics-gold">₱0.00</span>
+            <!-- Cardholder & Expiry Row -->
+            <div class="flex items-end justify-between text-[10px] font-mono">
+              <div>
+                <span class="text-[8px] uppercase tracking-wider text-slate-400 block">Cardholder</span>
+                <p id="card-preview-name" class="font-bold text-white uppercase truncate max-w-[170px]">
+                  {{ $activeStudent['name'] ?? 'JILO DERRAMAS' }}
+                </p>
               </div>
+              <div class="text-right">
+                <span class="text-[8px] uppercase tracking-wider text-slate-400 block">Expires</span>
+                <p id="card-preview-expiry" class="font-bold text-indigo-300">MM / YY</p>
+              </div>
+            </div>
+          </div>
 
-              <!-- Quick Helper Button to Enlarge QR -->
+          <!-- Customer Information -->
+          <div class="space-y-2.5 pt-1 border-t border-slate-800">
+            <h5 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span>Customer Information</span>
+            </h5>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">Name *</label>
+                <input
+                  type="text"
+                  id="card-cust-name"
+                  value="{{ $activeStudent['name'] ?? 'JILO DERRAMAS' }}"
+                  oninput="document.getElementById('card-preview-name').textContent = this.value || 'CARDHOLDER NAME'"
+                  placeholder="Full Name"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">Email *</label>
+                <input
+                  type="email"
+                  id="card-cust-email"
+                  value="{{ $activeStudent['email'] ?? ($activeStudent['student_id'] . '@student.npc.edu.ph') }}"
+                  placeholder="student@npc.edu.ph"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">Mobile Phone (Optional)</label>
+              <input
+                type="text"
+                id="card-cust-phone"
+                value="{{ $activeStudent['contact'] ?? '' }}"
+                placeholder="+63 9XX XXX XXXX"
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+
+          <!-- Billing Address -->
+          <div class="space-y-2.5 pt-1 border-t border-slate-800">
+            <h5 class="text-xs font-bold text-white uppercase tracking-wider">Billing Address</h5>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">Country *</label>
+              <select id="card-bill-country" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                <option value="Philippines" selected>Philippines</option>
+                <option value="United States">United States</option>
+                <option value="Singapore">Singapore</option>
+                <option value="Japan">Japan</option>
+                <option value="Australia">Australia</option>
+                <option value="Canada">Canada</option>
+                <option value="United Kingdom">United Kingdom</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">Address Line 1 *</label>
+                <input type="text" id="card-bill-line1" placeholder="Street address or P.O. Box" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">Address Line 2 (Optional)</label>
+                <input type="text" id="card-bill-line2" placeholder="Apt, Suite, Unit, Building" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">City *</label>
+                <input type="text" id="card-bill-city" placeholder="City" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">State / Province *</label>
+                <input type="text" id="card-bill-state" placeholder="Metro Manila" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">Postal Code *</label>
+                <input type="text" id="card-bill-zip" placeholder="1000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Information -->
+          <div class="space-y-2.5 pt-1 border-t border-slate-800">
+            <h5 class="text-xs font-bold text-white uppercase tracking-wider">Card Information</h5>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">Card Number *</label>
+              <div class="relative">
+                <input
+                  type="text"
+                  id="card-info-number"
+                  maxlength="19"
+                  placeholder="4343 •••• •••• 4343"
+                  oninput="icsApp.formatDebitCardInput(this)"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+                <div class="absolute right-3 top-2 flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                  <span>💳</span>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">MM *</label>
+                <input
+                  type="text"
+                  id="card-info-mm"
+                  maxlength="2"
+                  placeholder="MM"
+                  oninput="icsApp.updateCardExpiryPreview()"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono text-center focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">YY *</label>
+                <input
+                  type="text"
+                  id="card-info-yy"
+                  maxlength="2"
+                  placeholder="YY"
+                  oninput="icsApp.updateCardExpiryPreview()"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono text-center focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-slate-400 uppercase mb-0.5">CVC *</label>
+                <input
+                  type="password"
+                  id="card-info-cvc"
+                  maxlength="4"
+                  placeholder="•••"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono text-center focus:outline-none focus:border-indigo-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- PayMongo Security Notice -->
+          <div class="pt-2 text-center text-[10px] text-slate-400 leading-relaxed border-t border-slate-800">
+            By completing your purchase, you agree to PayMongo's <a href="https://www.paymongo.com/privacy" target="_blank" class="text-indigo-400 underline hover:text-indigo-300">Privacy Policy</a>.
+            <div class="flex items-center justify-center gap-1 mt-1 text-slate-500 font-semibold text-[9px] uppercase tracking-wider">
+              <span>Powered by PayMongo &bull; 256-Bit SSL Encrypted</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- E-WALLETS SECTION: GCASH / MAYA PAYMENT DETAILS -->
+        <!-- ======================================================== -->
+        <div id="gcash-payment-box" class="hidden p-3.5 rounded-2xl bg-slate-950 border border-blue-900/60 space-y-3 transition-all duration-300">
+          <!-- E-Wallet Sub-Selector (GCash or Maya) -->
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span class="text-xs font-bold text-white uppercase tracking-wider">Choose E-Wallet Channel:</span>
+            <div class="inline-flex rounded-xl p-1 bg-slate-900 border border-slate-700">
               <button
                 type="button"
-                onclick="icsApp.openQrZoomModal()"
-                class="mt-2 text-[10px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 hover:underline transition">
-                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-                Click here to enlarge & view crystal-clear QR Code
+                onclick="icsApp.toggleEwalletChannel('gcash')"
+                id="btn-ewallet-gcash"
+                class="px-3 py-1 rounded-lg text-[10px] font-bold transition bg-blue-600 text-white cursor-pointer">
+                GCash
+              </button>
+              <button
+                type="button"
+                onclick="icsApp.toggleEwalletChannel('maya')"
+                id="btn-ewallet-maya"
+                class="px-3 py-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white cursor-pointer">
+                Maya
               </button>
             </div>
           </div>
 
-          <!-- GCash Verification Note: Either Ref No OR Receipt Screenshot Required -->
-          <div class="p-2.5 rounded-xl bg-blue-950/60 border border-blue-800/80 text-[11px] text-blue-200 flex items-center gap-2">
-            <span class="text-base flex-shrink-0">💡</span>
-            <div>
-              <p class="font-bold text-white">Payment Verification Requirement</p>
-              <p class="text-[10px] text-blue-300">Magbigay ng kahit <strong>isa (1)</strong>: <strong>GCash Reference Number</strong> <span class="text-ics-gold font-bold">OR</span> <strong>Receipt Screenshot</strong>.</p>
+          <!-- Real-Time Status Notification -->
+          <div id="sandbox-realtime-banner" class="p-2.5 rounded-xl bg-blue-950/40 border border-blue-700/60 flex items-center justify-between gap-2 text-[11px]">
+            <div class="flex items-center gap-2 text-blue-300 font-semibold">
+              <span id="sandbox-status-dot" class="w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping flex-shrink-0"></span>
+              <span id="sandbox-status-text">Scan the QR code below or open the live payment portal...</span>
+            </div>
+            <span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-700 flex-shrink-0">ONLINE</span>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center gap-3.5 bg-blue-950/30 p-3.5 rounded-2xl border border-blue-900/50">
+            <!-- Normal Camera Scannable QR Code -->
+            <div
+              onclick="icsApp.openQrZoomModal()"
+              title="Click to view and enlarge QR code"
+              class="group relative cursor-pointer bg-white p-2.5 rounded-2xl shadow-lg border-2 border-blue-400 hover:border-blue-300 hover:scale-[1.03] active:scale-95 transition-all duration-200 flex flex-col items-center justify-center flex-shrink-0 w-32 h-auto text-center">
+              <div id="dynamic-qr-container" class="w-24 h-24 flex items-center justify-center overflow-hidden rounded">
+                <img
+                  src="{{ asset('images/gcash_qr_code_hd.png') }}"
+                  alt="Online Payment QR Code"
+                  class="w-24 h-24 object-contain rounded-lg">
+              </div>
+              <span class="text-[8px] font-black text-blue-700 uppercase tracking-tight flex items-center justify-center gap-1 mt-1 group-hover:text-blue-900 transition">
+                📱 Camera QR
+              </span>
+            </div>
+
+            <!-- Channel Info & Portal Launcher -->
+            <div class="flex-1 text-left min-w-0 w-full">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span id="online-channel-badge" class="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-500 text-white">GCash Online</span>
+                <span class="text-[10px] text-slate-300 font-semibold">Secure Direct Payment</span>
+              </div>
+              <h4 id="online-channel-title" class="text-xs font-bold text-white mt-1">Scan QR Code or Open Payment Portal</h4>
+              <p class="text-[10px] text-slate-300 leading-relaxed">
+                Scan with your phone camera or click below to launch the official <strong id="online-channel-name-inline" class="text-blue-300">GCash</strong> checkout window.
+              </p>
+
+              <div class="mt-2 pt-2 border-t border-blue-900/50 flex items-center justify-between">
+                <span class="text-[10px] text-slate-400 uppercase font-semibold">Amount to Pay:</span>
+                <span id="gcash-amount-badge" class="text-xs font-black font-mono text-ics-gold">₱0.00</span>
+              </div>
+
+              <!-- Portal Launcher -->
+              <div class="mt-2.5">
+                <button
+                  type="button"
+                  onclick="icsApp.openSandboxSimulatorPopup()"
+                  class="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-extrabold shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
+                  <span>📱 Open Payment Portal</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- GCash Reference Number -->
+          <!-- Reference Number (Locked once verified) -->
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label class="block text-[10px] font-bold text-slate-300 uppercase">GCash Reference No.</label>
-              <span class="text-[9px] font-mono font-bold text-blue-300 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">Reference No. OR Receipt</span>
+              <label id="online-ref-label" class="block text-[10px] font-bold text-slate-300 uppercase">Payment Reference Number *</label>
+              <span id="chk-ref-locked-tag" class="hidden text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">🔒 Verified & Locked</span>
             </div>
-            <input type="text" id="chk-gcash-ref" placeholder="e.g. 1002 9384 1928" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-blue-500">
+            <input
+              type="text"
+              id="chk-gcash-ref"
+              oninput="if(icsApp.selectedPaymentMethod === 'GCash Online') icsApp.draftGcashRef = this.value; else if(icsApp.selectedPaymentMethod === 'Maya Online') icsApp.draftMayaRef = this.value; else if(icsApp.selectedPaymentMethod === 'Debit/Credit Card') icsApp.draftCardRef = this.value; icsApp.saveCheckoutProgress();"
+              placeholder="e.g. 100293847582 or GCASH-REF-XXXX"
+              class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors">
           </div>
 
-          <!-- Upload Receipt (Screenshot) with preview -->
+          <!-- Upload Receipt (Screenshot) with Preview (Locked once verified) -->
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label class="block text-[10px] font-bold text-slate-300 uppercase">Upload Payment Receipt Screenshot</label>
-              <span class="text-[9px] font-mono font-bold text-blue-300 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">Receipt OR Reference No.</span>
+              <label class="block text-[10px] font-bold text-slate-300 uppercase">Payment Receipt / Screenshot</label>
+              <span id="chk-receipt-locked-tag" class="hidden text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">🔒 Verified & Attached</span>
             </div>
             <div class="relative border-2 border-dashed border-slate-700 hover:border-blue-400 rounded-2xl p-3 bg-slate-900/80 text-center transition">
               <input type="file" id="chk-receipt-file" accept="image/*" onchange="icsApp.handleReceiptFileSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
@@ -1509,20 +1777,22 @@
                 <svg class="w-6 h-6 mx-auto text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p class="text-[11px] font-bold text-slate-300">Click or tap to upload Receipt Screenshot</p>
-                <p class="text-[9px] text-slate-500">JPG, PNG, WebP | Instantly viewable by ICS Admin verification team</p>
+                <p class="text-[11px] font-bold text-slate-300">Tap here to select and upload your payment receipt</p>
+                <p class="text-[9px] text-slate-500">Attach a photo or screenshot of the completed transaction</p>
               </div>
-              <div id="receipt-upload-preview-container" class="hidden flex items-center justify-center gap-3">
-                <img id="receipt-upload-preview-img" src="" alt="Receipt Preview" class="w-14 h-14 object-cover rounded-xl border border-blue-500 shadow">
+              <div id="receipt-upload-preview-container" class="hidden relative z-20 flex items-center justify-center gap-3">
+                <img id="receipt-upload-preview-img" onclick="event.stopPropagation(); icsApp.openReceiptViewModalDirect(icsApp.receiptBase64)" src="" alt="Receipt Preview" class="w-14 h-14 object-cover rounded-xl border-2 border-blue-400 shadow-md cursor-pointer hover:scale-105 active:scale-95 transition" title="Click to view full receipt image">
                 <div class="text-left text-[11px]">
                   <p class="font-bold text-emerald-400 flex items-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    Receipt Ready to Submit
+                    Receipt Screenshot Attached
                   </p>
                   <p id="receipt-file-name" class="text-slate-400 text-[10px] truncate max-w-[180px] font-mono"></p>
-                  <span class="text-[9px] text-blue-400 underline cursor-pointer">Tap to change image</span>
+                  <button type="button" id="receipt-action-label" onclick="event.stopPropagation(); icsApp.openReceiptViewModalDirect(icsApp.receiptBase64)" class="text-[10px] font-bold text-cyan-400 hover:text-cyan-300 underline cursor-pointer mt-0.5 inline-block">
+                    🔍 Click to zoom / view receipt
+                  </button>
                 </div>
               </div>
             </div>
@@ -1746,11 +2016,11 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: RECEIPT VIEWER (FOR ADMIN & STUDENT VERIFICATION) -->
+  <!-- MODAL: RECEIPT VIEWER (ZOOMABLE PREVIEW FOR BOTH STORE & ADMIN) -->
   <!-- ======================================================== -->
-  <div id="receipt-view-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative text-left">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+  <div id="receipt-view-modal" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative text-left flex flex-col max-h-[92vh]">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-xl bg-blue-950 text-blue-400 border border-blue-800 flex items-center justify-center">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1759,67 +2029,97 @@
           </div>
           <div>
             <h3 class="text-sm font-black text-white font-display">Proof of GCash Payment Receipt</h3>
-            <p class="text-[11px] text-slate-400" id="receipt-view-subtitle">Official Student Upload</p>
+            <p class="text-[11px] text-slate-400" id="receipt-view-subtitle">Official Student Upload (Zoomable)</p>
           </div>
         </div>
-        <button onclick="icsApp.closeReceiptViewModal()" class="text-slate-400 hover:text-white p-1">
+        <button type="button" onclick="icsApp.closeReceiptViewModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition" title="Close (Esc)">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <div class="mt-4 space-y-3.5">
+      <div class="mt-4 space-y-3 flex-1 overflow-y-auto pr-1">
         <!-- Quick Summary Bar -->
-        <div class="grid grid-cols-2 gap-2 text-[11px] bg-slate-950 p-3 rounded-2xl border border-slate-800">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-slate-950 p-3 rounded-2xl border border-slate-800 shrink-0">
           <div>
             <span class="text-slate-500 uppercase font-bold text-[9px] block">Reference Code</span>
             <span id="receipt-view-ref" class="font-mono font-bold text-ics-gold"></span>
           </div>
           <div>
-            <span class="text-slate-500 uppercase font-bold text-[9px] block">Student</span>
-            <span id="receipt-view-student" class="text-white font-semibold"></span>
+            <span class="text-slate-500 uppercase font-bold text-[9px] block">Student Buyer</span>
+            <span id="receipt-view-student" class="text-white font-semibold truncate block"></span>
           </div>
           <div>
             <span class="text-slate-500 uppercase font-bold text-[9px] block">Total Amount</span>
             <span id="receipt-view-amount" class="font-mono font-bold text-white"></span>
           </div>
           <div>
-            <span class="text-slate-500 uppercase font-bold text-[9px] block">GCash Reference No.</span>
-            <span id="receipt-view-gcash-ref" class="font-mono text-blue-300 font-bold"></span>
+            <span class="text-slate-500 uppercase font-bold text-[9px] block">GCash Ref No.</span>
+            <span id="receipt-view-gcash-ref" class="font-mono text-blue-300 font-bold truncate block"></span>
           </div>
         </div>
 
-        <!-- Receipt Image Frame -->
-        <div id="receipt-view-frame" class="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden flex items-center justify-center p-2 min-h-[140px] max-h-[420px]">
-          <img id="receipt-view-img" src="" alt="Payment Receipt" class="max-h-[380px] w-auto object-contain rounded-xl shadow-lg">
+        <!-- Zoom Toolbar Controls -->
+        <div id="receipt-zoom-toolbar" class="flex items-center justify-between bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+          <span class="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+            <span>Zoom Level:</span>
+            <span id="receipt-zoom-level-text" class="font-mono text-cyan-300 font-bold">100%</span>
+            <span class="text-[9px] text-slate-500 hidden sm:inline">(Click image to toggle 2x Zoom)</span>
+          </span>
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="icsApp.zoomReceipt(-0.25)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition border border-slate-700 cursor-pointer" title="Zoom Out (-)">
+              −
+            </button>
+            <button type="button" onclick="icsApp.resetReceiptZoom()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition border border-slate-700 cursor-pointer" title="Reset Zoom">
+              Reset
+            </button>
+            <button type="button" onclick="icsApp.zoomReceipt(0.25)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition border border-slate-700 cursor-pointer" title="Zoom In (+)">
+              +
+            </button>
+            <button type="button" onclick="icsApp.rotateReceipt()" class="ml-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700 flex items-center gap-1 cursor-pointer" title="Rotate 90 deg">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Rotate</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Receipt Image Frame with Drag & Click Zoom -->
+        <div id="receipt-view-frame" class="relative rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden flex items-center justify-center p-2 min-h-[220px] max-h-[460px] select-none cursor-grab active:cursor-grabbing">
+          <img
+            id="receipt-view-img"
+            src=""
+            alt="Payment Receipt"
+            onclick="icsApp.toggleReceiptZoom(event)"
+            title="Click to zoom in / reset"
+            class="max-h-[420px] w-auto object-contain rounded-xl shadow-lg transition-transform duration-100 ease-out origin-center cursor-zoom-in"
+          />
           <div id="receipt-view-empty-notice" class="hidden py-8 px-4 text-center">
             <svg class="w-10 h-10 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <p class="text-xs font-bold text-slate-300">Walang naka-attach na screenshot ng resibo</p>
-            <p class="text-[11px] text-slate-500 mt-0.5">I-verify ang bayad gamit ang GCash Reference Number sa itaas.</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">I-verify ang bayad gamit ang Reference Number sa itaas.</p>
           </div>
         </div>
 
         <!-- Modal Actions -->
-        <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-between shrink-0">
           <a id="receipt-view-download-link" href="" target="_blank" download="receipt.jpg" class="text-xs text-blue-400 hover:underline flex items-center gap-1 font-semibold">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Open Full Image
+            Open Full Size in New Tab
           </a>
-          <div class="flex items-center gap-2">
-            <button onclick="icsApp.closeReceiptViewModal()" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
-              Close
-            </button>
-          </div>
+          <button type="button" onclick="icsApp.closeReceiptViewModal()" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+            Close
+          </button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: ENLARGED GCASH QR CODE (HIGH-RESOLUTION SCAN) -->
+  <!-- MODAL: ENLARGED NORMAL CAMERA QR CODE (REAL-TIME SANDBOX) -->
   <!-- ======================================================== -->
   <div id="qr-zoom-modal" onclick="if(event.target === this) icsApp.closeQrZoomModal()" class="hidden fixed inset-0 z-[70] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-white text-slate-900 rounded-3xl max-w-sm sm:max-w-md w-full p-6 sm:p-7 shadow-2xl relative text-center border-2 border-blue-500 animate-in fade-in zoom-in-95 duration-200">
@@ -1833,63 +2133,61 @@
 
       <!-- Modal Header -->
       <div class="mb-4">
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold mb-1.5">
+        <div id="qr-zoom-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold mb-1.5">
           <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
           </svg>
-          GCash & InstaPay / QRPh
+          <span id="qr-zoom-channel-text">GCash / Maya / Card Normal Camera QR</span>
         </div>
-        <h3 class="text-lg font-black text-slate-900 font-display">Scan QR Code to Pay</h3>
-        <p class="text-xs text-slate-500">High-resolution QR code for quick scanning with phone camera or GCash app</p>
+        <h3 class="text-lg font-black text-slate-900 font-display">Scan with Normal Phone Camera</h3>
+        <p class="text-xs text-slate-500">Use any standard phone camera! It will seamlessly open and authorize the payment in the portal.</p>
       </div>
 
-      <!-- High Definition Pure QR Code Canvas -->
+      <!-- High Definition Dynamic Normal-Camera QR Code Canvas -->
       <div class="relative bg-white p-4 sm:p-5 rounded-2xl border-2 border-dashed border-blue-400 inline-block mx-auto shadow-inner">
-        <img
-          src="{{ asset('images/gcash_qr_code_hd.png') }}"
-          alt="ICS Official GCash QR Code"
-          class="w-64 h-64 sm:w-72 sm:h-72 object-contain mx-auto rounded-lg select-none"
-          style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;">
+        <div id="qr-zoom-dynamic-container" class="w-60 h-60 sm:w-64 sm:h-64 flex items-center justify-center mx-auto">
+          <img
+            src="{{ asset('images/gcash_qr_code_hd.png') }}"
+            alt="ICS Official QR Code"
+            class="w-60 h-60 object-contain mx-auto rounded-lg select-none">
+        </div>
         <div class="mt-2 text-[11px] font-bold text-blue-900 tracking-wider uppercase font-mono">
-          RO****Y D. | +63 930 635 ****
+          ICS ONLINE PAYMENT SANDBOX (REAL-TIME SYNC)
         </div>
       </div>
 
-      <!-- Payment Amount Badge -->
+      <!-- Payment Amount & Real-Time Status Badge -->
       <div class="mt-4 p-3 bg-blue-50 rounded-2xl border border-blue-200 flex items-center justify-between text-left">
         <div>
           <span class="text-[10px] text-blue-700 font-bold uppercase block">Exact Amount to Pay:</span>
           <span id="qr-zoom-amount" class="text-lg font-black font-mono text-blue-950">₱0.00</span>
         </div>
         <div class="text-right">
-          <span class="text-[10px] text-slate-500 block">Status</span>
-          <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-            Ready to Scan
+          <span class="text-[10px] text-slate-500 block">Real-Time Status</span>
+          <span id="qr-zoom-live-status" class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600">
+            Waiting for Scan...
           </span>
         </div>
       </div>
 
       <!-- Modal Buttons -->
       <div class="mt-4 flex flex-col sm:flex-row gap-2">
-        <a
-          href="{{ asset('images/gcash_qr_code_hd.png') }}"
-          download="ICS_GCash_QR_Payment.png"
-          class="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          <span>Save QR to Photos / Gallery</span>
-        </a>
+        <button
+          type="button"
+          onclick="icsApp.openSandboxSimulatorPopup()"
+          class="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer">
+          <span>📱 Open Mobile Payment UI</span>
+        </button>
         <button
           type="button"
           onclick="icsApp.closeQrZoomModal()"
-          class="py-2.5 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+          class="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer">
           Close
         </button>
       </div>
 
       <p class="text-[10px] text-slate-400 mt-3 italic">
-        Tip: Using a single phone? Save the QR code and upload via GCash: GCash App > Pay QR > Upload from Gallery!
+        Tip: Scan using your phone camera on the same Wi-Fi/Hotspot, or click "Open Mobile Payment UI" to demonstrate live!
       </p>
     </div>
   </div>
@@ -2261,6 +2559,15 @@
         this.selectedPaymentMethod = 'Cash on Pickup';
         this.receiptBase64 = null;
         this.activeViewingReceiptReservation = null;
+        this.isRealtimePaymentVerified = false;
+        this.draftGcashRef = '';
+        this.draftMayaRef = '';
+        this.draftCardRef = '';
+        this.sandboxToken = null;
+        this.sandboxUrl = null;
+        this.qrScanUrl = null;
+        this.sandboxPollTimer = null;
+        this._restoredProgress = null;
 
         // Support Tickets & Live Chat Helpdesk State
         this.supportTickets = @json($supportTickets ?? []);
@@ -2272,6 +2579,7 @@
       }
 
       init() {
+        this.restoreSavedCheckoutProgressIfAny();
         this.updateCartBadge();
         this.renderSizeGuide();
         this.initTracker();
@@ -3306,7 +3614,7 @@
       }
 
       // ==========================================
-      // CHECKOUT MODAL & SUBMIT
+      // CHECKOUT MODAL & REAL-TIME SANDBOX PAYMENT
       // ==========================================
       openCheckoutModal() {
         if (!this.currentUser) {
@@ -3331,27 +3639,234 @@
         const totalEl = document.getElementById('chk-total-preview');
         if (totalEl) totalEl.textContent = '₱' + grandTotal.toFixed(2);
 
-        // Reset payment selection to Cash on Pickup by default
-        this.selectedPaymentMethod = 'Cash on Pickup';
-        this.receiptBase64 = null;
-        const cashRadio = document.querySelector('input[name="chk_payment_method"][value="Cash on Pickup"]');
-        if (cashRadio) cashRadio.checked = true;
-        this.togglePaymentMethod('cash');
+        // Update PayMongo Styled Breakdown & Headers
+        const pmTotalDue = document.getElementById('pm-header-total-due');
+        if (pmTotalDue) pmTotalDue.textContent = '₱' + grandTotal.toFixed(2);
+        const pmSubtotal = document.getElementById('pm-breakdown-subtotal');
+        if (pmSubtotal) pmSubtotal.textContent = '₱' + subtotal.toFixed(2);
+        const pmSubtotalVal = document.getElementById('pm-breakdown-subtotal-val');
+        if (pmSubtotalVal) pmSubtotalVal.textContent = '₱' + subtotal.toFixed(2);
 
-        // Reset file upload inputs
-        const fileInput = document.getElementById('chk-receipt-file');
-        if (fileInput) fileInput.value = '';
-        const placeholder = document.getElementById('receipt-upload-placeholder');
-        const previewContainer = document.getElementById('receipt-upload-preview-container');
-        if (placeholder) placeholder.classList.remove('hidden');
-        if (previewContainer) previewContainer.classList.add('hidden');
+        // Check if user has saved verified payment progress
+        const hasSavedVerifiedProgress = this.isRealtimePaymentVerified || this.restoreSavedCheckoutProgressIfAny();
+
+        if (hasSavedVerifiedProgress && (this.isRealtimePaymentVerified || this._restoredProgress?.isRealtimePaymentVerified)) {
+          // Restore verified online payment state
+          const p = this._restoredProgress || {};
+          this.isRealtimePaymentVerified = true;
+          this.selectedPaymentMethod = p.selectedPaymentMethod || this.selectedPaymentMethod || 'GCash Online';
+          this.receiptBase64 = p.receiptBase64 || this.receiptBase64;
+          this.sandboxToken = p.sandboxToken || this.sandboxToken;
+
+          const refVal = p.referenceNumber || document.getElementById('chk-gcash-ref')?.value || '';
+          const refInput = document.getElementById('chk-gcash-ref');
+          if (refInput && refVal) refInput.value = refVal;
+
+          // Select corresponding radio button
+          const targetRadio = document.querySelector(`input[name="chk_payment_method"][value="${this.selectedPaymentMethod}"]`);
+          if (targetRadio) targetRadio.checked = true;
+
+          // Set active view according to method without overwriting verified state
+          if (this.selectedPaymentMethod === 'Maya Online') {
+            this.togglePaymentMethod('maya', true);
+          } else if (this.selectedPaymentMethod === 'Debit/Credit Card') {
+            this.togglePaymentMethod('card', true);
+          } else {
+            this.togglePaymentMethod('gcash', true);
+          }
+
+          // Restore receipt preview
+          if (this.receiptBase64) {
+            const placeholder = document.getElementById('receipt-upload-placeholder');
+            const previewContainer = document.getElementById('receipt-upload-preview-container');
+            const previewImg = document.getElementById('receipt-upload-preview-img');
+            const fileNameEl = document.getElementById('receipt-file-name');
+            if (placeholder) placeholder.classList.add('hidden');
+            if (previewContainer) previewContainer.classList.remove('hidden');
+            if (previewImg) previewImg.src = this.receiptBase64;
+            if (fileNameEl) fileNameEl.textContent = (refVal || 'VERIFIED_RECEIPT') + '.png';
+          }
+
+          this.applyVerifiedPaymentLock();
+          this.showToast('Restored your verified online payment details.', 'info');
+        } else {
+          // Reset payment selection & real-time sandbox state
+          this.selectedPaymentMethod = 'Cash on Pickup';
+          this.receiptBase64 = null;
+          this.isRealtimePaymentVerified = false;
+          this.sandboxToken = null;
+          this.sandboxUrl = null;
+          this.qrScanUrl = null;
+          if (this.sandboxPollTimer) {
+            clearInterval(this.sandboxPollTimer);
+            this.sandboxPollTimer = null;
+          }
+
+          const refInput = document.getElementById('chk-gcash-ref');
+          if (refInput) {
+            refInput.value = '';
+            refInput.placeholder = 'e.g. 100293847582 or GCASH-REF-XXXX';
+          }
+
+          const cashRadio = document.querySelector('input[name="chk_payment_method"][value="Cash on Pickup"]');
+          if (cashRadio) cashRadio.checked = true;
+          this.togglePaymentMethod('cash');
+
+          // Reset file upload inputs
+          const fileInput = document.getElementById('chk-receipt-file');
+          if (fileInput) fileInput.value = '';
+          const placeholder = document.getElementById('receipt-upload-placeholder');
+          const previewContainer = document.getElementById('receipt-upload-preview-container');
+          if (placeholder) placeholder.classList.remove('hidden');
+          if (previewContainer) previewContainer.classList.add('hidden');
+
+          this.applyVerifiedPaymentLock();
+        }
 
         document.getElementById('checkout-modal').classList.remove('hidden');
       }
 
       closeCheckoutModal() {
+        if (this.isRealtimePaymentVerified) {
+          const proceed = confirm("⚠️ You have a VERIFIED payment attached to this reservation.\n\nClosing this window will NOT forfeit your payment; your verified reference and receipt are safely saved. You can re-open checkout anytime to submit.\n\nDo you want to close anyway?");
+          if (!proceed) {
+            return;
+          }
+        }
         document.getElementById('checkout-modal').classList.add('hidden');
         this.closeQrZoomModal();
+        if (this.sandboxPollTimer) {
+          clearInterval(this.sandboxPollTimer);
+          this.sandboxPollTimer = null;
+        }
+      }
+
+      saveCheckoutProgress() {
+        if (!this.isRealtimePaymentVerified && !this.receiptBase64) return;
+        const refVal = document.getElementById('chk-gcash-ref')?.value || '';
+        const progress = {
+          selectedPaymentMethod: this.selectedPaymentMethod || 'GCash Online',
+          referenceNumber: refVal,
+          receiptBase64: this.receiptBase64 || null,
+          isRealtimePaymentVerified: Boolean(this.isRealtimePaymentVerified),
+          sandboxToken: this.sandboxToken || null,
+          savedAt: Date.now()
+        };
+        try {
+          localStorage.setItem('ics_checkout_saved_progress', JSON.stringify(progress));
+        } catch (e) {
+          console.warn('Could not cache checkout progress:', e);
+        }
+      }
+
+      restoreSavedCheckoutProgressIfAny() {
+        try {
+          const raw = localStorage.getItem('ics_checkout_saved_progress');
+          if (!raw) return false;
+          const progress = JSON.parse(raw);
+          // Expire after 24 hours
+          if (!progress || (Date.now() - (progress.savedAt || 0) > 24 * 3600 * 1000)) {
+            localStorage.removeItem('ics_checkout_saved_progress');
+            return false;
+          }
+
+          if (progress.isRealtimePaymentVerified || progress.referenceNumber || progress.receiptBase64) {
+            this.selectedPaymentMethod = progress.selectedPaymentMethod || 'GCash Online';
+            this.isRealtimePaymentVerified = Boolean(progress.isRealtimePaymentVerified);
+            this.receiptBase64 = progress.receiptBase64 || null;
+            this.sandboxToken = progress.sandboxToken || null;
+            this._restoredProgress = progress;
+            return true;
+          }
+        } catch (e) {
+          console.warn('Error reading saved checkout progress:', e);
+        }
+        return false;
+      }
+
+      clearSavedCheckoutProgress() {
+        try {
+          localStorage.removeItem('ics_checkout_saved_progress');
+        } catch (e) {}
+        this._restoredProgress = null;
+        this.isRealtimePaymentVerified = false;
+        this.receiptBase64 = null;
+        this.sandboxToken = null;
+        this.applyVerifiedPaymentLock();
+      }
+
+      applyVerifiedPaymentLock() {
+        const refInput = document.getElementById('chk-gcash-ref');
+        const fileInput = document.getElementById('chk-receipt-file');
+        const refLockTag = document.getElementById('chk-ref-locked-tag');
+        const receiptLockTag = document.getElementById('chk-receipt-locked-tag');
+        const banner = document.getElementById('sandbox-realtime-banner');
+        const statusDot = document.getElementById('sandbox-status-dot');
+        const statusText = document.getElementById('sandbox-status-text');
+
+        if (this.isRealtimePaymentVerified) {
+          if (refInput) {
+            refInput.readOnly = true;
+            refInput.classList.add('bg-slate-800/90', 'text-emerald-400', 'cursor-not-allowed', 'border-emerald-600/60');
+            refInput.classList.remove('focus:border-blue-500');
+          }
+          if (fileInput) {
+            fileInput.disabled = true;
+            fileInput.classList.add('pointer-events-none');
+          }
+          if (refLockTag) refLockTag.classList.remove('hidden');
+          if (receiptLockTag) receiptLockTag.classList.remove('hidden');
+
+          if (banner) banner.className = 'p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-500 flex items-center justify-between gap-2 text-[11px]';
+          if (statusDot) statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0';
+          const refVal = refInput?.value || 'VERIFIED';
+          if (statusText) statusText.textContent = `✅ Payment Verified [${refVal}]! Reference No. & receipt locked.`;
+
+          // Disable payment method radio buttons so user cannot switch to Cash
+          document.querySelectorAll('input[name="chk_payment_method"]').forEach(r => {
+            if (r.value !== this.selectedPaymentMethod) {
+              r.disabled = true;
+            }
+          });
+        } else {
+          if (refInput) {
+            refInput.readOnly = false;
+            refInput.classList.remove('bg-slate-800/90', 'text-emerald-400', 'cursor-not-allowed', 'border-emerald-600/60');
+          }
+          if (fileInput) {
+            fileInput.disabled = false;
+            fileInput.classList.remove('pointer-events-none');
+          }
+          if (refLockTag) refLockTag.classList.add('hidden');
+          if (receiptLockTag) receiptLockTag.classList.add('hidden');
+
+          document.querySelectorAll('input[name="chk_payment_method"]').forEach(r => {
+            r.disabled = false;
+          });
+        }
+      }
+
+      openReceiptViewModalDirect(imgSrc) {
+        if (!imgSrc) {
+          this.showToast('No receipt image available to preview.', 'info');
+          return;
+        }
+        const ref = document.getElementById('chk-gcash-ref')?.value || 'ONLINE_PAYMENT';
+        const name = document.getElementById('chk-name')?.value || (this.currentUser?.name ?? 'Student');
+        const studentId = document.getElementById('chk-id')?.value || (this.currentUser?.student_id ?? '');
+        const subtotal = this.cart.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+        const total = subtotal + 10.00;
+
+        this.openReceiptViewModal({
+          ref_code: 'ORDER_PREVIEW',
+          student_name: name,
+          student_id: studentId,
+          total_amount: total,
+          payment_reference: ref,
+          payment_method: this.selectedPaymentMethod || 'Online Payment',
+          payment_status: 'Paid / Verified',
+          receipt_image: imgSrc
+        });
       }
 
       openQrZoomModal() {
@@ -3360,6 +3875,9 @@
         const grandTotal = subtotal + fee;
         const qrAmountEl = document.getElementById('qr-zoom-amount');
         if (qrAmountEl) qrAmountEl.textContent = '₱' + grandTotal.toFixed(2);
+        if (this.qrScanUrl) {
+          this.renderSandboxQrCode(this.qrScanUrl);
+        }
         const modal = document.getElementById('qr-zoom-modal');
         if (modal) modal.classList.remove('hidden');
       }
@@ -3369,21 +3887,369 @@
         if (modal) modal.classList.add('hidden');
       }
 
-      togglePaymentMethod(method) {
+      togglePaymentMethod(method, isRestoring = false) {
+        if (!isRestoring && this.isRealtimePaymentVerified) {
+          this.showToast('Payment has already been confirmed and locked to this method.', 'warning');
+          return;
+        }
+
         const gcashBox = document.getElementById('gcash-payment-box');
+        const cardBox = document.getElementById('card-payment-box');
         const totalLabel = document.getElementById('chk-total-label');
-        if (method === 'gcash') {
-          this.selectedPaymentMethod = 'GCash Online';
-          if (gcashBox) gcashBox.classList.remove('hidden');
-          if (totalLabel) totalLabel.textContent = 'Total GCash to Send:';
-          const subtotal = this.cart.reduce((sum, it) => sum + (it.price * it.quantity), 0);
-          const grandTotal = subtotal + 10.00;
-          const badge = document.getElementById('gcash-amount-badge');
-          if (badge) badge.textContent = '₱' + grandTotal.toFixed(2);
-        } else {
+        const channelBadge = document.getElementById('online-channel-badge');
+        const channelInline = document.getElementById('online-channel-name-inline');
+        const refLabel = document.getElementById('online-ref-label');
+        const zoomChannelText = document.getElementById('qr-zoom-channel-text');
+        const headerTitle = document.getElementById('pm-header-order-title');
+        const refInput = document.getElementById('chk-gcash-ref');
+
+        // Save current input into channel drafts if payment is not locked yet
+        if (!this.isRealtimePaymentVerified && refInput) {
+          if (this.selectedPaymentMethod === 'GCash Online') {
+            this.draftGcashRef = refInput.value;
+          } else if (this.selectedPaymentMethod === 'Maya Online') {
+            this.draftMayaRef = refInput.value;
+          } else if (this.selectedPaymentMethod === 'Debit/Credit Card') {
+            this.draftCardRef = refInput.value;
+          }
+        }
+
+        if (method === 'cash') {
           this.selectedPaymentMethod = 'Cash on Pickup';
           if (gcashBox) gcashBox.classList.add('hidden');
+          if (cardBox) cardBox.classList.add('hidden');
           if (totalLabel) totalLabel.textContent = 'Total Payable upon Pickup:';
+          if (headerTitle) headerTitle.textContent = 'ICS Merchandise Order (Cash on Pickup)';
+          if (this.sandboxPollTimer) {
+            clearInterval(this.sandboxPollTimer);
+            this.sandboxPollTimer = null;
+          }
+          return;
+        }
+
+        if (method === 'card') {
+          this.selectedPaymentMethod = 'Debit/Credit Card';
+          if (gcashBox) gcashBox.classList.add('hidden');
+          if (cardBox) cardBox.classList.remove('hidden');
+          if (headerTitle) headerTitle.textContent = 'ICS Merchandise Order (Debit/Credit Card)';
+          if (totalLabel) totalLabel.textContent = 'Total Card Charge:';
+          if (channelBadge) {
+            channelBadge.textContent = 'Visa / Mastercard (Direct)';
+            channelBadge.className = 'px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-500 text-white';
+          }
+          if (channelInline) {
+            channelInline.textContent = 'Debit / Credit Card';
+            channelInline.className = 'text-indigo-300';
+          }
+          if (refLabel) refLabel.textContent = 'Card Auth / Ref No. *';
+          if (zoomChannelText) zoomChannelText.textContent = '📱 Card Normal Camera QR';
+          if (refInput && !this.isRealtimePaymentVerified) {
+            refInput.value = this.draftCardRef || '';
+            refInput.placeholder = 'e.g. CARD-4343••••4343';
+          }
+        } else if (method === 'maya') {
+          this.selectedPaymentMethod = 'Maya Online';
+          if (cardBox) cardBox.classList.add('hidden');
+          if (gcashBox) gcashBox.classList.remove('hidden');
+          if (headerTitle) headerTitle.textContent = 'ICS Merchandise Order (Maya Online)';
+          if (totalLabel) totalLabel.textContent = 'Total Maya to Send:';
+          if (channelBadge) {
+            channelBadge.textContent = 'Maya Official Checkout';
+            channelBadge.className = 'px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500 text-slate-950';
+          }
+          if (channelInline) {
+            channelInline.textContent = 'Maya';
+            channelInline.className = 'text-emerald-300';
+          }
+          if (refLabel) refLabel.textContent = 'Maya Reference Number *';
+          if (zoomChannelText) zoomChannelText.textContent = '📱 E-Wallet Camera QR (GCash & Maya)';
+          if (refInput && !this.isRealtimePaymentVerified) {
+            refInput.value = this.draftMayaRef || '';
+            refInput.placeholder = 'e.g. MAYA-938475829102 or Ref No.';
+          }
+        } else {
+          this.selectedPaymentMethod = 'GCash Online';
+          if (cardBox) cardBox.classList.add('hidden');
+          if (gcashBox) gcashBox.classList.remove('hidden');
+          if (headerTitle) headerTitle.textContent = 'ICS Merchandise Order (GCash Online)';
+          if (totalLabel) totalLabel.textContent = 'Total GCash to Send:';
+          if (channelBadge) {
+            channelBadge.textContent = 'GCash Online Checkout';
+            channelBadge.className = 'px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-500 text-white';
+          }
+          if (channelInline) {
+            channelInline.textContent = 'GCash';
+            channelInline.className = 'text-blue-300';
+          }
+          if (refLabel) refLabel.textContent = 'GCash Reference Number *';
+          if (zoomChannelText) zoomChannelText.textContent = '📱 E-Wallet Camera QR (GCash & Maya)';
+          if (refInput && !this.isRealtimePaymentVerified) {
+            refInput.value = this.draftGcashRef || '';
+            refInput.placeholder = 'e.g. 100293847582 or GCASH-REF-XXXX';
+          }
+        }
+
+        const subtotal = this.cart.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+        const grandTotal = subtotal + 10.00;
+        const badge = document.getElementById('gcash-amount-badge');
+        if (badge) badge.textContent = '₱' + grandTotal.toFixed(2);
+
+        this.initSandboxPaymentSession(this.selectedPaymentMethod);
+      }
+
+      toggleEwalletChannel(channel) {
+        if (this.isRealtimePaymentVerified) {
+          this.showToast('Payment has already been confirmed and locked.', 'warning');
+          return;
+        }
+
+        const btnGcash = document.getElementById('btn-ewallet-gcash');
+        const btnMaya = document.getElementById('btn-ewallet-maya');
+
+        if (channel === 'maya') {
+          if (btnMaya) {
+            btnMaya.className = 'px-3 py-1 rounded-lg text-[10px] font-bold transition bg-emerald-500 text-slate-950 cursor-pointer';
+          }
+          if (btnGcash) {
+            btnGcash.className = 'px-3 py-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white cursor-pointer';
+          }
+          this.togglePaymentMethod('maya');
+        } else {
+          if (btnGcash) {
+            btnGcash.className = 'px-3 py-1 rounded-lg text-[10px] font-bold transition bg-blue-600 text-white cursor-pointer';
+          }
+          if (btnMaya) {
+            btnMaya.className = 'px-3 py-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white cursor-pointer';
+          }
+          this.togglePaymentMethod('gcash');
+        }
+      }
+
+      formatDebitCardInput(input) {
+        let val = input.value.replace(/\D/g, '').substring(0, 16);
+        let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+        input.value = formatted;
+
+        const previewEl = document.getElementById('card-preview-number');
+        if (previewEl) {
+          if (!val) {
+            previewEl.innerHTML = '4343 &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 4343';
+          } else {
+            let padded = val.padEnd(16, '•');
+            previewEl.textContent = padded.match(/.{1,4}/g).join(' ');
+          }
+        }
+
+        // Also sync to payment reference input
+        const refInput = document.getElementById('chk-gcash-ref');
+        if (refInput && val.length >= 4) {
+          refInput.value = 'CARD-' + val.slice(0, 4) + '••••' + val.slice(-4);
+        }
+      }
+
+      updateCardExpiryPreview() {
+        const mm = (document.getElementById('card-info-mm')?.value || '').padStart(2, '0');
+        const yy = (document.getElementById('card-info-yy')?.value || '').padStart(2, '0');
+        const previewEl = document.getElementById('card-preview-expiry');
+        if (previewEl) {
+          previewEl.textContent = `${mm || 'MM'} / ${yy || 'YY'}`;
+        }
+      }
+
+      async initSandboxPaymentSession(methodName) {
+        const subtotal = this.cart.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+        const grandTotal = subtotal + 10.00;
+
+        // If we already have an active unpaid sandbox token for this modal, just update its method
+        if (this.sandboxToken && !this.isRealtimePaymentVerified) {
+          try {
+            await fetch(`/api/payment/sandbox/${this.sandboxToken}/step`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+              },
+              body: JSON.stringify({ method: methodName })
+            });
+          } catch (e) {}
+          if (!this.sandboxPollTimer) {
+            this.sandboxPollTimer = setInterval(() => this.pollSandboxPaymentStatus(), 1500);
+          }
+          return;
+        }
+
+        try {
+          const res = await fetch('{{ route("api.payment.sandbox.create") }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+              method: methodName,
+              amount: grandTotal,
+              student_name: document.getElementById('chk-name')?.value || (this.currentUser?.name ?? 'Juan Dela Cruz'),
+              student_id: document.getElementById('chk-id')?.value || (this.currentUser?.student_id ?? '2024-10822-AIS'),
+              department: document.getElementById('chk-dept')?.value || (this.currentUser?.department ?? 'AIS'),
+              year_level: document.getElementById('chk-year')?.value || (this.currentUser?.year_level ?? '2nd Year'),
+              contact: document.getElementById('chk-contact')?.value || (this.currentUser?.contact ?? '09171234567'),
+              items: this.cart
+            })
+          });
+
+          const data = await res.json();
+          if (data.success && data.token) {
+            this.sandboxToken = data.token;
+            this.sandboxUrl = data.sandbox_url;
+            this.qrScanUrl = data.qr_scan_url || data.sandbox_url;
+            this.renderSandboxQrCode(this.qrScanUrl);
+
+            if (this.sandboxPollTimer) clearInterval(this.sandboxPollTimer);
+            this.sandboxPollTimer = setInterval(() => this.pollSandboxPaymentStatus(), 1500);
+          }
+        } catch (err) {
+          console.warn('Sandbox QR session init warning:', err);
+        }
+      }
+
+      renderSandboxQrCode(targetUrl) {
+        if (!targetUrl || typeof QRCode === 'undefined') return;
+
+        const smallContainer = document.getElementById('dynamic-qr-container');
+        if (smallContainer) {
+          smallContainer.innerHTML = '';
+          new QRCode(smallContainer, {
+            text: targetUrl,
+            width: 96,
+            height: 96,
+            colorDark: '#0f172a',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        }
+
+        const zoomContainer = document.getElementById('qr-zoom-dynamic-container');
+        if (zoomContainer) {
+          zoomContainer.innerHTML = '';
+          new QRCode(zoomContainer, {
+            text: targetUrl,
+            width: 240,
+            height: 240,
+            colorDark: '#0f172a',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        }
+      }
+
+      openSandboxSimulatorPopup() {
+        if (!this.sandboxUrl) {
+          this.showToast('Initializing payment portal, please try again in a second...', 'info');
+          this.initSandboxPaymentSession(this.selectedPaymentMethod);
+          return;
+        }
+        const width = 440;
+        const height = 780;
+        const left = Math.max(20, Math.round((window.screen.width - width) / 2));
+        const top = Math.max(20, Math.round((window.screen.height - height) / 2));
+        window.open(
+          this.sandboxUrl,
+          'ICS_Online_Payment_Sandbox',
+          `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+        );
+      }
+
+      async pollSandboxPaymentStatus() {
+        if (!this.sandboxToken || this.isRealtimePaymentVerified || this._isPollingSandbox) return;
+        this._isPollingSandbox = true;
+
+        try {
+          const res = await fetch(`/api/payment/sandbox/${this.sandboxToken}/status`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (!data.success || !data.session) return;
+
+          // If payment was verified while network request was in-flight, exit immediately
+          if (this.isRealtimePaymentVerified) return;
+
+          const s = data.session;
+          const banner = document.getElementById('sandbox-realtime-banner');
+          const statusDot = document.getElementById('sandbox-status-dot');
+          const statusText = document.getElementById('sandbox-status-text');
+          const zoomStatus = document.getElementById('qr-zoom-live-status');
+
+          if (s.status === 'scanned') {
+            if (banner) banner.className = 'p-2.5 rounded-xl bg-blue-950/60 border border-blue-500/80 flex items-center justify-between gap-2 text-[11px]';
+            if (statusDot) statusDot.className = 'w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping flex-shrink-0';
+            if (statusText) statusText.textContent = `📱 QR Scanned! Customer opened ${s.method} portal on phone...`;
+            if (zoomStatus) {
+              zoomStatus.textContent = '📱 QR Scanned on Phone!';
+              zoomStatus.className = 'inline-flex items-center gap-1 text-[11px] font-bold text-blue-600';
+            }
+          } else if (s.status === 'authenticated') {
+            if (banner) banner.className = 'p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-400/80 flex items-center justify-between gap-2 text-[11px]';
+            if (statusDot) statusDot.className = 'w-2.5 h-2.5 rounded-full bg-indigo-400 animate-ping flex-shrink-0';
+            if (statusText) statusText.textContent = `🔐 Portal Verified (${s.student_name})! Awaiting confirmation...`;
+            if (zoomStatus) {
+              zoomStatus.textContent = '🔐 Logged In! Confirming...';
+              zoomStatus.className = 'inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600';
+            }
+          } else if (s.status === 'paid') {
+            // Guard: If already verified, do not re-run or fire duplicate toast notifications
+            if (this.isRealtimePaymentVerified) return;
+            this.isRealtimePaymentVerified = true;
+            if (this.sandboxPollTimer) {
+              clearInterval(this.sandboxPollTimer);
+              this.sandboxPollTimer = null;
+            }
+
+            if (s.method) {
+              this.selectedPaymentMethod = s.method;
+            }
+
+            // 1. Auto-fill Payment Reference Number from confirmed sandbox/QR payment
+            const refInput = document.getElementById('chk-gcash-ref');
+            if (refInput && s.reference_number) {
+              refInput.value = s.reference_number;
+            }
+
+            // 2. Auto-attach Digital Payment Receipt Screenshot
+            const imgSource = s.receipt_base64 || (s.receipt_image ? '/' + s.receipt_image.replace(/^\//, '') : null);
+            if (imgSource) {
+              this.receiptBase64 = imgSource;
+              const placeholder = document.getElementById('receipt-upload-placeholder');
+              const previewContainer = document.getElementById('receipt-upload-preview-container');
+              const previewImg = document.getElementById('receipt-upload-preview-img');
+              const fileNameEl = document.getElementById('receipt-file-name');
+              if (placeholder) placeholder.classList.add('hidden');
+              if (previewContainer) previewContainer.classList.remove('hidden');
+              if (previewImg) previewImg.src = imgSource;
+              if (fileNameEl) fileNameEl.textContent = (s.reference_number || 'OFFICIAL_RECEIPT') + '.png';
+            }
+
+            // 3. Immediately lock reference & receipt so user cannot alter them
+            this.applyVerifiedPaymentLock();
+
+            // 4. Save verified checkout progress into localStorage
+            this.saveCheckoutProgress();
+
+            // 5. Update Real-Time Status Banner to Paid
+            if (banner) banner.className = 'p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-500 flex items-center justify-between gap-2 text-[11px]';
+            if (statusDot) statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0';
+            if (statusText) statusText.textContent = `✅ Payment Received [${s.reference_number || 'OK'}]! Reference No. & receipt auto-filled and locked.`;
+            if (zoomStatus) {
+              zoomStatus.textContent = '✅ Payment Confirmed!';
+              zoomStatus.className = 'inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600';
+            }
+
+            this.closeQrZoomModal();
+            this.showToast(`Real-Time Payment Verified via ${this.selectedPaymentMethod} (${s.reference_number})! Reference & receipt locked and saved.`, 'success');
+          }
+        } catch (err) {
+          // Ignore transient poll errors
+        } finally {
+          this._isPollingSandbox = false;
         }
       }
 
@@ -3467,6 +4333,7 @@
             if (previewContainer) previewContainer.classList.remove('hidden');
             if (previewImg) previewImg.src = this.receiptBase64;
             if (fileNameEl) fileNameEl.textContent = file.name;
+            this.saveCheckoutProgress();
             this.showToast('Payment receipt screenshot attached!', 'info');
           };
           img.src = rawData;
@@ -3499,9 +4366,9 @@
         const gcashRef = (document.getElementById('chk-gcash-ref')?.value || '').trim();
         const hasReceipt = Boolean(this.receiptBase64);
 
-        if (this.selectedPaymentMethod === 'GCash Online') {
+        if (['GCash Online', 'Maya Online', 'Debit/Credit Card'].includes(this.selectedPaymentMethod)) {
           if (!gcashRef && !hasReceipt) {
-            this.showToast('Please enter your GCash Reference Number OR upload a Receipt Screenshot!', 'warning');
+            this.showToast(`For ${this.selectedPaymentMethod}, please scan the QR code / click 'Open Live Payment UI' to pay, OR enter a Reference No.!`, 'warning');
             return;
           }
         }
@@ -3535,6 +4402,7 @@
           total_amount: total,
           payment_method: this.selectedPaymentMethod,
           payment_reference: gcashRef,
+          payment_verified: Boolean(this.isRealtimePaymentVerified),
           receipt_image: this.receiptBase64 || null
         };
 
@@ -3565,10 +4433,11 @@
             return;
           }
 
-          // Clear cart immediately on successful creation
+          // Clear cart & saved progress immediately on successful creation
           this.cart = [];
           this.saveCartToStorage();
           this.updateCartBadge();
+          this.clearSavedCheckoutProgress();
           this.closeCheckoutModal();
 
           // Confetti celebration (only on fresh new reservations, not duplicate spam callbacks)
@@ -3796,10 +4665,12 @@
                   ${r.notes ? `Note: "${r.notes}"` : 'Official Student Pre-Order'}
                 </div>
                 <div class="flex items-center gap-2">
-                  <button type="button" onclick="icsApp.closeStudentOrderHistoryModal(); icsApp.selectTrackerReservation('${r.ref_code}'); document.getElementById('tracker-section')?.scrollIntoView({behavior:'smooth'});" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
-                    <svg class="w-3.5 h-3.5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                    <span>Track Order</span>
-                  </button>
+                  ${r.status !== 'Claimed' ? `
+                    <button type="button" onclick="icsApp.closeStudentOrderHistoryModal(); icsApp.selectTrackerReservation('${r.ref_code}'); document.getElementById('tracker-section')?.scrollIntoView({behavior:'smooth'});" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+                      <svg class="w-3.5 h-3.5 text-ics-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                      <span>Track Order</span>
+                    </button>
+                  ` : ''}
                   <button type="button" onclick="icsApp.viewPrintClaimSlip(icsApp.reservations.find(x => x.ref_code === '${r.ref_code}'))" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white shadow transition flex items-center gap-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                     <span>View Slip</span>
@@ -3862,11 +4733,16 @@
       // RECEIPT VIEWER MODAL & VERIFICATION
       // ==========================================
       openReceiptViewModal(resObj) {
+        if (!resObj) return;
         this.activeViewingReceiptReservation = resObj;
-        document.getElementById('receipt-view-ref').textContent = resObj.ref_code;
-        document.getElementById('receipt-view-student').textContent = `${resObj.student_name} (${resObj.student_id})`;
-        document.getElementById('receipt-view-amount').textContent = '₱' + Number(resObj.total_amount).toFixed(2);
-        document.getElementById('receipt-view-gcash-ref').textContent = resObj.payment_reference || 'Not Provided';
+        const refEl = document.getElementById('receipt-view-ref');
+        if (refEl) refEl.textContent = resObj.ref_code || '';
+        const studentEl = document.getElementById('receipt-view-student');
+        if (studentEl) studentEl.textContent = `${resObj.student_name || 'Student'} (${resObj.student_id || 'N/A'})`;
+        const amtEl = document.getElementById('receipt-view-amount');
+        if (amtEl) amtEl.textContent = '₱' + Number(resObj.total_amount || 0).toFixed(2);
+        const refNoEl = document.getElementById('receipt-view-gcash-ref');
+        if (refNoEl) refNoEl.textContent = resObj.payment_reference || 'Not Provided';
 
         let imgSrc = '';
         if (resObj.receipt_image && resObj.receipt_image !== 'images/gcash_qr.jpg' && !resObj.receipt_image.includes('gcash_qr')) {
@@ -3898,12 +4774,143 @@
           if (emptyNotice) emptyNotice.classList.remove('hidden');
         }
 
-        document.getElementById('receipt-view-modal').classList.remove('hidden');
+        // Reset transforms
+        this.receiptZoomScale = 1;
+        this.receiptPanX = 0;
+        this.receiptPanY = 0;
+        this.receiptRotation = 0;
+        this.applyReceiptTransform();
+        this.initReceiptPanAndZoomEvents();
+
+        const modal = document.getElementById('receipt-view-modal');
+        if (modal) modal.classList.remove('hidden');
       }
 
       closeReceiptViewModal() {
-        document.getElementById('receipt-view-modal').classList.add('hidden');
+        const modal = document.getElementById('receipt-view-modal');
+        if (modal) modal.classList.add('hidden');
         this.activeViewingReceiptReservation = null;
+        this.receiptZoomScale = 1;
+        this.receiptPanX = 0;
+        this.receiptPanY = 0;
+        this.receiptRotation = 0;
+      }
+
+      zoomReceipt(delta) {
+        let newScale = (this.receiptZoomScale || 1) + delta;
+        newScale = Math.max(0.5, Math.min(newScale, 4.0));
+        this.receiptZoomScale = newScale;
+        if (newScale === 1) {
+          this.receiptPanX = 0;
+          this.receiptPanY = 0;
+        }
+        this.applyReceiptTransform();
+      }
+
+      toggleReceiptZoom(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if ((this.receiptZoomScale || 1) <= 1.1) {
+          this.receiptZoomScale = 2.0;
+        } else {
+          this.receiptZoomScale = 1.0;
+          this.receiptPanX = 0;
+          this.receiptPanY = 0;
+        }
+        this.applyReceiptTransform();
+      }
+
+      rotateReceipt() {
+        this.receiptRotation = ((this.receiptRotation || 0) + 90) % 360;
+        this.applyReceiptTransform();
+      }
+
+      resetReceiptZoom() {
+        this.receiptZoomScale = 1;
+        this.receiptPanX = 0;
+        this.receiptPanY = 0;
+        this.receiptRotation = 0;
+        this.applyReceiptTransform();
+      }
+
+      applyReceiptTransform() {
+        const img = document.getElementById('receipt-view-img');
+        const zoomText = document.getElementById('receipt-zoom-level-text');
+        const scale = this.receiptZoomScale || 1;
+        const x = this.receiptPanX || 0;
+        const y = this.receiptPanY || 0;
+        const rot = this.receiptRotation || 0;
+
+        if (img) {
+          img.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${rot}deg)`;
+          if (scale <= 1.1) {
+            img.classList.remove('cursor-zoom-out');
+            img.classList.add('cursor-zoom-in');
+          } else {
+            img.classList.remove('cursor-zoom-in');
+            img.classList.add('cursor-zoom-out');
+          }
+        }
+        if (zoomText) {
+          zoomText.textContent = `${Math.round(scale * 100)}%`;
+        }
+      }
+
+      initReceiptPanAndZoomEvents() {
+        const frame = document.getElementById('receipt-view-frame');
+        if (!frame || frame._hasZoomEventsAttached) return;
+        frame._hasZoomEventsAttached = true;
+
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let hasMoved = false;
+
+        frame.addEventListener('mousedown', (e) => {
+          if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+          isDragging = true;
+          hasMoved = false;
+          startX = e.clientX - (this.receiptPanX || 0);
+          startY = e.clientY - (this.receiptPanY || 0);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          hasMoved = true;
+          this.receiptPanX = e.clientX - startX;
+          this.receiptPanY = e.clientY - startY;
+          this.applyReceiptTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+          isDragging = false;
+        });
+
+        // Touch support for mobile / tablet drag pan
+        frame.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].clientX - (this.receiptPanX || 0);
+            startY = e.touches[0].clientY - (this.receiptPanY || 0);
+          }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+          if (!isDragging || e.touches.length !== 1) return;
+          this.receiptPanX = e.touches[0].clientX - startX;
+          this.receiptPanY = e.touches[0].clientY - startY;
+          this.applyReceiptTransform();
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+          isDragging = false;
+        });
+
+        // Mousewheel zoom support
+        frame.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const delta = e.deltaY < 0 ? 0.25 : -0.25;
+          this.zoomReceipt(delta);
+        }, { passive: false });
       }
 
       viewActiveReceipt() {
@@ -4144,6 +5151,12 @@
       showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
         if (!container) return;
+
+        // Anti-Duplicate Toast Guard: Never show identical message if already visible
+        const existingToasts = Array.from(container.querySelectorAll('span.leading-snug'));
+        if (existingToasts.some(el => el.textContent.trim() === String(message).trim())) {
+          return;
+        }
 
         const toast = document.createElement('div');
         const bgColors = {

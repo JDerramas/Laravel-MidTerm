@@ -49,4 +49,9 @@ return [
         'redirect_uri' => env('ONEPASS_REDIRECT_URI', 'http://127.0.0.1:8000/oauth/callback'),
     ],
 
+    'paymongo' => [
+        'public_key' => env('PAYMONGO_PUBLIC_KEY', ''),
+        'secret_key' => env('PAYMONGO_SECRET_KEY', ''),
+    ],
+
 ];

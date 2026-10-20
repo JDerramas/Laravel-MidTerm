@@ -18,11 +18,11 @@ class ActivityLog extends Model
     ];
 
     /**
-     * Helper method to quickly record audit log entries
+     * Helper method to quickly record audit log entries with automatic TiDB storage protection
      */
     public static function record($action, $activity, $userCode = '251505', $userName = 'Admin', $module = 'General')
     {
-        return self::create([
+        $log = self::create([
             'user_code'  => $userCode,
             'user_name'  => $userName,
             'action'     => strtoupper($action),
@@ -30,5 +30,20 @@ class ActivityLog extends Model
             'module'     => $module,
             'ip_address' => request()->ip() ?? '127.0.0.1',
         ]);
+
+        // Auto-Prune TiDB Storage Protection: Keep database lean (cap at latest 500 audit entries)
+        try {
+            if (mt_rand(1, 10) === 1) {
+                $total = self::count();
+                if ($total > 500) {
+                    $excessIds = self::orderBy('id', 'asc')->limit($total - 500)->pluck('id');
+                    if ($excessIds->isNotEmpty()) {
+                        self::whereIn('id', $excessIds)->delete();
+                    }
+                }
+            }
+        } catch (\Throwable $e) {}
+
+        return $log;
     }
 }
