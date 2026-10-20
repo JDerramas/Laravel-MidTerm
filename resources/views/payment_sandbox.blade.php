@@ -278,9 +278,23 @@
         </div>
       </div>
 
-      <div class="p-3 rounded-2xl bg-emerald-950 text-emerald-200 text-xs font-semibold flex items-center justify-center gap-2">
-        <svg class="w-4 h-4 text-emerald-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-        <span>Laptop / Main Website Updated in Real-Time!</span>
+      <!-- Auto-Close & Return to Store Notice Banner -->
+      <div class="p-3.5 rounded-2xl bg-emerald-950 border border-emerald-500/80 text-emerald-100 text-xs font-semibold space-y-2.5">
+        <div class="flex items-center justify-center gap-2">
+          <svg class="w-4 h-4 text-emerald-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span class="font-extrabold text-emerald-300">Payment Verified &amp; Attached to Store!</span>
+        </div>
+        <p class="text-[11px] text-emerald-200 font-normal leading-relaxed">
+          Closing window in <span id="autoclose-seconds" class="font-bold text-white font-mono bg-emerald-800 px-1.5 py-0.5 rounded text-xs">2</span>s &amp; returning to checkout to confirm your slip...
+        </p>
+        <button
+          type="button"
+          onclick="returnToStoreAndCloseNow()"
+          id="btn-return-store"
+          class="w-full py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer">
+          <span>⚡ Return &amp; Confirm Slip Now</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
       </div>
     </div>
 
@@ -487,6 +501,101 @@
       return canvas.toDataURL('image/png');
     }
 
+    let autoCloseTimer = null;
+    let autoCloseCountdownInterval = null;
+    let lastRefNo = '';
+
+    function notifyOpenerPaymentSuccess(refNo = null, receiptBase64 = null) {
+      const activeRef = refNo || lastRefNo;
+      const name = document.getElementById('payer-name')?.value || 'Juan Dela Cruz';
+      const stuId = document.getElementById('payer-student-id')?.value || '2024-10822-AIS';
+      const payload = {
+        type: 'ICS_PAYMENT_SUCCESS',
+        token: TOKEN,
+        reference_number: activeRef,
+        method: currentChannel,
+        student_name: name,
+        student_id: stuId,
+        receipt_image: receiptBase64 || null
+      };
+
+      // 1. Send cross-window postMessage to opener
+      if (window.opener && !window.opener.closed) {
+        try {
+          window.opener.postMessage(payload, '*');
+        } catch (e) {}
+      }
+
+      // 2. BroadcastChannel for cross-tab or standalone browser windows
+      if (typeof BroadcastChannel !== 'undefined') {
+        try {
+          const bc = new BroadcastChannel('ics_payment_channel');
+          bc.postMessage(payload);
+          setTimeout(() => { try { bc.close(); } catch(e) {} }, 100);
+        } catch (e) {}
+      }
+
+      // 3. LocalStorage event for multi-window sync
+      try {
+        localStorage.setItem('ics_last_payment_success', JSON.stringify({
+          ...payload,
+          timestamp: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function scheduleAutoClose(refNo, receiptBase64 = null) {
+      lastRefNo = refNo;
+      // Immediately notify main storefront window
+      notifyOpenerPaymentSuccess(refNo, receiptBase64);
+
+      let remaining = 2;
+      const secEl = document.getElementById('autoclose-seconds');
+      if (secEl) secEl.textContent = remaining;
+
+      if (autoCloseCountdownInterval) clearInterval(autoCloseCountdownInterval);
+      autoCloseCountdownInterval = setInterval(() => {
+        remaining--;
+        if (secEl) secEl.textContent = Math.max(0, remaining);
+        if (remaining <= 0) {
+          clearInterval(autoCloseCountdownInterval);
+        }
+      }, 1000);
+
+      if (autoCloseTimer) clearTimeout(autoCloseTimer);
+      autoCloseTimer = setTimeout(() => {
+        returnToStoreAndCloseNow();
+      }, 2000);
+    }
+
+    function returnToStoreAndCloseNow() {
+      if (autoCloseTimer) clearTimeout(autoCloseTimer);
+      if (autoCloseCountdownInterval) clearInterval(autoCloseCountdownInterval);
+
+      notifyOpenerPaymentSuccess();
+
+      // Focus opener store window
+      if (window.opener && !window.opener.closed) {
+        try {
+          window.opener.focus();
+        } catch (e) {}
+      }
+
+      // Attempt to close this popup window
+      try {
+        window.close();
+      } catch (e) {}
+
+      // Fallback message if browser blocks programmatic window.close()
+      setTimeout(() => {
+        const btn = document.getElementById('btn-return-store');
+        if (btn) {
+          btn.innerHTML = '<span>✓ Done! Please switch back to your store tab</span>';
+          btn.className = 'w-full py-2.5 px-3 rounded-xl bg-slate-800 text-emerald-300 font-bold text-xs shadow transition flex items-center justify-center gap-1.5';
+        }
+      }, 350);
+    }
+
     async function completeTestPayment() {
       const btn = document.getElementById('pay-now-btn');
       btn.disabled = true;
@@ -524,8 +633,12 @@
           document.getElementById('step-receipt').classList.remove('hidden');
 
           document.getElementById('receipt-method-text').textContent = currentChannel;
-          document.getElementById('receipt-ref-text').textContent = data.session.reference_number || refNo;
+          const finalRef = data.session?.reference_number || refNo;
+          document.getElementById('receipt-ref-text').textContent = finalRef;
           document.getElementById('receipt-student-text').textContent = `${name} (${stuId})`;
+
+          // Trigger auto-close & seamless return to checkout!
+          scheduleAutoClose(finalRef, receiptBase64);
         }
       } catch (err) {
         alert('Network error while completing test payment. Please try again.');
@@ -542,8 +655,10 @@
         document.getElementById('step-login').classList.add('hidden');
         document.getElementById('step-receipt').classList.remove('hidden');
         document.getElementById('receipt-method-text').textContent = currentChannel;
-        document.getElementById('receipt-ref-text').textContent = @json($paymentData['reference_number'] ?? 'GCASH-PAID');
+        const paidRef = @json($paymentData['reference_number'] ?? 'GCASH-PAID');
+        document.getElementById('receipt-ref-text').textContent = paidRef;
         document.getElementById('receipt-student-text').textContent = document.getElementById('payer-name').value;
+        scheduleAutoClose(paidRef);
         return;
       }
 

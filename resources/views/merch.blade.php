@@ -1812,11 +1812,21 @@
             </span>
             <span id="chk-fee-preview" class="font-mono text-ics-gold font-bold">₱10.00</span>
           </div>
-          <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-            <div>
-              <p class="text-[10px] text-slate-400 uppercase font-semibold" id="chk-total-label">Total Payable:</p>
-              <p id="chk-total-preview" class="text-lg font-black text-ics-gold font-mono">₱0.00</p>
+          <div class="pt-2 border-t border-slate-800/80 space-y-2">
+            <!-- Real-Time Verified Helper Notice Banner -->
+            <div id="chk-payment-ready-notice" class="hidden p-2.5 rounded-2xl bg-emerald-950/80 border border-emerald-500/70 text-emerald-200 text-xs font-semibold flex items-center justify-between gap-2 shadow-sm">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping flex-shrink-0"></span>
+                <span>Online payment verified! Click <strong>Confirm &amp; Generate Slip</strong> to finalize.</span>
+              </div>
+              <span class="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded bg-emerald-500 text-slate-950 flex-shrink-0">Ready</span>
             </div>
+
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-[10px] text-slate-400 uppercase font-semibold" id="chk-total-label">Total Payable:</p>
+                <p id="chk-total-preview" class="text-lg font-black text-ics-gold font-mono">₱0.00</p>
+              </div>
             <button
               id="chk-submit-btn"
               type="submit"
@@ -2567,6 +2577,8 @@
         this.sandboxUrl = null;
         this.qrScanUrl = null;
         this.sandboxPollTimer = null;
+        this.sandboxPopupRef = null;
+        this.paymentBroadcastChannel = null;
         this._restoredProgress = null;
 
         // Support Tickets & Live Chat Helpdesk State
@@ -2580,6 +2592,7 @@
 
       init() {
         this.restoreSavedCheckoutProgressIfAny();
+        this.setupPaymentCrossWindowListeners();
         this.updateCartBadge();
         this.renderSizeGuide();
         this.initTracker();
@@ -3804,6 +3817,8 @@
         const statusDot = document.getElementById('sandbox-status-dot');
         const statusText = document.getElementById('sandbox-status-text');
 
+        const readyNotice = document.getElementById('chk-payment-ready-notice');
+
         if (this.isRealtimePaymentVerified) {
           if (refInput) {
             refInput.readOnly = true;
@@ -3816,6 +3831,7 @@
           }
           if (refLockTag) refLockTag.classList.remove('hidden');
           if (receiptLockTag) receiptLockTag.classList.remove('hidden');
+          if (readyNotice) readyNotice.classList.remove('hidden');
 
           if (banner) banner.className = 'p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-500 flex items-center justify-between gap-2 text-[11px]';
           if (statusDot) statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0';
@@ -3839,6 +3855,7 @@
           }
           if (refLockTag) refLockTag.classList.add('hidden');
           if (receiptLockTag) receiptLockTag.classList.add('hidden');
+          if (readyNotice) readyNotice.classList.add('hidden');
 
           document.querySelectorAll('input[name="chk_payment_method"]').forEach(r => {
             r.disabled = false;
@@ -4153,11 +4170,164 @@
         const height = 780;
         const left = Math.max(20, Math.round((window.screen.width - width) / 2));
         const top = Math.max(20, Math.round((window.screen.height - height) / 2));
-        window.open(
+        this.sandboxPopupRef = window.open(
           this.sandboxUrl,
           'ICS_Online_Payment_Sandbox',
           `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
         );
+        if (this.sandboxPopupRef && this.sandboxPopupRef.focus) {
+          try {
+            this.sandboxPopupRef.focus();
+          } catch (e) {}
+        }
+      }
+
+      setupPaymentCrossWindowListeners() {
+        // 1. Listen for postMessage from payment sandbox popup
+        window.addEventListener('message', (event) => {
+          if (!event.data || typeof event.data !== 'object') return;
+          if (event.data.type === 'ICS_PAYMENT_SUCCESS') {
+            const data = event.data;
+            if (!this.sandboxToken || data.token === this.sandboxToken || !data.token) {
+              this.handleVerifiedSandboxPayment({
+                status: 'paid',
+                method: data.method || this.selectedPaymentMethod,
+                reference_number: data.reference_number,
+                receipt_base64: data.receipt_image
+              });
+            }
+          }
+        });
+
+        // 2. BroadcastChannel for cross-tab or external window communication
+        if (typeof BroadcastChannel !== 'undefined') {
+          try {
+            this.paymentBroadcastChannel = new BroadcastChannel('ics_payment_channel');
+            this.paymentBroadcastChannel.onmessage = (event) => {
+              if (event.data && event.data.type === 'ICS_PAYMENT_SUCCESS') {
+                const data = event.data;
+                if (!this.sandboxToken || data.token === this.sandboxToken || !data.token) {
+                  this.handleVerifiedSandboxPayment({
+                    status: 'paid',
+                    method: data.method || this.selectedPaymentMethod,
+                    reference_number: data.reference_number,
+                    receipt_base64: data.receipt_image
+                  });
+                }
+              }
+            };
+          } catch (e) {
+            console.warn('BroadcastChannel not supported:', e);
+          }
+        }
+
+        // 3. Storage event for cross-tab / multi-window payment sync
+        window.addEventListener('storage', (event) => {
+          if (event.key === 'ics_last_payment_success' && event.newValue) {
+            try {
+              const data = JSON.parse(event.newValue);
+              if (data && (!this.sandboxToken || data.token === this.sandboxToken || !data.token)) {
+                this.handleVerifiedSandboxPayment({
+                  status: 'paid',
+                  method: data.method || this.selectedPaymentMethod,
+                  reference_number: data.reference_number,
+                  receipt_base64: data.receipt_image
+                });
+              }
+            } catch (e) {}
+          }
+        });
+      }
+
+      handleVerifiedSandboxPayment(s) {
+        if (!s || this.isRealtimePaymentVerified) return;
+        this.isRealtimePaymentVerified = true;
+
+        if (this.sandboxPollTimer) {
+          clearInterval(this.sandboxPollTimer);
+          this.sandboxPollTimer = null;
+        }
+
+        // Automatically close the popup sandbox window once payment succeeds
+        if (this.sandboxPopupRef && !this.sandboxPopupRef.closed) {
+          try {
+            this.sandboxPopupRef.close();
+          } catch (e) {}
+          this.sandboxPopupRef = null;
+        }
+
+        // Bring focus back to this main store window
+        try {
+          window.focus();
+        } catch (e) {}
+
+        if (s.method) {
+          this.selectedPaymentMethod = s.method;
+        }
+
+        // 1. Auto-fill Payment Reference Number from confirmed sandbox/QR payment
+        const refInput = document.getElementById('chk-gcash-ref');
+        if (refInput && s.reference_number) {
+          refInput.value = s.reference_number;
+        }
+
+        // 2. Auto-attach Digital Payment Receipt Screenshot
+        const imgSource = s.receipt_base64 || (s.receipt_image ? '/' + s.receipt_image.replace(/^\//, '') : null);
+        if (imgSource) {
+          this.receiptBase64 = imgSource;
+          const placeholder = document.getElementById('receipt-upload-placeholder');
+          const previewContainer = document.getElementById('receipt-upload-preview-container');
+          const previewImg = document.getElementById('receipt-upload-preview-img');
+          const fileNameEl = document.getElementById('receipt-file-name');
+          if (placeholder) placeholder.classList.add('hidden');
+          if (previewContainer) previewContainer.classList.remove('hidden');
+          if (previewImg) previewImg.src = imgSource;
+          if (fileNameEl) fileNameEl.textContent = (s.reference_number || 'OFFICIAL_RECEIPT') + '.png';
+        }
+
+        // 3. Immediately lock reference & receipt so user cannot alter them
+        this.applyVerifiedPaymentLock();
+
+        // 4. Save verified checkout progress into localStorage
+        this.saveCheckoutProgress();
+
+        // 5. Update Real-Time Status Banner to Paid
+        const banner = document.getElementById('sandbox-realtime-banner');
+        const statusDot = document.getElementById('sandbox-status-dot');
+        const statusText = document.getElementById('sandbox-status-text');
+        const zoomStatus = document.getElementById('qr-zoom-live-status');
+
+        if (banner) banner.className = 'p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-500 flex items-center justify-between gap-2 text-[11px]';
+        if (statusDot) statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0';
+        if (statusText) statusText.textContent = `✅ Payment Received [${s.reference_number || 'OK'}]! Reference No. & receipt auto-filled and locked.`;
+        if (zoomStatus) {
+          zoomStatus.textContent = '✅ Payment Confirmed!';
+          zoomStatus.className = 'inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600';
+        }
+
+        // 6. Close QR Zoom Modal if currently open
+        this.closeQrZoomModal();
+
+        // 7. Make sure Checkout Modal is open and visible
+        const checkoutModal = document.getElementById('checkout-modal');
+        if (checkoutModal) {
+          checkoutModal.classList.remove('hidden');
+        }
+
+        // 8. Smoothly scroll to and highlight "Confirm & Generate Slip" button so student can confirm with 1 tap
+        setTimeout(() => {
+          const submitBtn = document.getElementById('chk-submit-btn');
+          if (submitBtn) {
+            submitBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            submitBtn.focus();
+            submitBtn.classList.add('ring-4', 'ring-emerald-400', 'shadow-emerald-500/50');
+            setTimeout(() => {
+              submitBtn.classList.remove('ring-4', 'ring-emerald-400', 'shadow-emerald-500/50');
+            }, 6000);
+          }
+        }, 200);
+
+        this.showToast(`Real-Time Payment Verified via ${this.selectedPaymentMethod} (${s.reference_number || 'OK'})! Click "Confirm & Generate Slip" to finalize.`, 'success');
       }
 
       async pollSandboxPaymentStatus() {
@@ -4196,55 +4366,7 @@
               zoomStatus.className = 'inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600';
             }
           } else if (s.status === 'paid') {
-            // Guard: If already verified, do not re-run or fire duplicate toast notifications
-            if (this.isRealtimePaymentVerified) return;
-            this.isRealtimePaymentVerified = true;
-            if (this.sandboxPollTimer) {
-              clearInterval(this.sandboxPollTimer);
-              this.sandboxPollTimer = null;
-            }
-
-            if (s.method) {
-              this.selectedPaymentMethod = s.method;
-            }
-
-            // 1. Auto-fill Payment Reference Number from confirmed sandbox/QR payment
-            const refInput = document.getElementById('chk-gcash-ref');
-            if (refInput && s.reference_number) {
-              refInput.value = s.reference_number;
-            }
-
-            // 2. Auto-attach Digital Payment Receipt Screenshot
-            const imgSource = s.receipt_base64 || (s.receipt_image ? '/' + s.receipt_image.replace(/^\//, '') : null);
-            if (imgSource) {
-              this.receiptBase64 = imgSource;
-              const placeholder = document.getElementById('receipt-upload-placeholder');
-              const previewContainer = document.getElementById('receipt-upload-preview-container');
-              const previewImg = document.getElementById('receipt-upload-preview-img');
-              const fileNameEl = document.getElementById('receipt-file-name');
-              if (placeholder) placeholder.classList.add('hidden');
-              if (previewContainer) previewContainer.classList.remove('hidden');
-              if (previewImg) previewImg.src = imgSource;
-              if (fileNameEl) fileNameEl.textContent = (s.reference_number || 'OFFICIAL_RECEIPT') + '.png';
-            }
-
-            // 3. Immediately lock reference & receipt so user cannot alter them
-            this.applyVerifiedPaymentLock();
-
-            // 4. Save verified checkout progress into localStorage
-            this.saveCheckoutProgress();
-
-            // 5. Update Real-Time Status Banner to Paid
-            if (banner) banner.className = 'p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-500 flex items-center justify-between gap-2 text-[11px]';
-            if (statusDot) statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 flex-shrink-0';
-            if (statusText) statusText.textContent = `✅ Payment Received [${s.reference_number || 'OK'}]! Reference No. & receipt auto-filled and locked.`;
-            if (zoomStatus) {
-              zoomStatus.textContent = '✅ Payment Confirmed!';
-              zoomStatus.className = 'inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600';
-            }
-
-            this.closeQrZoomModal();
-            this.showToast(`Real-Time Payment Verified via ${this.selectedPaymentMethod} (${s.reference_number})! Reference & receipt locked and saved.`, 'success');
+            this.handleVerifiedSandboxPayment(s);
           }
         } catch (err) {
           // Ignore transient poll errors
