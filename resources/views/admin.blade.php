@@ -1052,10 +1052,10 @@
                   data-status="{{ $r->status }}"
                   data-ref="{{ $r->ref_code }}"
                   data-stuid="{{ $r->student_id }}"
-                  data-name="{{ $r->student_name }}"
-                  data-dept="{{ $r->department }}"
+                  data-name="{{ htmlspecialchars($r->student_name ?? '', ENT_QUOTES, 'UTF-8') }}"
+                  data-dept="{{ htmlspecialchars($r->department ?? '', ENT_QUOTES, 'UTF-8') }}"
                   data-total="{{ $r->total_amount }}"
-                  data-items="{{ json_encode($r->items) }}"
+                  data-items="{{ htmlspecialchars(json_encode($r->items ?? []), ENT_QUOTES, 'UTF-8') }}"
                   @if($isFinishedOrder) onclick="icsApp.toggleReservationRowSelect(event, '{{ $r->id }}')" @endif>
                   <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
                     <div class="reservation-header-badges flex items-center gap-2.5 flex-wrap">
@@ -3071,7 +3071,7 @@
   <!-- ======================================================== -->
 
 
-  <div id="receipt-view-modal" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+  <div id="receipt-view-modal" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5" style="display: none;">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative text-left flex flex-col max-h-[92vh]">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
         <div class="flex items-center gap-2.5">
@@ -3182,7 +3182,7 @@
   <!-- ======================================================== -->
   <!-- MODAL: MESSAGE STUDENT BUYER ("if may itatanong yung admin don sa bibili") -->
   <!-- ======================================================== -->
-  <div id="admin-message-buyer-modal" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="admin-message-buyer-modal" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4" style="display: none;">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative text-left">
       <!-- Modal Header -->
       <div class="flex items-center justify-between pb-3.5 border-b border-slate-800">
@@ -3316,7 +3316,7 @@
   <!-- ======================================================== -->
   <!-- MODAL / PRINTABLE CLAIM SLIP (FOR ADMIN VERIFICATION & ISSUANCE) -->
   <!-- ======================================================== -->
-  <div id="slip-modal" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="slip-modal" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4" style="display: none;">
     <div class="bg-white text-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative text-left" id="printable-claim-slip">
 
       <!-- Slip Header -->
@@ -5227,7 +5227,10 @@
         if (payStatusEl) payStatusEl.textContent = resObj.payment_status || 'Unpaid';
 
         const modal = document.getElementById('slip-modal');
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
+        }
 
         if (autoPrint) {
           setTimeout(() => this.printCurrentSlip(), 200);
@@ -5237,7 +5240,10 @@
       printCurrentSlip() {
         document.body.classList.add('slip-modal-open');
         const modal = document.getElementById('slip-modal');
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
+        }
         setTimeout(() => {
           window.print();
         }, 120);
@@ -5348,12 +5354,18 @@
         }
 
         const modalEl = document.getElementById('receipt-view-modal');
-        if (modalEl) modalEl.classList.remove('hidden');
+        if (modalEl) {
+          modalEl.classList.remove('hidden');
+          modalEl.style.display = 'flex';
+        }
       }
 
       closeReceiptViewModal() {
         const modalEl = document.getElementById('receipt-view-modal');
-        if (modalEl) modalEl.classList.add('hidden');
+        if (modalEl) {
+          modalEl.classList.add('hidden');
+          modalEl.style.display = 'none';
+        }
         this.activeViewingReceiptReservation = null;
         this.receiptZoomScale = 1;
         this.receiptPanX = 0;
@@ -5660,13 +5672,19 @@
         }
 
         const modal = document.getElementById('admin-message-buyer-modal');
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
+        }
         if (contentEl) setTimeout(() => contentEl.focus(), 150);
       }
 
       closeAdminMessageBuyerModal() {
         const modal = document.getElementById('admin-message-buyer-modal');
-        if (modal) modal.classList.add('hidden');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+        }
         this.activeMessageReservation = null;
       }
 
@@ -5806,7 +5824,10 @@
       closeSlipModal() {
         document.body.classList.remove('slip-modal-open');
         const modal = document.getElementById('slip-modal');
-        if (modal) modal.classList.add('hidden');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+        }
       }
 
       // ==========================================
@@ -6408,23 +6429,34 @@
       }
 
       toggleAllReservationCheckboxes(checked) {
-        const cards = document.querySelectorAll('#reservations-list .reservation-queue-card');
-        cards.forEach(card => {
-          if (!card.classList.contains('hidden') && card.style.display !== 'none') {
-            const status = card.getAttribute('data-status');
-            // Only select finished (Claimed or Cancelled) orders
-            if (status === 'Claimed' || status === 'Cancelled') {
-              const id = card.getAttribute('data-id');
-              const cb = card.querySelector('.reservation-row-checkbox');
-              if (cb) cb.checked = checked;
-              if (id) {
-                const idStr = String(id);
-                if (checked) {
-                  this.selectedReservationIds.add(idStr);
-                } else {
-                  this.selectedReservationIds.delete(idStr);
-                }
-              }
+        const selectableCards = Array.from(document.querySelectorAll('#reservations-list .reservation-queue-card'))
+          .filter(card => !card.classList.contains('hidden') && card.style.display !== 'none' && (card.getAttribute('data-status') === 'Claimed' || card.getAttribute('data-status') === 'Cancelled'));
+
+        if (selectableCards.length === 0) {
+          const selectAll = document.getElementById('reservations-select-all');
+          if (selectAll) {
+            selectAll.checked = false;
+            selectAll.disabled = true;
+          }
+          if (this.selectedReservationIds) this.selectedReservationIds.clear();
+          try { localStorage.removeItem('ics_selected_reservation_ids'); } catch (e) {}
+          this.restoreReservationSelectionUI();
+          if (checked) {
+            this.showToast('Only completed (Claimed) or Cancelled orders can be selected for deletion.', 'info');
+          }
+          return;
+        }
+
+        selectableCards.forEach(card => {
+          const id = card.getAttribute('data-id');
+          const cb = card.querySelector('.reservation-row-checkbox');
+          if (cb) cb.checked = checked;
+          if (id) {
+            const idStr = String(id);
+            if (checked) {
+              this.selectedReservationIds.add(idStr);
+            } else {
+              this.selectedReservationIds.delete(idStr);
             }
           }
         });
@@ -6435,44 +6467,52 @@
       }
 
       restoreReservationSelectionUI() {
+        const selectableCheckboxes = Array.from(document.querySelectorAll('#reservations-list .reservation-queue-card:not(.hidden) .reservation-row-checkbox'));
+        const validSelectableIds = new Set(selectableCheckboxes.map(cb => String(cb.value)));
+
         try {
           const raw = localStorage.getItem('ics_selected_reservation_ids');
           if (raw) {
             const parsed = JSON.parse(raw);
-            this.selectedReservationIds = new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+            this.selectedReservationIds = new Set(
+              (Array.isArray(parsed) ? parsed.map(String) : []).filter(id => validSelectableIds.has(id))
+            );
+          } else {
+            this.selectedReservationIds = new Set(
+              Array.from(this.selectedReservationIds || []).filter(id => validSelectableIds.has(String(id)))
+            );
           }
-        } catch (e) {}
+        } catch (e) {
+          this.selectedReservationIds = new Set();
+        }
 
-        const cards = document.querySelectorAll('#reservations-list .reservation-queue-card');
-        let visibleSelectableTotal = 0;
         let visibleChecked = 0;
-
-        cards.forEach(card => {
-          if (!card.classList.contains('hidden') && card.style.display !== 'none') {
-            const cb = card.querySelector('.reservation-row-checkbox');
-            if (cb) {
-              visibleSelectableTotal++;
-              const id = card.getAttribute('data-id');
-              const isSelected = id && this.selectedReservationIds.has(String(id));
-              cb.checked = isSelected;
-              if (isSelected) {
-                visibleChecked++;
-                card.classList.add('ring-2', 'ring-rose-500/80', 'bg-rose-950/20');
-              } else {
-                card.classList.remove('ring-2', 'ring-rose-500/80', 'bg-rose-950/20');
-              }
+        selectableCheckboxes.forEach(cb => {
+          const isSelected = this.selectedReservationIds.has(String(cb.value));
+          cb.checked = isSelected;
+          const card = cb.closest('.reservation-queue-card');
+          if (card) {
+            if (isSelected) {
+              visibleChecked++;
+              card.classList.add('ring-2', 'ring-rose-500/80', 'bg-rose-950/20');
+            } else {
+              card.classList.remove('ring-2', 'ring-rose-500/80', 'bg-rose-950/20');
             }
           }
         });
 
         const selectAll = document.getElementById('reservations-select-all');
         if (selectAll) {
-          selectAll.checked = visibleSelectableTotal > 0 && visibleChecked === visibleSelectableTotal;
+          selectAll.checked = selectableCheckboxes.length > 0 && visibleChecked === selectableCheckboxes.length;
+          selectAll.disabled = selectableCheckboxes.length === 0;
+          selectAll.title = selectableCheckboxes.length === 0
+            ? 'Only completed (Claimed) or Cancelled orders can be selected for deletion'
+            : 'Select all finished orders in current view';
         }
 
         const countBadge = document.getElementById('reservations-selected-badge');
         const bulkDeleteBtn = document.getElementById('reservations-bulk-delete-btn');
-        const count = this.selectedReservationIds ? this.selectedReservationIds.size : 0;
+        const count = visibleChecked;
 
         if (countBadge) {
           if (count > 0) {
@@ -6493,12 +6533,15 @@
       }
 
       async deleteSelectedReservations() {
-        if (!this.selectedReservationIds || this.selectedReservationIds.size === 0) {
-          this.showToast('Please select at least one reservation to delete.', 'info');
+        const selectableCheckboxes = Array.from(document.querySelectorAll('#reservations-list .reservation-queue-card:not(.hidden) .reservation-row-checkbox:checked'));
+        const idsToDelete = selectableCheckboxes.map(cb => cb.value).filter(Boolean);
+
+        if (idsToDelete.length === 0) {
+          this.showToast('Please select at least one finished reservation to delete.', 'info');
           return;
         }
 
-        const count = this.selectedReservationIds.size;
+        const count = idsToDelete.length;
         if (!confirm(`Are you sure you want to permanently delete ${count} selected reservation(s)?\n\nThis will remove them from the database, return any reserved inventory back to available stock, and delete associated tickets. This action cannot be undone.`)) {
           return;
         }
@@ -6514,7 +6557,7 @@
               'Accept': 'application/json'
             },
             body: JSON.stringify({
-              ids: Array.from(this.selectedReservationIds)
+              ids: idsToDelete
             })
           });
 
@@ -8254,9 +8297,22 @@
         }
 
         const ticket = (this.supportTickets || []).find(t => t.id === this.activeAdminTicketId);
-        if (ticket && ticket.status === 'Open') {
+        if (ticket && (ticket.status === 'Open' || ticket.status === 'Resolved')) {
           ticket.status = 'In Progress';
           this.renderAdminTicketsList();
+          const statusBadge = document.getElementById('admin-active-ticket-status-badge');
+          if (statusBadge) {
+            statusBadge.textContent = 'In Progress';
+            statusBadge.className = 'px-2 py-0.5 rounded-full text-[9px] font-mono font-bold border bg-amber-950 text-amber-300 border-amber-800';
+          }
+          const markResolvedText = document.getElementById('admin-btn-mark-resolved-text');
+          const markResolvedBtn = document.getElementById('admin-btn-mark-resolved');
+          if (markResolvedText && markResolvedBtn) {
+            markResolvedText.textContent = 'Mark as Done (Resolved)';
+            markResolvedBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-700 transition flex items-center gap-1.5 shadow';
+          }
+          const deleteTicketBtn = document.getElementById('admin-btn-delete-ticket');
+          if (deleteTicketBtn) deleteTicketBtn.classList.add('hidden');
         }
 
         try {
@@ -8320,6 +8376,23 @@
           const data = await res.json();
           if (data.success && data.ticket) {
             ticket.status = data.ticket.status;
+
+            // Instantly sync linked reservation hold state in the queue
+            const rIdx = (this.reservations || []).findIndex(r =>
+              (ticket.reservation_ref && r.ref_code === ticket.reservation_ref) ||
+              (ticket.reservation_id && String(r.id) === String(ticket.reservation_id))
+            );
+            if (rIdx >= 0) {
+              if (data.ticket.status === 'Resolved') {
+                this.reservations[rIdx].active_ticket = null;
+                this.reservations[rIdx].activeTicket = null;
+              } else {
+                this.reservations[rIdx].active_ticket = data.ticket;
+                this.reservations[rIdx].activeTicket = data.ticket;
+              }
+              this.renderReservationsQueue();
+            }
+
             this.showToast(`Ticket ${ticket.ticket_code} marked as ${ticket.status}!`, 'success');
             this.selectAdminTicket(ticket.id);
             this.renderAdminTicketsList();

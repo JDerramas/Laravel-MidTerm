@@ -81,17 +81,22 @@ class MerchController extends Controller
 
         // 4. Fetch Helpdesk Tickets & active count for student support
         if ($studentUser) {
+            $userStuId = $studentUser['student_id'] ?? '';
+            $userName  = $studentUser['name'] ?? '';
+            $userEmail = $studentUser['email'] ?? '';
             $supportTickets = SupportTicket::with(['messages', 'reservation'])
-                ->where(function ($q) use ($studentUser) {
-                    $q->where('student_id', $studentUser['student_id'] ?? '')
-                        ->orWhere('student_name', $studentUser['name'] ?? '');
+                ->where(function ($q) use ($userStuId, $userName, $userEmail) {
+                    if ($userStuId) $q->where('student_id', $userStuId);
+                    if ($userName)  $q->orWhere('student_name', $userName);
+                    if ($userEmail) $q->orWhere('student_id', $userEmail);
                 })
                 ->orderBy('created_at', 'desc')
                 ->take(20)
                 ->get();
-            $openTicketsCount = SupportTicket::where(function ($q) use ($studentUser) {
-                $q->where('student_id', $studentUser['student_id'] ?? '')
-                    ->orWhere('student_name', $studentUser['name'] ?? '');
+            $openTicketsCount = SupportTicket::where(function ($q) use ($userStuId, $userName, $userEmail) {
+                if ($userStuId) $q->where('student_id', $userStuId);
+                if ($userName)  $q->orWhere('student_name', $userName);
+                if ($userEmail) $q->orWhere('student_id', $userEmail);
             })->whereIn('status', ['Open', 'In Progress'])->count();
         } else {
             $supportTickets = collect([]);
@@ -2034,12 +2039,20 @@ class MerchController extends Controller
             }
         }
 
-        // Anti-spam rule: Prevent sending messages if ticket is already closed/resolved
+        // Anti-spam rule: Prevent student replies to resolved tickets, but auto-reopen if admin replies
         if ($ticket->status === 'Resolved') {
-            return response()->json([
-                'success' => false,
-                'message' => 'This support ticket has been resolved and closed. Please open a new ticket if you need further help.',
-            ], 422);
+            if ($request->sender_type === 'admin') {
+                $ticket->update([
+                    'status'      => 'In Progress',
+                    'resolved_by' => null,
+                    'resolved_at' => null,
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This support ticket has been resolved and closed. Please open a new ticket or request an officer to reopen it.',
+                ], 422);
+            }
         }
 
         $msg = SupportMessage::create([
@@ -2448,7 +2461,24 @@ class MerchController extends Controller
         // 1. Check for existing open or in-progress ticket linked to this reservation
         $ticket = SupportTicket::where('reservation_ref', $reservation->ref_code)
             ->whereIn('status', ['Open', 'In Progress'])
+            ->latest()
             ->first();
+
+        // 2. If no open ticket, check for existing resolved ticket to reopen
+        if (!$ticket) {
+            $resolvedTicket = SupportTicket::where('reservation_ref', $reservation->ref_code)
+                ->where('status', 'Resolved')
+                ->latest()
+                ->first();
+            if ($resolvedTicket) {
+                $ticket = $resolvedTicket;
+                $ticket->update([
+                    'status'      => 'In Progress',
+                    'resolved_by' => null,
+                    'resolved_at' => null,
+                ]);
+            }
+        }
 
         $isNew = false;
         if (!$ticket) {
@@ -2613,14 +2643,17 @@ class MerchController extends Controller
             if ($studentUser) {
                 $userStuId = $studentUser['student_id'] ?? '';
                 $userName  = $studentUser['name'] ?? '';
+                $userEmail = $studentUser['email'] ?? '';
                 $supportTickets = SupportTicket::with(['messages', 'reservation'])
-                    ->where(function ($q) use ($userStuId, $userName) {
+                    ->where(function ($q) use ($userStuId, $userName, $userEmail) {
                         if ($userStuId) $q->where('student_id', $userStuId);
                         if ($userName)  $q->orWhere('student_name', $userName);
+                        if ($userEmail) $q->orWhere('student_id', $userEmail);
                     })->orderBy('created_at', 'desc')->take(10)->get();
-                $openTicketsCount = SupportTicket::where(function ($q) use ($userStuId, $userName) {
+                $openTicketsCount = SupportTicket::where(function ($q) use ($userStuId, $userName, $userEmail) {
                     if ($userStuId) $q->where('student_id', $userStuId);
                     if ($userName)  $q->orWhere('student_name', $userName);
+                    if ($userEmail) $q->orWhere('student_id', $userEmail);
                 })->whereIn('status', ['Open', 'In Progress'])->count();
             } else {
                 $supportTickets = collect([]);

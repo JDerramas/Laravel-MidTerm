@@ -1909,7 +1909,7 @@
   <!-- ======================================================== -->
   <!-- MODAL / PRINTABLE CLAIM SLIP (WITH VISUAL BARCODE / QR) -->
   <!-- ======================================================== -->
-  <div id="slip-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="slip-modal" style="display: none;" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white text-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative text-left" id="printable-claim-slip">
 
       <!-- Slip Header -->
@@ -2047,7 +2047,7 @@
   <!-- ======================================================== -->
   <!-- MODAL: RECEIPT VIEWER (ZOOMABLE PREVIEW FOR BOTH STORE & ADMIN) -->
   <!-- ======================================================== -->
-  <div id="receipt-view-modal" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+  <div id="receipt-view-modal" style="display: none;" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative text-left flex flex-col max-h-[92vh]">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
         <div class="flex items-center gap-2.5">
@@ -2228,13 +2228,22 @@
     <button
       onclick="icsApp.openStudentSupportModal()"
       title="Chat Support & Order Helpdesk"
-      class="group flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-900 border-2 border-emerald-500/80 hover:border-emerald-400 text-white shadow-2xl backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95">
-      <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-      </svg>
+      class="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-900 border-2 border-emerald-500/80 hover:border-emerald-400 text-white shadow-2xl backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95">
+      <div class="relative">
+        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+        <span id="student-chat-icon-ping" class="hidden absolute -top-1 -right-1 flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+        </span>
+      </div>
       <div class="text-left hidden sm:block">
-        <span class="text-xs font-black tracking-tight block text-white leading-none">Support Desk</span>
-        <span class="text-[9px] text-emerald-400 font-mono leading-none">Order Help & Cancellation</span>
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-black tracking-tight block text-white leading-none">Support Desk</span>
+          <span id="student-chat-unread-badge" class="hidden px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-black tracking-wider leading-none shadow">1 NEW</span>
+        </div>
+        <span id="student-chat-btn-subtext" class="text-[9px] text-emerald-400 font-mono leading-none transition-colors">Order Help & Cancellation</span>
       </div>
     </button>
   </div>
@@ -2242,7 +2251,7 @@
   <!-- ======================================================== -->
   <!-- MODAL: STUDENT SUPPORT TICKETS & CHAT DESK -->
   <!-- ======================================================== -->
-  <div id="student-support-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+  <div id="student-support-modal" style="display: none;" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl sm:max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative text-left">
 
       <!-- Modal Header -->
@@ -2617,6 +2626,7 @@
         this.initTracker();
         this.syncStudentIdentityToForms();
         this.updateStudentMyTicketsCount();
+        this.updateStudentChatBadge();
         this.startRealtimeSync();
 
         @if(session('success'))
@@ -4904,7 +4914,10 @@
         if (payStatusEl) payStatusEl.textContent = resObj.payment_status || 'Unpaid';
 
         const modal = document.getElementById('slip-modal');
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+          modal.style.display = 'flex';
+          modal.classList.remove('hidden');
+        }
 
         if (autoPrint) {
           setTimeout(() => this.printCurrentSlip(), 200);
@@ -4914,7 +4927,10 @@
       printCurrentSlip() {
         document.body.classList.add('slip-modal-open');
         const modal = document.getElementById('slip-modal');
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+          modal.style.display = 'flex';
+          modal.classList.remove('hidden');
+        }
         setTimeout(() => {
           window.print();
         }, 120);
@@ -4974,12 +4990,18 @@
         this.initReceiptPanAndZoomEvents();
 
         const modal = document.getElementById('receipt-view-modal');
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+          modal.style.display = 'flex';
+          modal.classList.remove('hidden');
+        }
       }
 
       closeReceiptViewModal() {
         const modal = document.getElementById('receipt-view-modal');
-        if (modal) modal.classList.add('hidden');
+        if (modal) {
+          modal.style.display = 'none';
+          modal.classList.add('hidden');
+        }
         this.activeViewingReceiptReservation = null;
         this.receiptZoomScale = 1;
         this.receiptPanX = 0;
@@ -5117,7 +5139,10 @@
       closeSlipModal() {
         document.body.classList.remove('slip-modal-open');
         const modal = document.getElementById('slip-modal');
-        if (modal) modal.classList.add('hidden');
+        if (modal) {
+          modal.style.display = 'none';
+          modal.classList.add('hidden');
+        }
       }
 
 
@@ -5179,6 +5204,8 @@
             // 3. Update Support Tickets Cache in real-time
             if (data.support_tickets && Array.isArray(data.support_tickets)) {
               this.supportTickets = data.support_tickets;
+              this.updateStudentMyTicketsCount();
+              this.updateStudentChatBadge();
               const histContainer = document.getElementById('student-tickets-history-container');
               if (histContainer && !histContainer.classList.contains('hidden')) {
                 if (typeof this.renderTicketsListHtml === 'function') {
@@ -5421,6 +5448,74 @@
         });
       }
 
+      updateStudentChatBadge() {
+        const lastReadMsgId = Number(localStorage.getItem('ics_student_last_read_msg_id') || 0);
+        let unreadCount = 0;
+        let latestAdminMsg = null;
+
+        (this.supportTickets || []).forEach(ticket => {
+          (ticket.messages || []).forEach(msg => {
+            if (msg.sender_type !== 'student') {
+              if (Number(msg.id) > lastReadMsgId) {
+                unreadCount++;
+              }
+              if (!latestAdminMsg || Number(msg.id) > Number(latestAdminMsg.id)) {
+                latestAdminMsg = msg;
+              }
+            }
+          });
+        });
+
+        const pingEl = document.getElementById('student-chat-icon-ping');
+        const badgeEl = document.getElementById('student-chat-unread-badge');
+        const subtextEl = document.getElementById('student-chat-btn-subtext');
+
+        if (unreadCount > 0 && latestAdminMsg) {
+          if (pingEl) pingEl.classList.remove('hidden');
+          if (badgeEl) {
+            badgeEl.textContent = `${unreadCount} NEW`;
+            badgeEl.classList.remove('hidden');
+          }
+          if (subtextEl) {
+            const sender = latestAdminMsg.sender_name || 'Admin Officer';
+            const rawMsg = latestAdminMsg.message || 'Sent an update';
+            const snippet = rawMsg.length > 22 ? rawMsg.substring(0, 22) + '...' : rawMsg;
+            subtextEl.textContent = `${sender}: "${snippet}"`;
+            subtextEl.className = 'text-[9px] text-rose-400 font-bold leading-none animate-pulse';
+          }
+
+          if (this._lastNotifiedAdminMsgId && Number(latestAdminMsg.id) > Number(this._lastNotifiedAdminMsgId)) {
+            const sender = latestAdminMsg.sender_name || 'Admin Officer';
+            const rawMsg = latestAdminMsg.message || 'Sent an update';
+            const snippet = rawMsg.length > 40 ? rawMsg.substring(0, 40) + '...' : rawMsg;
+            this.showToast(`💬 ${sender}: "${snippet}"`, 'info');
+          }
+          this._lastNotifiedAdminMsgId = Number(latestAdminMsg.id);
+        } else {
+          if (pingEl) pingEl.classList.add('hidden');
+          if (badgeEl) badgeEl.classList.add('hidden');
+          if (subtextEl) {
+            subtextEl.textContent = 'Order Help & Cancellation';
+            subtextEl.className = 'text-[9px] text-emerald-400 font-mono leading-none transition-colors';
+          }
+        }
+      }
+
+      markStudentChatAsRead() {
+        let maxMsgId = 0;
+        (this.supportTickets || []).forEach(ticket => {
+          (ticket.messages || []).forEach(msg => {
+            if (Number(msg.id) > maxMsgId) {
+              maxMsgId = Number(msg.id);
+            }
+          });
+        });
+        if (maxMsgId > 0) {
+          localStorage.setItem('ics_student_last_read_msg_id', String(maxMsgId));
+        }
+        this.updateStudentChatBadge();
+      }
+
       updateStudentMyTicketsCount() {
         const countBadge = document.getElementById('student-my-tickets-count');
         if (!countBadge) return;
@@ -5475,7 +5570,11 @@
         }
 
         const modal = document.getElementById('student-support-modal');
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+          modal.style.display = 'flex';
+          modal.classList.remove('hidden');
+        }
+        this.markStudentChatAsRead();
       }
 
       closeStudentSupportModal() {
@@ -5484,7 +5583,10 @@
           this._studentChatPollInterval = null;
         }
         const modal = document.getElementById('student-support-modal');
-        if (modal) modal.classList.add('hidden');
+        if (modal) {
+          modal.style.display = 'none';
+          modal.classList.add('hidden');
+        }
         this.activeStudentTicketId = null;
       }
 
@@ -5763,6 +5865,7 @@
 
       async openStudentTicketChat(ticketId, switchTab = true) {
         this.activeStudentTicketId = ticketId;
+        this.markStudentChatAsRead();
         const ticket = (this.supportTickets || []).find(t => t.id === ticketId);
 
         if (switchTab) {
@@ -5973,6 +6076,10 @@
             'bg-emerald-950 text-emerald-300 border-emerald-800' :
             (t.status === 'In Progress' ? 'bg-amber-950 text-amber-300 border-amber-800' : 'bg-blue-950 text-blue-300 border-blue-800');
 
+          const adminMsgs = (t.messages || []).filter(m => m.sender_type !== 'student');
+          const lastMsg = adminMsgs.length > 0 ? adminMsgs[adminMsgs.length - 1] : null;
+          const lastMsgSnippet = lastMsg ? `<p class="text-[10px] text-emerald-400 font-medium truncate mt-1">💬 <strong class="text-white">${lastMsg.sender_name || 'Admin Officer'}:</strong> ${lastMsg.message}</p>` : '';
+
           card.innerHTML = `
             <div class="flex items-center justify-between text-xs">
               <div class="flex items-center gap-2">
@@ -5986,6 +6093,7 @@
             <div>
               <p class="text-xs font-bold text-white leading-tight">${t.subject}</p>
               ${t.reservation_ref ? `<p class="text-[10px] text-slate-400 font-mono mt-0.5">Order Ref: <strong class="text-slate-200">${t.reservation_ref}</strong></p>` : ''}
+              ${lastMsgSnippet}
             </div>
             <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
               <span class="text-slate-500 font-mono text-[10px]">${new Date(t.created_at).toLocaleDateString()}</span>
