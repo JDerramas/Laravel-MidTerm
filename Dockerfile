@@ -67,18 +67,19 @@ ENV APP_NAME="ICS Merch Store" \
     ONEPASS_CLIENT_SECRET=cp3_sec_nQxEeSfQXyRHdfecwA0yb6JPF5OZAOs5yXpl \
     ONEPASS_ISSUER_URL=https://onepass-gdbe.onrender.com
 
-# Setup directory structure and permissions for storage, database, and bootstrap/cache
+# Setup directory structure and permissions for storage, database, uploads, and bootstrap/cache
 RUN mkdir -p /var/www/html/storage/framework/sessions \
     /var/www/html/storage/framework/views \
     /var/www/html/storage/framework/cache/data \
     /var/www/html/storage/logs \
     /var/www/html/bootstrap/cache \
+    /var/www/html/public/uploads/receipts \
     && touch /var/www/html/database/database.sqlite \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
-    && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/uploads \
+    && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/uploads
 
 # Dynamic port binding for Render ($PORT or default 80)
 EXPOSE 80 10000
 
-# Cache configuration, routes, and views for lightning-fast request handling
-CMD sh -c "touch /var/www/html/database/database.sqlite && sed -i \"s/80/\${PORT:-80}/g\" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground"
+# Cache configuration, routes, views, and auto-run migrations for Render cloud deployment
+CMD sh -c "touch /var/www/html/database/database.sqlite && sed -i \"s/80/\${PORT:-80}/g\" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground"

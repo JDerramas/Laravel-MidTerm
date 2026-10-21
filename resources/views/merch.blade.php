@@ -212,6 +212,25 @@
             <span>Size Guide</span>
           </button>
 
+          <!-- Desktop & Mobile Customer Support Desk Trigger -->
+          <button
+            type="button"
+            id="nav-support-btn"
+            onclick="icsApp.openStudentSupportModal()"
+            class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-400 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/80 hover:border-emerald-500 shadow-md transition whitespace-nowrap flex-shrink-0 cursor-pointer"
+            title="Customer Support & Helpdesk">
+            <div class="relative flex items-center justify-center">
+              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <span id="header-support-ping" class="hidden absolute -top-1 -right-1 flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              </span>
+            </div>
+            <span class="hidden sm:inline">Support</span>
+          </button>
+
           <!-- Reservation Cart Button (Always visible on mobile & desktop) -->
           <button
             id="nav-cart-btn"
@@ -520,6 +539,17 @@
         <p class="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold">Student Quick Actions</p>
 
         <div class="space-y-1">
+          <!-- Customer Support Desk -->
+          <button onclick="icsApp.openStudentSupportModal(); icsApp.closeMobileDrawer();" class="w-full text-left p-2.5 rounded-xl hover:bg-slate-800 text-emerald-300 text-xs font-semibold flex items-center justify-between cursor-pointer">
+            <div class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <span>Customer Support &amp; Chat</span>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800">Direct Line</span>
+          </button>
+
           <!-- My Orders & History -->
           <button onclick="icsApp.openStudentOrderHistoryModal(); icsApp.closeMobileDrawer();" class="w-full text-left p-2.5 rounded-xl hover:bg-slate-800 text-amber-300 text-xs font-semibold flex items-center justify-between">
             <div class="flex items-center gap-2.5">
@@ -1056,9 +1086,14 @@
   <!-- ======================================================== -->
   <div id="product-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative text-left">
-      <button onclick="icsApp.closeProductModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      <!-- High-contrast Extreme Corner Close Button -->
+      <button
+        type="button"
+        onclick="icsApp.closeProductModal()"
+        class="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-50 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950 text-white hover:bg-rose-600 hover:text-white border-2 border-slate-700/90 hover:border-rose-500 shadow-2xl flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 group focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+        title="Close (Esc)">
+        <svg class="w-5 h-5 text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
 
@@ -1856,6 +1891,7 @@
               </svg>
             </button>
           </div>
+          </div>
         </div>
       </form>
     </div>
@@ -1909,11 +1945,21 @@
   <!-- ======================================================== -->
   <!-- MODAL / PRINTABLE CLAIM SLIP (WITH VISUAL BARCODE / QR) -->
   <!-- ======================================================== -->
-  <div id="slip-modal" style="display: none;" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="slip-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white text-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative text-left" id="printable-claim-slip">
+      <!-- High-contrast Extreme Corner Close Button (Always visible on white backgrounds) -->
+      <button
+        type="button"
+        onclick="icsApp.closeSlipModal()"
+        class="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-50 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950 text-white hover:bg-rose-600 hover:text-white border-2 border-slate-700/90 hover:border-rose-500 shadow-2xl flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 group focus:outline-none focus:ring-2 focus:ring-rose-500/50 no-print"
+        title="Close Slip (Esc)">
+        <svg class="w-5 h-5 text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
 
       <!-- Slip Header -->
-      <div class="flex items-center justify-between pb-4 border-b-2 border-slate-900">
+      <div class="flex items-center justify-between pb-4 border-b-2 border-slate-900 pr-12">
         <div class="flex items-center gap-3">
           <img src="{{ asset('images/ics-logo.png') }}" alt="ICS" class="w-12 h-12 object-contain rounded-xl p-0.5 bg-slate-900">
           <div>
@@ -1926,11 +1972,6 @@
             <p class="text-[9px] text-slate-500 font-mono">Official Student Copy | Verified Claim Slip</p>
           </div>
         </div>
-        <button onclick="icsApp.closeSlipModal()" class="text-slate-400 hover:text-black p-1 no-print">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
 
       <!-- Slip Details -->
@@ -2047,9 +2088,20 @@
   <!-- ======================================================== -->
   <!-- MODAL: RECEIPT VIEWER (ZOOMABLE PREVIEW FOR BOTH STORE & ADMIN) -->
   <!-- ======================================================== -->
-  <div id="receipt-view-modal" style="display: none;" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+  <div id="receipt-view-modal" onclick="if(event.target === this) icsApp.closeReceiptViewModal()" class="hidden fixed inset-0 z-[80] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative text-left flex flex-col max-h-[92vh]">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
+      <!-- High-contrast Extreme Corner Close Button (Always visible on white/dark backgrounds) -->
+      <button
+        type="button"
+        onclick="icsApp.closeReceiptViewModal()"
+        class="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-50 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950 text-white hover:bg-rose-600 hover:text-white border-2 border-slate-700/90 hover:border-rose-500 shadow-2xl flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 group focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+        title="Close Receipt Viewer (Esc)">
+        <svg class="w-5 h-5 text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0 pr-12">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-xl bg-blue-950 text-blue-400 border border-blue-800 flex items-center justify-center">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2061,11 +2113,6 @@
             <p class="text-[11px] text-slate-400" id="receipt-view-subtitle">Official Student Upload (Zoomable)</p>
           </div>
         </div>
-        <button type="button" onclick="icsApp.closeReceiptViewModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition" title="Close (Esc)">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
 
       <div class="mt-4 space-y-3 flex-1 overflow-y-auto pr-1">
@@ -2153,10 +2200,14 @@
   <div id="qr-zoom-modal" onclick="if(event.target === this) icsApp.closeQrZoomModal()" class="hidden fixed inset-0 z-[70] overflow-y-auto bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-white text-slate-900 rounded-3xl max-w-sm sm:max-w-md w-full p-6 sm:p-7 shadow-2xl relative text-center border-2 border-blue-500 animate-in fade-in zoom-in-95 duration-200">
 
-      <!-- Close Button -->
-      <button type="button" onclick="icsApp.closeQrZoomModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-900 p-2 rounded-full hover:bg-slate-100 transition" title="Close">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      <!-- High-contrast Extreme Corner Close Button (Always visible on white backgrounds) -->
+      <button
+        type="button"
+        onclick="icsApp.closeQrZoomModal()"
+        class="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-50 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950 text-white hover:bg-rose-600 hover:text-white border-2 border-slate-700/90 hover:border-rose-500 shadow-2xl flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 group focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+        title="Close (Esc)">
+        <svg class="w-5 h-5 text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
 
@@ -2251,11 +2302,21 @@
   <!-- ======================================================== -->
   <!-- MODAL: STUDENT SUPPORT TICKETS & CHAT DESK -->
   <!-- ======================================================== -->
-  <div id="student-support-modal" style="display: none;" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+  <div id="student-support-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl sm:max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative text-left">
+      <!-- High-contrast Extreme Corner Close Button -->
+      <button
+        type="button"
+        onclick="icsApp.closeStudentSupportModal()"
+        class="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-50 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950 text-white hover:bg-rose-600 hover:text-white border-2 border-slate-700/80 hover:border-rose-500 shadow-2xl flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 group focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+        title="Close (Esc)">
+        <svg class="w-5 h-5 text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
 
       <!-- Modal Header -->
-      <div class="flex items-center justify-between pb-3.5 border-b border-slate-800">
+      <div class="flex items-center justify-between pb-3.5 border-b border-slate-800 pr-12">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-2xl bg-emerald-950 border border-emerald-800 text-emerald-400 flex items-center justify-center shadow">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2270,11 +2331,6 @@
             <p class="text-[11px] text-slate-400">Order cancellation requests, size exchanges, and verification support</p>
           </div>
         </div>
-        <button onclick="icsApp.closeStudentSupportModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
 
       <!-- Tab Switcher (New Ticket vs Active Chat vs My Tickets) -->
@@ -2569,9 +2625,12 @@
      */
     class IcsMerchApp {
       constructor() {
-        this.catalog = @json($products);
-        this.reservations = @json($reservations);
-        this.supportTickets = @json($supportTickets ?? []);
+        const rawCatalog = @json($products);
+        this.catalog = Array.isArray(rawCatalog) ? rawCatalog : Object.values(rawCatalog || {});
+        const rawRes = @json($reservations);
+        this.reservations = Array.isArray(rawRes) ? rawRes : Object.values(rawRes || {});
+        const rawTickets = @json($supportTickets ?? []);
+        this.supportTickets = Array.isArray(rawTickets) ? rawTickets : Object.values(rawTickets || {});
 
         // Logged-in Student Account (Verified via OnePass OAuth)
         this.currentUser = @json($studentUser ?? null);
@@ -2654,6 +2713,10 @@
             this.closeQrZoomModal();
             this.closeStudentSupportModal();
             this.closeLoginPromptModal();
+            this.closeProductModal();
+            this.closeSizeGuideModal();
+            this.closeReceiptViewModal();
+            this.closeSlipModal();
           }
         });
       }
@@ -3233,10 +3296,8 @@
           this.showToast('Please select a reservation to view slip', 'info');
           return;
         }
-        const res = this.reservations.find(r => r.ref_code === this.activeTrackedRef);
-        if (res) {
-          this.viewPrintClaimSlip(res);
-        }
+        const res = (this.reservations || []).find(r => r.ref_code === this.activeTrackedRef);
+        this.viewPrintClaimSlip(res || this.activeTrackedRef);
       }
 
       initCharts() {}
@@ -3493,7 +3554,11 @@
           }
         });
 
-        document.getElementById('product-modal').classList.remove('hidden');
+        const prodModal = document.getElementById('product-modal');
+        if (prodModal) {
+          prodModal.classList.remove('hidden');
+          prodModal.style.display = 'flex';
+        }
       }
 
       selectModalSize(size, buttonEl) {
@@ -3516,7 +3581,11 @@
       }
 
       closeProductModal() {
-        document.getElementById('product-modal').classList.add('hidden');
+        const prodModal = document.getElementById('product-modal');
+        if (prodModal) {
+          prodModal.classList.add('hidden');
+          prodModal.style.display = 'none';
+        }
       }
 
       // ==========================================
@@ -4822,7 +4891,7 @@
                       <span>Track Order</span>
                     </button>
                   ` : ''}
-                  <button type="button" onclick="icsApp.viewPrintClaimSlip(icsApp.reservations.find(x => x.ref_code === '${r.ref_code}'))" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white shadow transition flex items-center gap-1.5 cursor-pointer">
+                  <button type="button" onclick="icsApp.viewPrintClaimSlip('${r.ref_code}')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-ics-700 to-ics-800 hover:from-ics-600 hover:to-ics-700 text-white shadow transition flex items-center gap-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                     <span>View Slip</span>
                   </button>
@@ -4939,8 +5008,43 @@
       // ==========================================
       // RECEIPT VIEWER MODAL & VERIFICATION
       // ==========================================
-      openReceiptViewModal(resObj) {
-        if (!resObj) return;
+      async openReceiptViewModal(resObj) {
+        if (typeof resObj === 'string' && (resObj.startsWith('data:image') || resObj.startsWith('http://') || resObj.startsWith('https://') || resObj.includes('.jpg') || resObj.includes('.png') || resObj.includes('.webp') || resObj.includes('receipts/') || resObj.includes('images/'))) {
+          resObj = {
+            id: 'IMG_PREVIEW',
+            ref_code: 'IMAGE PREVIEW',
+            student_name: 'Image Viewer',
+            student_id: 'N/A',
+            total_amount: 0,
+            payment_reference: 'N/A',
+            receipt_image: resObj,
+            payment_status: 'Preview'
+          };
+        } else if (typeof resObj === 'string' || typeof resObj === 'number') {
+          const targetId = String(resObj).trim();
+          resObj = (this.reservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId || r.id == targetId) || null;
+          if (!resObj) {
+            try {
+              const res = await fetch(`{{ url('api/reservations') }}/${encodeURIComponent(targetId)}`, {
+                headers: { 'Accept': 'application/json' }
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.reservation) {
+                  resObj = data.reservation;
+                  this.reservations = this.reservations || [];
+                  this.reservations.push(resObj);
+                }
+              }
+            } catch (err) {
+              console.warn('Receipt lookup error:', err);
+            }
+          }
+        }
+        if (!resObj) {
+          this.showToast('Unable to open receipt viewer: reservation record not found.', 'warning');
+          return;
+        }
         this.activeViewingReceiptReservation = resObj;
         const refEl = document.getElementById('receipt-view-ref');
         if (refEl) refEl.textContent = resObj.ref_code || '';
@@ -5528,18 +5632,19 @@
       }
 
       openStudentSupportModal(preselectReason = null, preselectResRef = null) {
-        if (!this.currentUser) {
-          this.openLoginPromptModal('support');
-          return;
-        }
+        const user = this.currentUser || {
+          name: 'Student Buyer',
+          student_id: 'GUEST',
+          section: 'Student'
+        };
 
         this.populateStudentReservationsDropdown();
         this.updateStudentMyTicketsCount();
 
         const nameEl = document.getElementById('student-ticket-user-name');
         const idEl = document.getElementById('student-ticket-user-id');
-        if (nameEl) nameEl.textContent = this.currentUser.name;
-        if (idEl) idEl.textContent = `Student ID: ${this.currentUser.student_id} / ${this.currentUser.section || 'Student'}`;
+        if (nameEl) nameEl.textContent = user.name;
+        if (idEl) idEl.textContent = user.student_id === 'GUEST' ? 'Student ID: Guest Buyer / Visitor' : `Student ID: ${user.student_id} / ${user.section || 'Student'}`;
 
         if (preselectReason) {
           const radio = document.querySelector(`input[name="support_ticket_reason"][value="${preselectReason}"]`);
@@ -5559,7 +5664,7 @@
 
         // Check if student has an active unresolved ticket
         const activeTicket = (this.supportTickets || []).find(t =>
-          t.student_id === this.currentUser.student_id &&
+          t.student_id === user.student_id &&
           t.status !== 'Resolved'
         );
 

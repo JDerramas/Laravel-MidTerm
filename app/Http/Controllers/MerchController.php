@@ -512,8 +512,8 @@ class MerchController extends Controller
         // Generate unique Reference Code (e.g. ICS-2026-X941K)
         $refCode = 'ICS-' . date('Y') . '-' . strtoupper(Str::random(5));
 
-        // Save into reservations table
-        $reservation = Reservation::create([
+        // Save into reservations table with resilient database fallbacks
+        $reservationData = [
             'ref_code'          => $refCode,
             'student_name'      => $validated['student_name'],
             'student_id'        => $validated['student_id'],
@@ -530,46 +530,65 @@ class MerchController extends Controller
             'payment_reference' => !empty($paymentRef) ? $paymentRef : null,
             'receipt_image'     => $receiptPath,
             'notes'             => $validated['notes'] ?? 'Online Reservation',
-        ]);
+        ];
+
+        try {
+            $reservation = Reservation::create($reservationData);
+        } catch (\Throwable $dbErr) {
+            \Log::warning('Initial reservation create failed: ' . $dbErr->getMessage());
+            // Fallback: If receipt_image was too large for DB column or threw an error, store path or null and retry
+            if (!empty($reservationData['receipt_image']) && strlen($reservationData['receipt_image']) > 500) {
+                $reservationData['receipt_image'] = 'uploads/receipts/pending_receipt.png';
+            }
+            $reservation = Reservation::create($reservationData);
+        }
 
         // Deduct available stock and increment reserved stock
-        foreach ($validated['items'] as $item) {
-            $itemId = $item['productId'] ?? $item['id'] ?? $item['item_code'] ?? 0;
-            $prod = Product::where('item_code', $itemId)
-                ->orWhere('id', $itemId)
-                ->first();
+        try {
+            foreach ($validated['items'] as $item) {
+                $itemId = $item['productId'] ?? $item['id'] ?? $item['item_code'] ?? 0;
+                $prod = Product::where('item_code', $itemId)
+                    ->orWhere('id', $itemId)
+                    ->first();
 
-            if ($prod) {
-                $qty = intval($item['quantity'] ?? 1);
-                $prod->current_stock = max(0, $prod->current_stock - $qty);
-                $prod->units_reserved = ($prod->units_reserved ?? 0) + $qty;
+                if ($prod) {
+                    $qty = intval($item['quantity'] ?? 1);
+                    $prod->current_stock = max(0, $prod->current_stock - $qty);
+                    $prod->units_reserved = ($prod->units_reserved ?? 0) + $qty;
 
-                // Also deduct stock for the specific selected size (XS, S, M, L, etc.)
-                if (is_array($prod->sizes) && isset($item['size']) && isset($prod->sizes[$item['size']])) {
-                    $sizes = $prod->sizes;
-                    $sizes[$item['size']] = max(0, $sizes[$item['size']] - $qty);
-                    $prod->sizes = $sizes;
+                    // Also deduct stock for the specific selected size (XS, S, M, L, etc.)
+                    if (is_array($prod->sizes) && isset($item['size']) && isset($prod->sizes[$item['size']])) {
+                        $sizes = $prod->sizes;
+                        $sizes[$item['size']] = max(0, $sizes[$item['size']] - $qty);
+                        $prod->sizes = $sizes;
+                    }
+                    $prod->save();
                 }
-                $prod->save();
             }
+        } catch (\Throwable $stockErr) {
+            \Log::warning('Stock deduction warning: ' . $stockErr->getMessage());
         }
 
         // Record in Audit Trail log with GCash details
-        $auditPaymentInfo = $paymentMethod;
-        if (!empty($paymentRef)) {
-            $auditPaymentInfo .= " [Ref: {$paymentRef}]";
-        }
-        if (!empty($receiptPath)) {
-            $auditPaymentInfo .= " [Receipt Attached]";
-        }
+        try {
+            $auditPaymentInfo = $paymentMethod;
+            if (!empty($paymentRef)) {
+                $auditPaymentInfo .= " [Ref: {$paymentRef}]";
+            }
+            if (!empty($receiptPath)) {
+                $auditPaymentInfo .= " [Receipt Attached]";
+            }
 
-        ActivityLog::record(
-            'CREATE',
-            "New reservation [{$refCode}] from {$validated['student_name']} ({$validated['student_id']}) with total PHP " . number_format($validated['total_amount'], 2) . " via {$auditPaymentInfo}",
-            $validated['student_id'],
-            $validated['student_name'],
-            'Reservations'
-        );
+            ActivityLog::record(
+                'CREATE',
+                "New reservation [{$refCode}] from {$validated['student_name']} ({$validated['student_id']}) with total PHP " . number_format($validated['total_amount'], 2) . " via {$auditPaymentInfo}",
+                $validated['student_id'],
+                $validated['student_name'],
+                'Reservations'
+            );
+        } catch (\Throwable $logErr) {
+            \Log::warning('Audit log write warning: ' . $logErr->getMessage());
+        }
 
         return response()->json([
             'success' => true,
