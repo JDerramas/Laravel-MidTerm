@@ -138,36 +138,56 @@
 
     /* Print Styles (Prevents blank page and isolates claim slip only when modal is active) */
     @media print {
-      body.slip-modal-open * {
-        visibility: hidden !important;
+      /* Hide all direct body siblings except #slip-modal so there are ZERO blank pages */
+      body.slip-modal-open > *:not(#slip-modal) {
+        display: none !important;
+      }
+
+      body.slip-modal-open {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
       }
 
       body.slip-modal-open #slip-modal {
         position: static !important;
         display: block !important;
         visibility: visible !important;
-        background: transparent !important;
+        background: #ffffff !important;
         padding: 0 !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-shadow: none !important;
         overflow: visible !important;
       }
 
-      body.slip-modal-open #printable-claim-slip,
-      body.slip-modal-open #printable-claim-slip * {
-        visibility: visible !important;
-      }
-
       body.slip-modal-open #printable-claim-slip {
-        position: relative !important;
-        left: 0 !important;
-        top: 0 !important;
+        position: static !important;
         width: 100% !important;
         max-width: 100% !important;
-        background: white !important;
-        color: black !important;
-        box-shadow: none !important;
-        border: none !important;
+        margin: 0 auto !important;
         padding: 1.5rem !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        border: 2px solid #0f172a !important;
+        border-radius: 1rem !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      body.slip-modal-open #printable-claim-slip * {
+        visibility: visible !important;
+        color: inherit !important;
+      }
+
+      body.slip-modal-open #printable-claim-slip .text-red-900,
+      body.slip-modal-open #printable-claim-slip .text-ics-gold,
+      body.slip-modal-open #printable-claim-slip .text-emerald-700 {
+        color: #0f172a !important;
       }
 
       body:not(.slip-modal-open) {
@@ -176,10 +196,16 @@
       }
 
       .no-print,
+      #slip-modal .no-print,
       header,
       nav,
       #sidebar-container {
         display: none !important;
+      }
+
+      @page {
+        size: portrait;
+        margin: 12mm 10mm;
       }
     }
   </style>
@@ -1025,6 +1051,11 @@
                   data-id="{{ $r->id }}"
                   data-status="{{ $r->status }}"
                   data-ref="{{ $r->ref_code }}"
+                  data-stuid="{{ $r->student_id }}"
+                  data-name="{{ $r->student_name }}"
+                  data-dept="{{ $r->department }}"
+                  data-total="{{ $r->total_amount }}"
+                  data-items="{{ json_encode($r->items) }}"
                   @if($isFinishedOrder) onclick="icsApp.toggleReservationRowSelect(event, '{{ $r->id }}')" @endif>
                   <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
                     <div class="reservation-header-badges flex items-center gap-2.5 flex-wrap">
@@ -1185,7 +1216,7 @@
                         <!-- LOCKED: Cannot Mark Ready or Mark Claimed while ticket is pending -->
                         <button
                           type="button"
-                          onclick="event.stopPropagation(); icsApp.setAdminTab('helpdesk'); icsApp.selectAdminTicket({{ $r->activeTicket->id }});"
+                          onclick="event.stopPropagation(); icsApp.setAdminTab('support'); icsApp.selectAdminTicket({{ $r->activeTicket->id }});"
                           class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/60 transition flex items-center gap-1.5 cursor-pointer shadow-sm"
                           title="This reservation has an active support ticket. Please resolve ticket before claiming.">
                           <svg class="w-3.5 h-3.5 text-amber-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3408,7 +3439,7 @@
         <button type="button" onclick="icsApp.closeSlipModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition cursor-pointer">
           Close
         </button>
-        <button type="button" onclick="window.print()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-black text-white transition flex items-center gap-1.5 shadow cursor-pointer">
+        <button type="button" onclick="icsApp.printCurrentSlip()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-black text-white transition flex items-center gap-1.5 shadow cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
@@ -5071,32 +5102,61 @@
       // ==========================================
       // CLAIM SLIP DISPLAY & PRINT
       // ==========================================
-      viewPrintClaimSlip(resObj) {
+      async viewPrintClaimSlip(resObj, autoPrint = false) {
         if (typeof resObj === 'string' || typeof resObj === 'number') {
           const targetId = String(resObj).trim();
-          resObj = (this.reservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
-                || (this.claimedReservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
+          resObj = (this.reservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId || r.id == targetId)
+                || (this.claimedReservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId || r.id == targetId)
                 || null;
 
           // DOM fallback if not yet loaded in arrays
           if (!resObj) {
             const cardEl = document.querySelector(`.reservation-queue-card[data-id="${targetId}"], .reservation-queue-card[data-ref="${targetId}"], .claimed-ledger-row[data-id="${targetId}"], .claimed-ledger-row[data-ref="${targetId}"]`);
             if (cardEl) {
+              let parsedItems = [];
+              const rawItemsAttr = cardEl.getAttribute('data-items');
+              if (rawItemsAttr) {
+                try { parsedItems = JSON.parse(rawItemsAttr); } catch (e) { parsedItems = []; }
+              }
               resObj = {
                 id: targetId,
                 ref_code: cardEl.getAttribute('data-ref') || targetId,
-                student_name: cardEl.querySelector('p.font-black, td:nth-child(3)')?.textContent?.trim() || 'Student',
+                student_name: cardEl.getAttribute('data-name') || cardEl.querySelector('p.font-black, td:nth-child(3)')?.textContent?.trim() || 'Student',
                 student_id: cardEl.getAttribute('data-stuid') || cardEl.querySelector('.font-mono.text-cyan-300')?.textContent?.trim() || 'N/A',
-                department: cardEl.querySelector('p.text-xs.text-slate-300')?.textContent?.trim() || 'ICS',
-                pickup_date: cardEl.querySelector('p.text-sm.font-bold.text-ics-gold')?.textContent?.trim() || 'TBD',
+                department: cardEl.getAttribute('data-dept') || 'Associate in Information Systems (AIS)',
+                pickup_date: cardEl.querySelector('p.text-sm.font-bold.text-ics-gold')?.textContent?.trim() || 'Scheduled Date',
                 pickup_slot: cardEl.querySelector('p.text-xs.text-slate-200')?.textContent?.trim() || 'Claim during pickup hours',
-                total_amount: cardEl.querySelector('.text-emerald-400.font-mono')?.textContent?.replace(/[^0-9.]/g, '') || '0',
+                total_amount: cardEl.getAttribute('data-total') || cardEl.querySelector('.text-emerald-400.font-mono')?.textContent?.replace(/[^0-9.]/g, '') || '0',
                 payment_reference: cardEl.querySelector('.font-mono.text-ics-gold.select-all')?.textContent?.trim() || '',
                 payment_method: cardEl.querySelector('.reservation-actions-container')?.closest('.reservation-queue-card')?.querySelector('.px-2\\.5.py-1.rounded-full')?.textContent?.trim() || 'Cash on Pickup',
                 payment_status: cardEl.getAttribute('data-status') || 'Pending',
                 status: cardEl.getAttribute('data-status') || 'Pending',
-                items: []
+                items: parsedItems
               };
+            }
+          }
+
+          // Asynchronous server fetch fallback if items is empty or record not complete
+          if (!resObj || !resObj.items || (Array.isArray(resObj.items) && resObj.items.length === 0)) {
+            try {
+              const res = await fetch(`{{ url('api/reservations') }}/${encodeURIComponent(targetId)}`, {
+                headers: { 'Accept': 'application/json' }
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.reservation) {
+                  resObj = data.reservation;
+                  // Cache into local state
+                  const existingIdx = (this.reservations || []).findIndex(r => r.id == resObj.id || r.ref_code == resObj.ref_code);
+                  if (existingIdx >= 0) {
+                    this.reservations[existingIdx] = resObj;
+                  } else {
+                    this.reservations.push(resObj);
+                  }
+                }
+              }
+            } catch (fetchErr) {
+              console.warn('Reservation slip lookup fallback error:', fetchErr);
             }
           }
         }
@@ -5104,6 +5164,7 @@
           this.showToast('Unable to open claim slip: reservation record not found.', 'warning');
           return;
         }
+        this.activePrintingSlipReservation = resObj;
         document.body.classList.add('slip-modal-open');
 
         const refEl = document.getElementById('slip-ref');
@@ -5117,8 +5178,8 @@
         if (statusEl) statusEl.textContent = resObj.status || 'Pending';
         if (nameEl) nameEl.textContent = resObj.student_name || 'Student';
         if (idEl) idEl.textContent = resObj.student_id || 'N/A';
-        if (deptEl) deptEl.textContent = resObj.department || 'ICS';
-        if (slotEl) slotEl.textContent = `${resObj.pickup_date || ''} (${resObj.pickup_slot || ''})`;
+        if (deptEl) deptEl.textContent = resObj.department || 'Associate in Information Systems (AIS)';
+        if (slotEl) slotEl.textContent = `${resObj.pickup_date || 'Scheduled Date'} (${resObj.pickup_slot || 'Regular Office Hours'})`;
 
         const tbody = document.getElementById('slip-items-tbody');
         if (tbody) tbody.innerHTML = '';
@@ -5135,14 +5196,16 @@
           }
         }
         items.forEach(it => {
-          const sub = (it.price || 0) * (it.quantity || 1);
+          const price = Number(it.price) || 0;
+          const qty = Number(it.quantity) || 1;
+          const sub = price * qty;
           total += sub;
           if (tbody) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td class="py-2 px-3 font-medium text-slate-800">${this.escapeHtml(it.productName || it.name || 'Apparel')}</td>
+              <td class="py-2 px-3 font-medium text-slate-800">${this.escapeHtml(it.productName || it.name || 'Apparel Item')}</td>
               <td class="py-2 px-2 text-center font-mono font-bold text-red-800">${this.escapeHtml(it.size || 'N/A')}</td>
-              <td class="py-2 px-2 text-center font-mono">${this.escapeHtml(String(it.quantity || 1))}</td>
+              <td class="py-2 px-2 text-center font-mono">${this.escapeHtml(String(qty))}</td>
               <td class="py-2 px-3 text-right font-mono font-bold">₱${sub.toFixed(2)}</td>
             `;
             tbody.appendChild(tr);
@@ -5152,7 +5215,9 @@
         const slipSubtotalEl = document.getElementById('slip-subtotal');
         if (slipSubtotalEl) slipSubtotalEl.textContent = '₱' + total.toFixed(2);
 
-        const grandTotal = Number(resObj.total_amount) > total ? Number(resObj.total_amount) : total + 10.00;
+        const fee = 10.00;
+        const recordedTotal = Number(resObj.total_amount) || 0;
+        const grandTotal = recordedTotal > 0 ? recordedTotal : (total + fee);
         const grandTotalEl = document.getElementById('slip-grandtotal');
         if (grandTotalEl) grandTotalEl.textContent = '₱' + grandTotal.toFixed(2);
 
@@ -5163,6 +5228,19 @@
 
         const modal = document.getElementById('slip-modal');
         if (modal) modal.classList.remove('hidden');
+
+        if (autoPrint) {
+          setTimeout(() => this.printCurrentSlip(), 200);
+        }
+      }
+
+      printCurrentSlip() {
+        document.body.classList.add('slip-modal-open');
+        const modal = document.getElementById('slip-modal');
+        if (modal) modal.classList.remove('hidden');
+        setTimeout(() => {
+          window.print();
+        }, 120);
       }
 
       // ==========================================
@@ -5485,11 +5563,11 @@
       // ADMIN MESSAGE STUDENT BUYER MODAL
       // ("also add ka ng msg icon sa reservation if may itatanong yung admin don sa bibili")
       // ==========================================
-      openAdminMessageBuyerModal(resObj) {
+      async openAdminMessageBuyerModal(resObj) {
         if (typeof resObj === 'string' || typeof resObj === 'number') {
           const targetId = String(resObj).trim();
-          resObj = (this.reservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
-                || (this.claimedReservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId)
+          resObj = (this.reservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId || r.id == targetId)
+                || (this.claimedReservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId || r.id == targetId)
                 || null;
 
           // DOM fallback if not yet loaded in arrays
@@ -5497,13 +5575,37 @@
             const cardEl = document.querySelector(`.reservation-queue-card[data-id="${targetId}"], .reservation-queue-card[data-ref="${targetId}"], .claimed-ledger-row[data-id="${targetId}"], .claimed-ledger-row[data-ref="${targetId}"]`);
             if (cardEl) {
               resObj = {
-                id: targetId,
+                id: cardEl.getAttribute('data-id') || targetId,
                 ref_code: cardEl.getAttribute('data-ref') || targetId,
-                student_name: cardEl.querySelector('p.font-black, td:nth-child(3)')?.textContent?.trim() || 'Student Buyer',
+                student_name: cardEl.getAttribute('data-name') || cardEl.querySelector('p.font-black, td:nth-child(3)')?.textContent?.trim() || 'Student Buyer',
                 student_id: cardEl.getAttribute('data-stuid') || cardEl.querySelector('.font-mono.text-cyan-300')?.textContent?.trim() || 'N/A',
+                department: cardEl.getAttribute('data-dept') || 'N/A',
                 payment_method: cardEl.querySelector('.reservation-actions-container')?.closest('.reservation-queue-card')?.querySelector('.px-2\\.5.py-1.rounded-full')?.textContent?.trim() || 'Cash',
                 payment_status: cardEl.getAttribute('data-status') || 'Pending'
               };
+            }
+          }
+
+          // Asynchronous server fetch fallback if not loaded or name is incomplete
+          if (!resObj || !resObj.student_name || resObj.student_name === 'Student Buyer') {
+            try {
+              const res = await fetch(`{{ url('api/reservations') }}/${encodeURIComponent(targetId)}`, {
+                headers: { 'Accept': 'application/json' }
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.reservation) {
+                  resObj = data.reservation;
+                  const existingIdx = (this.reservations || []).findIndex(r => r.id == resObj.id || r.ref_code == resObj.ref_code);
+                  if (existingIdx >= 0) {
+                    this.reservations[existingIdx] = resObj;
+                  } else {
+                    this.reservations.push(resObj);
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn('Reservation lookup error for messaging:', err);
             }
           }
         }
@@ -5543,13 +5645,15 @@
 
         // Check if there is an active support ticket already for this reservation
         const existingTicket = (this.supportTickets || []).find(t =>
-          t.reservation_ref === resObj.ref_code && (t.status === 'Open' || t.status === 'In Progress')
-        );
+          (t.reservation_ref && t.reservation_ref === resObj.ref_code && (t.status === 'Open' || t.status === 'In Progress')) ||
+          (t.reservation_id && String(t.reservation_id) === String(resObj.id) && (t.status === 'Open' || t.status === 'In Progress'))
+        ) || resObj.active_ticket || resObj.activeTicket;
 
         if (alertBox) {
-          if (existingTicket) {
+          if (existingTicket && (existingTicket.status === 'Open' || existingTicket.status === 'In Progress' || !existingTicket.status)) {
             alertBox.classList.remove('hidden');
-            if (alertText) alertText.textContent = `Active Ticket [${existingTicket.ticket_code}]: Message will be added to this ongoing chat.`;
+            const code = existingTicket.ticket_code || existingTicket.code || 'Active Ticket';
+            if (alertText) alertText.textContent = `Active Ticket [${code}]: Message will be added to this ongoing chat.`;
           } else {
             alertBox.classList.add('hidden');
           }
@@ -5580,11 +5684,12 @@
         this.closeAdminMessageBuyerModal();
 
         const ticket = (this.supportTickets || []).find(t =>
-          t.reservation_ref === res.ref_code && (t.status === 'Open' || t.status === 'In Progress')
-        );
+          (t.reservation_ref && t.reservation_ref === res.ref_code && (t.status === 'Open' || t.status === 'In Progress')) ||
+          (t.reservation_id && String(t.reservation_id) === String(res.id) && (t.status === 'Open' || t.status === 'In Progress'))
+        ) || res.active_ticket || res.activeTicket;
 
         this.setAdminTab('support');
-        if (ticket) {
+        if (ticket && ticket.id) {
           this.selectAdminTicket(ticket.id);
         }
       }
@@ -5611,7 +5716,7 @@
         if (btnLabel) btnLabel.textContent = 'Sending Message...';
 
         try {
-          const res = await fetch(`{{ url('api/reservations') }}/${resObj.id}/message-buyer`, {
+          const res = await fetch(`{{ url('api/reservations') }}/${encodeURIComponent(resObj.id)}/message-buyer`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -5635,7 +5740,17 @@
               } else {
                 this.supportTickets.unshift(data.ticket);
               }
+
+              // Also attach active_ticket to the reservation in this.reservations
+              const rIdx = (this.reservations || []).findIndex(r => r.id == resObj.id || r.ref_code == resObj.ref_code);
+              if (rIdx >= 0) {
+                this.reservations[rIdx].active_ticket = data.ticket;
+                this.reservations[rIdx].activeTicket = data.ticket;
+              }
+
+              // Re-render both views so warning badge & locked actions immediately take effect
               this.renderAdminTicketsList();
+              this.renderReservationsQueue();
             }
 
             this.closeAdminMessageBuyerModal();
@@ -8472,6 +8587,12 @@
         card.setAttribute('data-id', r.id);
         card.setAttribute('data-status', r.status);
         card.setAttribute('data-ref', r.ref_code);
+        card.setAttribute('data-stuid', r.student_id || '');
+        card.setAttribute('data-name', r.student_name || '');
+        card.setAttribute('data-dept', r.department || '');
+        card.setAttribute('data-total', r.total_amount || '0');
+        const itemsJson = typeof r.items === 'string' ? r.items : JSON.stringify(r.items || []);
+        card.setAttribute('data-items', itemsJson);
         if (isFinishedOrder) {
           card.onclick = (e) => this.toggleReservationRowSelect(e, r.id);
         }

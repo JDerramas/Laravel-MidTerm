@@ -2380,6 +2380,33 @@ class MerchController extends Controller
     }
 
     /**
+     * API: Retrieve single reservation record by ID or Ref Code
+     */
+    public function getReservation($id)
+    {
+        $cleanId = trim((string) $id);
+        $reservation = is_numeric($cleanId)
+            ? Reservation::with('activeTicket')->find($cleanId)
+            : Reservation::with('activeTicket')->where('ref_code', $cleanId)->first();
+
+        if (!$reservation) {
+            $reservation = Reservation::with('activeTicket')->where('ref_code', $cleanId)->first();
+        }
+
+        if (!$reservation) {
+            return response()->json([
+                'success' => false,
+                'message' => "Reservation #{$cleanId} not found in database records."
+            ], 404);
+        }
+
+        return response()->json([
+            'success'     => true,
+            'reservation' => $reservation,
+        ]);
+    }
+
+    /**
      * API: Admin messages a student buyer regarding their reservation.
      * Reuses an active linked SupportTicket or creates a new conversation with the admin inquiry.
      */
@@ -2390,12 +2417,33 @@ class MerchController extends Controller
             'subject' => 'nullable|string',
         ]);
 
-        $reservation = is_numeric($id) ? Reservation::find($id) : Reservation::where('ref_code', $id)->first();
+        $cleanId = trim((string) $id);
+        $reservation = is_numeric($cleanId)
+            ? Reservation::with('activeTicket')->find($cleanId)
+            : Reservation::with('activeTicket')->where('ref_code', $cleanId)->first();
+
         if (!$reservation) {
-            $reservation = Reservation::where('ref_code', $id)->first() ?? Reservation::findOrFail($id);
+            $reservation = Reservation::with('activeTicket')->where('ref_code', $cleanId)->first();
         }
-        $adminName = session('admin_user.name') ?? 'ICS Council Officer';
-        $adminCode = session('admin_user.user_code') ?? '251505';
+
+        if (!$reservation) {
+            return response()->json([
+                'success' => false,
+                'message' => "Reservation #{$cleanId} not found in records."
+            ], 404);
+        }
+
+        $adminUserSession = session('admin_user');
+        $studentUserSession = session('student_user');
+        $adminName = (is_array($adminUserSession) ? ($adminUserSession['name'] ?? null) : null)
+            ?: (is_array($studentUserSession) ? ($studentUserSession['name'] ?? null) : null)
+            ?: session('admin_user_name')
+            ?: 'ICS Council Officer';
+
+        $adminCode = (is_array($adminUserSession) ? ($adminUserSession['user_code'] ?? null) : null)
+            ?: (is_array($studentUserSession) ? ($studentUserSession['student_id'] ?? null) : null)
+            ?: session('admin_user_code')
+            ?: '251505';
 
         // 1. Check for existing open or in-progress ticket linked to this reservation
         $ticket = SupportTicket::where('reservation_ref', $reservation->ref_code)
@@ -2412,10 +2460,12 @@ class MerchController extends Controller
                 'ticket_code'     => $ticketCode,
                 'student_id'      => $reservation->student_id ?: 'Student',
                 'student_name'    => $reservation->student_name ?: 'Student Buyer',
+                'department'      => $reservation->department ?: 'Associate in Information Systems (AIS)',
                 'reservation_ref' => $reservation->ref_code,
                 'reason'          => 'Admin Inquiry / Order Clarification',
                 'subject'         => $subject,
                 'status'          => 'In Progress',
+                'priority'        => 'Normal',
             ]);
         }
 
@@ -2438,11 +2488,15 @@ class MerchController extends Controller
             'Support Helpdesk'
         );
 
+        // Reload fresh reservation with newly created/linked active ticket
+        $reservation->load('activeTicket');
+
         return response()->json([
             'success'      => true,
             'is_new'       => $isNew,
             'message'      => "Message successfully sent to {$reservation->student_name}!",
             'ticket'       => $ticket->load(['messages', 'reservation']),
+            'reservation'  => $reservation,
             'sent_message' => $msg,
         ]);
     }

@@ -93,7 +93,8 @@ Route::post('/api/students/{id}/snooze', [MerchController::class, 'snoozeStudent
 Route::post('/api/students/{id}/ban', [MerchController::class, 'banStudent'])->name('api.students.ban');
 Route::post('/api/students/{id}/unban', [MerchController::class, 'unbanStudent'])->name('api.students.unban');
 
-// Admin Message Buyer from Reservation Queue
+// Admin Message Buyer from Reservation Queue & Fetch Single Reservation Record
+Route::get('/api/reservations/{id}', [MerchController::class, 'getReservation'])->name('api.reservations.show');
 Route::post('/api/reservations/{id}/message-buyer', [MerchController::class, 'messageBuyerFromReservation'])->name('api.reservations.message_buyer');
 
 // Real-Time Online Payment Sandbox & PayMongo Test Mode Routes (GCash, Maya, Debit/Credit Card + Normal Camera QR Scan)

@@ -114,29 +114,48 @@
       scrollbar-width: none;
     }
 
-    /* Print Styles (Prevents blank page and isolates claim slip only when modal is active) */
+    /* Print Styles: Cleanly print official claim slip without blank pages */
     @media print {
-      body.slip-modal-open * {
-        visibility: hidden !important;
+      @page {
+        size: portrait;
+        margin: 12mm 15mm;
       }
 
-      body.slip-modal-open #printable-claim-slip,
-      body.slip-modal-open #printable-claim-slip * {
-        visibility: visible !important;
+      body.slip-modal-open {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Hide everything at the top level except the slip modal to eliminate blank pages in Chromium */
+      body.slip-modal-open > *:not(#slip-modal) {
+        display: none !important;
+      }
+
+      body.slip-modal-open #slip-modal {
+        display: block !important;
+        position: static !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        inset: auto !important;
+        width: 100% !important;
       }
 
       body.slip-modal-open #printable-claim-slip {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
+        display: block !important;
+        position: static !important;
+        box-shadow: none !important;
+        border: 2px solid #0f172a !important;
+        border-radius: 1rem !important;
         width: 100% !important;
-        background: white !important;
-        color: black !important;
-      }
-
-      body:not(.slip-modal-open) {
+        max-width: 100% !important;
+        padding: 1.5rem !important;
         background: #ffffff !important;
         color: #000000 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
 
       .no-print,
@@ -2014,7 +2033,7 @@
         <button onclick="icsApp.closeSlipModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
           Close
         </button>
-        <button onclick="window.print()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-black text-white transition flex items-center gap-1.5 shadow">
+        <button onclick="icsApp.printCurrentSlip()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-black text-white transition flex items-center gap-1.5 shadow cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
@@ -4809,46 +4828,96 @@
       // ==========================================
       // CLAIM SLIP DISPLAY & PRINT
       // ==========================================
-      viewPrintClaimSlip(resObj) {
+      async viewPrintClaimSlip(resObj, autoPrint = false) {
+        if (typeof resObj === 'string' || typeof resObj === 'number') {
+          const targetId = String(resObj).trim();
+          resObj = (this.reservations || []).find(r => String(r.id) === targetId || String(r.ref_code) === targetId || r.id == targetId) || null;
+          if (!resObj || !resObj.items || (Array.isArray(resObj.items) && resObj.items.length === 0)) {
+            try {
+              const res = await fetch(`{{ url('api/reservations') }}/${encodeURIComponent(targetId)}`, {
+                headers: { 'Accept': 'application/json' }
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.reservation) {
+                  resObj = data.reservation;
+                }
+              }
+            } catch (e) {
+              console.warn('Student slip fetch error:', e);
+            }
+          }
+        }
         if (!resObj) return;
+
         document.body.classList.add('slip-modal-open');
-        document.getElementById('slip-ref').textContent = resObj.ref_code;
-        document.getElementById('slip-status').textContent = resObj.status;
-        document.getElementById('slip-student-name').textContent = resObj.student_name;
-        document.getElementById('slip-student-id').textContent = resObj.student_id;
-        document.getElementById('slip-dept').textContent = resObj.department;
-        document.getElementById('slip-pickup-slot').textContent = `${resObj.pickup_date} (${resObj.pickup_slot})`;
+        const refEl = document.getElementById('slip-ref');
+        if (refEl) refEl.textContent = resObj.ref_code || 'N/A';
+        const statEl = document.getElementById('slip-status');
+        if (statEl) statEl.textContent = resObj.status || 'Pending';
+        const nameEl = document.getElementById('slip-student-name');
+        if (nameEl) nameEl.textContent = resObj.student_name || 'Student';
+        const idEl = document.getElementById('slip-student-id');
+        if (idEl) idEl.textContent = resObj.student_id || 'N/A';
+        const deptEl = document.getElementById('slip-dept');
+        if (deptEl) deptEl.textContent = resObj.department || 'Associate in Information Systems (AIS)';
+        const slotEl = document.getElementById('slip-pickup-slot');
+        if (slotEl) slotEl.textContent = `${resObj.pickup_date || 'Scheduled Date'} (${resObj.pickup_slot || 'Official Pickup Slot'})`;
 
         const tbody = document.getElementById('slip-items-tbody');
-        tbody.innerHTML = '';
+        if (tbody) tbody.innerHTML = '';
         let total = 0;
 
-        const items = typeof resObj.items === 'string' ? JSON.parse(resObj.items) : (resObj.items || []);
+        let items = resObj.items || [];
+        if (typeof items === 'string') {
+          try { items = JSON.parse(items); } catch (e) { items = []; }
+        }
         items.forEach(it => {
-          const sub = (it.price || 0) * (it.quantity || 1);
+          const price = Number(it.price) || 0;
+          const qty = Number(it.quantity) || 1;
+          const sub = price * qty;
           total += sub;
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="py-2 px-3 font-medium text-slate-800">${it.productName}</td>
-            <td class="py-2 px-2 text-center font-mono font-bold text-red-800">${it.size}</td>
-            <td class="py-2 px-2 text-center font-mono">${it.quantity}</td>
-            <td class="py-2 px-3 text-right font-mono font-bold">₱${sub.toFixed(2)}</td>
-          `;
-          tbody.appendChild(tr);
+          if (tbody) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="py-2 px-3 font-medium text-slate-800">${it.productName || it.name || 'Apparel Item'}</td>
+              <td class="py-2 px-2 text-center font-mono font-bold text-red-800">${it.size || 'N/A'}</td>
+              <td class="py-2 px-2 text-center font-mono">${qty}</td>
+              <td class="py-2 px-3 text-right font-mono font-bold">₱${sub.toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+          }
         });
 
         const slipSubtotalEl = document.getElementById('slip-subtotal');
         if (slipSubtotalEl) slipSubtotalEl.textContent = '₱' + total.toFixed(2);
 
-        const grandTotal = Number(resObj.total_amount) > total ? Number(resObj.total_amount) : total + 10.00;
-        document.getElementById('slip-grandtotal').textContent = '₱' + grandTotal.toFixed(2);
+        const fee = 10.00;
+        const recordedTotal = Number(resObj.total_amount) || 0;
+        const grandTotal = recordedTotal > 0 ? recordedTotal : (total + fee);
+        const grandTotalEl = document.getElementById('slip-grandtotal');
+        if (grandTotalEl) grandTotalEl.textContent = '₱' + grandTotal.toFixed(2);
 
         const payMethodEl = document.getElementById('slip-payment-method');
         const payStatusEl = document.getElementById('slip-payment-status');
         if (payMethodEl) payMethodEl.textContent = resObj.payment_method || 'Cash on Pickup';
         if (payStatusEl) payStatusEl.textContent = resObj.payment_status || 'Unpaid';
 
-        document.getElementById('slip-modal').classList.remove('hidden');
+        const modal = document.getElementById('slip-modal');
+        if (modal) modal.classList.remove('hidden');
+
+        if (autoPrint) {
+          setTimeout(() => this.printCurrentSlip(), 200);
+        }
+      }
+
+      printCurrentSlip() {
+        document.body.classList.add('slip-modal-open');
+        const modal = document.getElementById('slip-modal');
+        if (modal) modal.classList.remove('hidden');
+        setTimeout(() => {
+          window.print();
+        }, 120);
       }
 
       // ==========================================

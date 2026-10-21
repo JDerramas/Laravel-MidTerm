@@ -29,10 +29,12 @@ class PaymentSandboxController extends Controller
         if (!file_exists($path)) {
             return null;
         }
+
         $raw = @file_get_contents($path);
         if (!$raw) {
             return null;
         }
+
         $decoded = json_decode($raw, true);
         return is_array($decoded) ? $decoded : null;
     }
